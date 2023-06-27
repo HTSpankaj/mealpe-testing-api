@@ -70,7 +70,7 @@ router.post("/createAdmin", async function (req, res, next) {
         .select("*")
         .maybeSingle();
       if (insertResponse.data) {
-        res.send({ status: true, data: insertResponse.data });
+        res.send({ success: true, data: insertResponse.data });
       } else {
         throw insertResponse.error;
       }
@@ -81,9 +81,9 @@ router.post("/createAdmin", async function (req, res, next) {
   } catch (error) {
     console.error(error);
     if (error.code === "23505") {
-      res.send({ status: false, message: "Email already exist" });
+      res.send({ success: false, message: "Email already exist" });
     }
-    res.send({ status: false, message: error?.message || error });
+    res.send({ success: false, message: error?.message || error });
   }
 });
 
@@ -102,7 +102,7 @@ router.post("/adminLogin", async (req, res) => {
         .match({ adminId: adminId });
 
       res.send({
-        status: true,
+        success: true,
         message: "Login succesfull",
         data: data,
       });
@@ -110,7 +110,7 @@ router.post("/adminLogin", async (req, res) => {
       throw authResponse.error;
     }
   } catch (error) {
-    res.status(500).json({ status: false, message: error.message || error });
+    res.status(500).json({ success: false, message: error.message || error });
   }
 });
 
