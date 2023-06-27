@@ -9,22 +9,19 @@ router.get("/", function (req, res, next) {
 router.post("/createCampus", async (req, res) => {
   const { campusName, address, cityId } = req.body;
   try {
-    const { data, error } = await supabaseInstance
-      .from("Campus")
-      .insert([{ campusName, address, cityId }])
-      .select("*")
-      .maybeSingle();
-    console.log(data);
-    console.log("error", error);
+    const { data, error } = await supabaseInstance.from("Campus").insert({ campusName, address, cityId }).select("*").maybeSingle();
+   
     if (data) {
       res.send({
         status: true,
         message: "Campus created successfully",
         data: data,
       });
+    } else {
+      throw error;
     }
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message || error });
   }
 });
 
