@@ -8,21 +8,6 @@ router.get("/", function (req, res, next) {
   res.send({ status: true, message: "respond send from admin.js" });
 });
 
-// router.get("/getAdminList", async function (req, res, next) {
-//   try {
-//     const adminResponse = await supabaseInstance
-//       .from("Super_Admin_Users")
-//       .select("*");
-//     if (adminResponse.data) {
-//       res.send({ status: true, data: adminResponse.data });
-//     } else {
-//       throw adminResponse.error;
-//     }
-//   } catch (error) {
-//     res.send({ status: false, message: error?.message || error });
-//   }
-// });
-
 router.get("/getAdminList", async (req, res) => {
   const { page, perPage } = req.query; // Extract query parameters
   const pageNumber = parseInt(page) || 1;
@@ -114,23 +99,17 @@ router.post("/adminLogin", async (req, res) => {
   }
 });
 
-router.post("/updateAdminPassword/:id", async (req, res) => {
-  const { id } = req.params;
-  const admin = req.body;
-  // const { name, email, mobile, role } = req.body;
+router.post("/updateAdminPassword ", async (req, res) => {
+ 
+  const { password, adminId} = req.body;
 
   try {
-    const { data, error } = await supabaseInstance
-      .from("Super_Admin_Users")
-      .update({ ...admin })
-      .eq("adminId", id)
-      .select();
-
+    // const { data, error } = await supabaseInstance.auth.updateUser({ password: password })
+    const { data, error } = await supabaseInstance.auth.admin.updateUserById(adminId, {password: password});
     if (data) {
       res.status(200).json({
         success: true,
-        message: "Data updated succesfully",
-        data: data,
+        message: "Password updated succesfully",
       });
     } else {
       throw error;
@@ -139,5 +118,6 @@ router.post("/updateAdminPassword/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 
 module.exports = router;

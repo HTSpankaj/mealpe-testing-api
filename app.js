@@ -12,6 +12,11 @@ var cityRouter = require("./routes/citys");
 var daysRouter = require("./routes/day");
 var categoryRouter = require("./routes/category");
 var restaurentRouter = require("./routes/restaurent");
+var customerRouter = require("./routes/customer")
+var resturantRouter = require("./routes/restaurent")
+var outletRouter = require("./routes/outlet")
+
+
 var app = express();
 
 // view engine setup
@@ -25,13 +30,17 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 
-app.use("/", indexRouter);
-app.use("/admin", adminRouter);
-app.use("/campus", campusRouter);
-app.use("/city", cityRouter);
+app.use('/', indexRouter);
+app.use('/admin', adminRouter);
+app.use('/campus', campusRouter);
+app.use('/city', cityRouter);
+app.use('/customer', customerRouter);
+app.use('/restaurent', resturantRouter);
+app.use('/outlet', outletRouter);
 app.use("/days", daysRouter);
 app.use("/category", categoryRouter);
-app.use("/restaurent", restaurentRouter);
+
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

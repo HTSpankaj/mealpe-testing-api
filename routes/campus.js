@@ -120,4 +120,26 @@ router.get("/getAllCampusList", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 })
+
+router.get("/getCityCampusList",async (req,res) => {
+  const { cityId } = req.query;
+  try {
+    const { data, error } = await supabaseInstance.from("Campus").select("*")
+      .eq("cityId", cityId)
+      .order("campusName", { ascending: true });
+    if (data) {
+      res.status(200).json({
+        success: true,
+        message: "Data fetch succesfully",
+        data: data,
+      });
+    } else {
+      throw error;
+    }
+
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+
+})
 module.exports = router;
