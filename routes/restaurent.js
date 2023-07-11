@@ -181,21 +181,37 @@ router.post("/restaurantLogin", async (req, res) => {
     if (data?.user) {
       const id = data.user.id
       console.log("id", id)
+      console.log("ata?.user?.user_metadata----->",data?.user?.user_metadata)
       if (data?.user?.user_metadata?.isRestaurant === true) {
         const restaurantData = await supabaseInstance.from("Restaurant").select("*").eq("restaurantId", id).maybeSingle();
 
         res.status(200).json({
           success: true,
           message: "LogIn successfully",
-          data: restaurantData.data
+          data: {
+            outletData: restaurantData.data
+          }
         });
 
-      } else if (data?.user?.user_metadata?.isOutlet == false) {
+      } else if (data?.user?.user_metadata?.isOutlet === true) {
         const outletData = await supabaseInstance.from("Outlet").select("*").eq("outletId", id).maybeSingle();
         res.status(200).json({
           success: true,
           message: "LogIn successfully",
-          data: outletData.data
+          data: {
+            outletData: outletData.data
+          }
+        });
+      } else if(data?.user?.user_metadata?.isOutletStaff === true) {
+        const outletStaffData = await supabaseInstance.from("Outlet_Staff").select("*").eq("outletStaffAuthUId", id).maybeSingle();
+        const outletData = await supabaseInstance.from("Outlet").select("*").eq("outletId", outletStaffData.data.outletId).maybeSingle();
+        res.status(200).json({
+          success: true,
+          message: "LogIn successfully",
+          data: {
+            outletData: outletData.data, 
+            outletStaffData: outletStaffData 
+          }
         });
       }
     }
