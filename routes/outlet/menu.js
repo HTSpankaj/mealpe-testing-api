@@ -106,4 +106,77 @@ router.post("/upsertCategoryImage", upload.single('file'), async (req, res) => {
   }
 })
 
+router.get("/getAttributes", async (req, res) => {
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Item_Attributes")
+      .select("*")
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post("/addMenu", async (req, res) => {
+  const { itemname, attributeid, price, itemdescription, minimumpreparationtime, kcal, servinginfo, spicelevel, outletId, restaurantId } = req.body;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Item")
+      .insert({ itemname, attributeid, price, itemdescription, minimumpreparationtime, kcal, servinginfo, spicelevel, outletId, restaurantId })
+      .select("*")
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.post("/upsertMenuItemImage",upload.single('file'), async (req, res) => {
+  const { itemid } = req.body;
+
+  try {
+    const { data, error } = await supabaseInstance
+      .storage
+      .from('menu-item-image')
+      .upload(itemid + ".webp", req.file.buffer, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: 'image/webp'
+      })
+
+    if (data?.path) {
+      const publickUrlresponse = await supabaseInstance.storage.from('menu-item-image').getPublicUrl(data?.path);
+      if (publickUrlresponse?.data?.publicUrl) {
+        const publicUrl = publickUrlresponse?.data?.publicUrl;
+        const menuData = await supabaseInstance.from("Menu_Item").update({ item_image_url: publicUrl }).eq("itemid", itemid).select("*").maybeSingle();
+        res.status(200).json({
+          success: true,
+          data: menuData.data,
+        });
+      } else {
+        throw publickUrlresponse.error || "Getting Error in PublicUrl"
+      }
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+})
+
 module.exports = router;

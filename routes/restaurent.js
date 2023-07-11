@@ -100,7 +100,30 @@ router.post("/createRestaurant", async (req, res) => {
       const restaurantAdminDetails = await supabaseInstance.from("Restaurant_Admin").insert({ name: restaurantAdminId?.name, mobile: restaurantAdminId?.mobile, email: restaurantAdminId?.email, address: restaurantAdminId?.address, pancard: restaurantAdminId?.pancard }).select().maybeSingle();
       const _restaurantAdminId = restaurantAdminDetails.data.restaurantAdminId;
 
-      const inserRestaurentNewkDetails = await supabaseInstance.from("Restaurant").insert({ restaurantId, restaurantName, email, mobile, GSTIN, FSSAI_License, bankDetailsId: _bankDetailsId, restaurantAdminId: _restaurantAdminId, campusId, address, isVeg, isNonVeg, openTime, closeTime }).select("*").maybeSingle();
+      let objectData = { 
+        restaurantId,
+        restaurantName, 
+        email,
+        mobile, 
+        GSTIN, 
+        FSSAI_License, 
+        bankDetailsId: _bankDetailsId, 
+        restaurantAdminId: _restaurantAdminId, 
+        campusId, 
+        address, 
+        isVeg, 
+        isNonVeg, 
+        openTime, 
+        closeTime 
+      }
+      
+      if (openTime) {
+        objectData.openTime = openTime;
+      }
+      if (closeTime) {
+        objectData.closeTime = closeTime;
+      }
+      const inserRestaurentNewkDetails = await supabaseInstance.from("Restaurant").insert(objectData).select("*").maybeSingle();
 
       for (let categoryItem of Restaurant_category) {
         const restaurentCategoryResponse = await supabaseInstance

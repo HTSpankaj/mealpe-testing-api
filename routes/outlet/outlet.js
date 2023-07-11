@@ -1,6 +1,8 @@
 var express = require("express");
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
+const multer = require("multer");
+const upload = multer();
 
 router.post("/createOutlet", async (req, res) => {
   const {
@@ -41,9 +43,30 @@ router.post("/createOutlet", async (req, res) => {
       const _bankDetailsId = bankDetails.data.bankDetailsId;
 
       const outletDetails = await supabaseInstance.from("Outlet_Admin").insert({ name: outletAdminId?.name, mobile: outletAdminId?.mobile, email: outletAdminId?.email, address: outletAdminId?.address, pancard: outletAdminId?.pancard }).select().maybeSingle();
-      const _outletAdminId = outletDetails.data.restaurantAdminId;
+      const _outletAdminId = outletDetails.data.outletAdminId;
+      console.log("_outletAdminId",_outletAdminId)
 
-      const inserRestaurentNewkDetails = await supabaseInstance.from("Outlet").insert({ outletId, outletName, restaurantName, email, mobile, GSTIN, FSSAI_License, bankDetailsId: _bankDetailsId, outletAdminId: _outletAdminId, campusId, address, openTime, closeTime, cityId, restaurantId, }).select("*").maybeSingle();
+      let postObject = { 
+        outletId,
+        outletName,
+        restaurantName,
+        email,
+        mobile,
+        GSTIN,
+        bankDetailsId: _bankDetailsId,
+        outletAdminId: _outletAdminId,
+        campusId,
+        address,
+        cityId,
+        restaurantId
+      }
+      if (openTime) {
+        postObject.openTime = openTime;
+      }
+      if (closeTime) {
+        postObject.closeTime = closeTime;
+      }
+      const inserRestaurentNewkDetails = await supabaseInstance.from("Outlet").insert(postObject).select("*").maybeSingle();
 
       for (let outletItem of Restaurant_category) {
         const outletCategoryResponse = await supabaseInstance
@@ -79,6 +102,39 @@ router.post("/createOutlet", async (req, res) => {
   }
 })
 
+
+router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) => {
+  const { outletId } = req.body;
+  console.log("outletId--->",outletId)
+  try {
+    const { data, error } = await supabaseInstance
+      .storage
+      .from('fssai-license')
+      .upload(outletId + ".webp", req.file.buffer, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: 'image/webp'
+      })
+
+    if (data?.path) {
+      const publickUrlresponse = await supabaseInstance.storage.from('fssai-license').getPublicUrl(data?.path);
+      if (publickUrlresponse?.data?.publicUrl) {
+        const publicUrl = publickUrlresponse?.data?.publicUrl;
+        const outletData = await supabaseInstance.from("Outlet").update({ FSSAI_License: publicUrl }).eq("outletId", outletId).select("*, bankDetailsId(*), campusId(*),restaurantId(*)").maybeSingle();
+        res.status(200).json({
+          success: true,
+          data: outletData.data,
+        });
+      } else {
+        throw publickUrlresponse.error || "Getting Error in PublicUrl"
+      }
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+})
 
 router.get("/getOutletList", async (req, res) => {
   const { page, perPage } = req.query;
