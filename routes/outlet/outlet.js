@@ -137,13 +137,14 @@ router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) =
 })
 
 router.get("/getOutletList", async (req, res) => {
-  const { page, perPage } = req.query;
+  const { page, perPage, serachText } = req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
     const { data, error, count } = await supabaseInstance
       .from("Outlet")
       .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*))", { count: "exact" })
+      .or(`address.ilike.${serachText},outletName.ilike.${serachText}`)
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outletName", { ascending: true });
 

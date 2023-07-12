@@ -85,4 +85,50 @@ router.post("/verifyOTP", async (req, res) => {
   }
 });
 
+router.get("/cafeteriaDetails/:outletId", async (req, res) => {
+  const { outletId } =req.params;
+  try {
+    const { data, error } = await supabaseInstance.from("Menu_Item").select("*").eq("outletId", outletId);
+    if (data) {
+      const outdetails = await supabaseInstance.from("Outlet").select("*").eq("outletId", outletId);
+      res.status(200).json({
+        success: true,
+        message: "Data fetch succesfully",
+        data:{
+          outdetails:outdetails.data,
+          menuItems:data
+        },
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+})
+
+router.get("/homeData", async (req, res) => {
+  const { categoryId, campusId } = req.query;
+  try {
+    const { data, error } = await supabaseInstance.from("Outlet").select("*,cityId(*),restaurantId(*),bankDetailsId(*),campusId(*)").eq("campusId",campusId).limit(5);
+    if (data) {
+      const PopularCafeterias = await supabaseInstance.from("Restaurant_category").select("*,restaurantId(*),outletId(*),categoryId(*)").eq("categoryId",categoryId).limit(5);
+      if(categoryId == null || categoryId  && campusId ) {
+        res.status(200).json({
+          success: true,
+          message: "Data fetch succesfully",
+          data:{
+            cafeteriasForYouData:data,
+            PopularCafeterias:PopularCafeterias.data
+          }
+        });
+      } 
+    } else{
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+})
+
 module.exports = router;
