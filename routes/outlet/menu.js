@@ -201,4 +201,25 @@ router.get("/getCategoryById/:categoryid", async (req, res) => {
   }
 });
 
+router.post("/createParentCategory", async (req, res) => {
+  const { outletId, status, parentCategoryName } = req.body;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Parent_Categories")
+      .insert({ outletId, status, parentCategoryName })
+      .select("*")
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
 module.exports = router;

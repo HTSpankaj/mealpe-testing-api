@@ -35,13 +35,16 @@ router.get("/getRestaurantList", async (req, res) => {
   const itemsPerPage = parseInt(perPage) || 10;
 
   try {
-    const { data, error, count } = await supabaseInstance
+    let query =  supabaseInstance
       .from("Restaurant")
       .select("*, bankDetailsId(*), campusId(*),restaurantAdminId(*), Restaurant_category!left(*, categoryId(*)), Timing!left(*)", { count: "exact" })
-      .or(`address.ilike.${searchText},restaurantName.ilike.${searchText}`)
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("restaurantAdminId", { ascending: true });
-
+      if(searchText) {
+        query = query.or(`address.ilike.%${searchText}%,restaurantName.ilike.%${searchText}%`);
+        // query = query.ilike('outletName', `%${searchText}%`);
+      }
+      const { data, error, count } = await query;
     if (data) {
       const totalPages = Math.ceil(count / itemsPerPage);
       res.status(200).json({
