@@ -53,10 +53,12 @@ router.post("/updateCategory/:categoryid", async (req, res) => {
 });
 
 router.get("/category/:outletId", async (req, res) => {
+  const { outletId } = req.params;
   try {
     const { data, error } = await supabaseInstance
       .from("Menu_Categories")
       .select("*")
+      .eq("outletId",outletId)
 
     if (data) {
       res.status(200).json({
@@ -70,7 +72,6 @@ router.get("/category/:outletId", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 
 router.post("/upsertCategoryImage", upload.single('file'), async (req, res) => {
   const { categoryid } = req.body;
@@ -109,7 +110,7 @@ router.post("/upsertCategoryImage", upload.single('file'), async (req, res) => {
 router.get("/getAttributes", async (req, res) => {
   try {
     const { data, error } = await supabaseInstance
-      .from("Item_Attributes")
+      .from("Menu_Item_Attributes")
       .select("*")
 
     if (data) {
@@ -178,5 +179,26 @@ router.post("/upsertMenuItemImage",upload.single('file'), async (req, res) => {
     res.status(500).json({ success: false, error: error });
   }
 })
+
+router.get("/getCategoryById/:categoryid", async (req, res) => {
+  const {categoryid} = req.params
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Categories")
+      .select("*")
+      .eq("categoryid",categoryid)
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 module.exports = router;
