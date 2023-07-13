@@ -100,11 +100,9 @@ router.post("/adminLogin", async (req, res) => {
 });
 
 router.post("/updateAdminPassword ", async (req, res) => {
- 
   const { password, adminId} = req.body;
-
-  try {
   
+  try {
     const { data, error } = await supabaseInstance.auth.admin.updateUserById(adminId, {password: password});
     if (data) {
       res.status(200).json({

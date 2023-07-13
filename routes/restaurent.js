@@ -29,8 +29,8 @@ router.get("/getRestaurant", async (req, res) => {
   }
 });
 
-router.post("/getRestaurantList", async (req, res) => {
-  const { page, perPage } = req.body; // Extract query parameters
+router.get("/getRestaurantList", async (req, res) => {
+  const { page, perPage, searchText} = req.query; // Extract query parameters
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
 
@@ -38,6 +38,7 @@ router.post("/getRestaurantList", async (req, res) => {
     const { data, error, count } = await supabaseInstance
       .from("Restaurant")
       .select("*, bankDetailsId(*), campusId(*),restaurantAdminId(*), Restaurant_category!left(*, categoryId(*)), Timing!left(*)", { count: "exact" })
+      .or(`address.ilike.${searchText},restaurantName.ilike.${searchText}`)
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("restaurantAdminId", { ascending: true });
 
