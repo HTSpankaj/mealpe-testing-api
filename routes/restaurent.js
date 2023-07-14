@@ -98,7 +98,7 @@ router.post("/createRestaurant", async (req, res) => {
       const restaurantId = data.user.id;
 
 
-      const bankDetails = await supabaseInstance.from("BankDetails").insert({ accountNumber: bankDetailsId.accountNumber, BankName: bankDetailsId.BankName, IFSCCode: bankDetailsId.IFSCCode }).select().maybeSingle();
+      const bankDetails = await supabaseInstance.from("BankDetails").insert({ accountNumber: bankDetailsId.accountNumber || 0, BankName: bankDetailsId.BankName, IFSCCode: bankDetailsId.IFSCCode }).select().maybeSingle();
       const _bankDetailsId = bankDetails.data.bankDetailsId;
 
       const restaurantAdminDetails = await supabaseInstance.from("Restaurant_Admin").insert({ name: restaurantAdminId?.name, mobile: restaurantAdminId?.mobile, email: restaurantAdminId?.email, address: restaurantAdminId?.address, pancard: restaurantAdminId?.pancard }).select().maybeSingle();
