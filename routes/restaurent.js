@@ -97,11 +97,10 @@ router.post("/createRestaurant", async (req, res) => {
     if (data?.user) {
       const restaurantId = data.user.id;
 
-
       const bankDetails = await supabaseInstance.from("BankDetails").insert({ accountNumber: bankDetailsId.accountNumber || 0, BankName: bankDetailsId.BankName, IFSCCode: bankDetailsId.IFSCCode }).select().maybeSingle();
       const _bankDetailsId = bankDetails.data.bankDetailsId;
 
-      const restaurantAdminDetails = await supabaseInstance.from("Restaurant_Admin").insert({ name: restaurantAdminId?.name, mobile: restaurantAdminId?.mobile, email: restaurantAdminId?.email, address: restaurantAdminId?.address, pancard: restaurantAdminId?.pancard }).select().maybeSingle();
+      const restaurantAdminDetails = await supabaseInstance.from("Restaurant_Admin").insert({ name: restaurantAdminId?.name, mobile: restaurantAdminId?.mobile || null, email: restaurantAdminId?.email, address: restaurantAdminId?.address, pancard: restaurantAdminId?.pancard }).select().maybeSingle();
       const _restaurantAdminId = restaurantAdminDetails.data.restaurantAdminId;
 
       let objectData = { 
@@ -147,7 +146,7 @@ router.post("/createRestaurant", async (req, res) => {
       for (let data of Timing) {
         const restaurentTimeResponse = await supabaseInstance
           .from("Timing")
-          .insert({ restaurantId, dayId: data.dayId, openTime: data.openTime, closeTime: data.closeTime })
+          .insert({ restaurantId, dayId: data.dayId, openTime: data.openTime || null, closeTime: data.closeTime || null })
           .select("*")
           .maybeSingle();
         console.log("restaurentTimeResponse", restaurentTimeResponse);
