@@ -68,6 +68,12 @@ router.post("/createOutlet", async (req, res) => {
       }
       const inserRestaurentNewkDetails = await supabaseInstance.from("Outlet").insert(postObject).select("*").maybeSingle();
 
+      const taxPostBody = [
+        {outletId, taxname: "CGST"},
+        {outletId, taxname: "SGST"}
+      ]
+      const taxResponse = await supabaseInstance.from("Tax").insert(taxPostBody).select();
+
       for (let outletItem of Restaurant_category) {
         const outletCategoryResponse = await supabaseInstance
           .from("Restaurant_category")
@@ -143,7 +149,7 @@ router.get("/getOutletList", async (req, res) => {
   try {
     const { data, error, count } = await supabaseInstance
       .from("Outlet")
-      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*))", { count: "exact" })
+      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
       .or(`address.ilike.${searchText},outletName.ilike.${searchText}`)
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outletName", { ascending: true });
@@ -174,7 +180,7 @@ router.get("/getOutletListByRestaurantId/:restaurantId", async (req, res) => {
   try {
     let query = supabaseInstance
       .from("Outlet")
-      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*))", { count: "exact" })
+      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outletName", { ascending: true })
       .eq("restaurantId", restaurantId)

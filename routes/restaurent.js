@@ -13,7 +13,7 @@ router.get("/getRestaurant", async (req, res) => {
     const { data, error } = await supabaseInstance
       .from("Restaurant")
       .select(
-        "*, bankDetailsId(*), restaurantAdminId(*), Restaurant_category!left(*, categoryId(*))"
+        "*, bankDetailsId(*), restaurantAdminId(*), Restaurant_category!left(*, categoryId(*)), Tax!left(taxid, taxname, tax)"
       );
     console.log(data);
     console.log(error);
@@ -37,7 +37,7 @@ router.get("/getRestaurantList", async (req, res) => {
   try {
     let query =  supabaseInstance
       .from("Restaurant")
-      .select("*, bankDetailsId(*), campusId(*),restaurantAdminId(*), Restaurant_category!left(*, categoryId(*)), Timing!left(*)", { count: "exact" })
+      .select("*, bankDetailsId(*), campusId(*),restaurantAdminId(*), Restaurant_category!left(*, categoryId(*)), Timing!left(*), Tax!left(taxid, taxname, tax)", { count: "exact" })
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("restaurantAdminId", { ascending: true });
       if(searchText) {
@@ -128,6 +128,12 @@ router.post("/createRestaurant", async (req, res) => {
         objectData.closeTime = closeTime;
       }
       const inserRestaurentNewkDetails = await supabaseInstance.from("Restaurant").insert(objectData).select("*").maybeSingle();
+      
+      const taxPostBody = [
+        {restaurantId, taxname: "CGST"},
+        {restaurantId, taxname: "SGST"}
+      ]
+      const taxResponse = await supabaseInstance.from("Tax").insert(taxPostBody).select();
 
       for (let categoryItem of Restaurant_category) {
         const restaurentCategoryResponse = await supabaseInstance
@@ -181,7 +187,7 @@ router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) =
       const publickUrlresponse = await supabaseInstance.storage.from('fssai-license').getPublicUrl(data?.path);
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const restaurantData = await supabaseInstance.from("Restaurant").update({ FSSAI_License: publicUrl }).eq("restaurantId", restaurantId).select("*, bankDetailsId(*), campusId(*),restaurantAdminId(*), Restaurant_category!left(*, categoryId(*))").maybeSingle();
+        const restaurantData = await supabaseInstance.from("Restaurant").update({ FSSAI_License: publicUrl }).eq("restaurantId", restaurantId).select("*, bankDetailsId(*), campusId(*),restaurantAdminId(*), Restaurant_category!left(*, categoryId(*)), Tax!left(taxid, taxname, tax)").maybeSingle();
         res.status(200).json({
           success: true,
           data: restaurantData.data,
@@ -210,7 +216,7 @@ router.post("/restaurantLogin", async (req, res) => {
       console.log("id", id)
       console.log("ata?.user?.user_metadata----->",data?.user?.user_metadata)
       if (data?.user?.user_metadata?.isRestaurant === true) {
-        const restaurantData = await supabaseInstance.from("Restaurant").select("*").eq("restaurantId", id).maybeSingle();
+        const restaurantData = await supabaseInstance.from("Restaurant").select("*, Tax!left(taxid, taxname, tax)").eq("restaurantId", id).maybeSingle();
 
         res.status(200).json({
           success: true,
