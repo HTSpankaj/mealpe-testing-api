@@ -222,4 +222,102 @@ router.post("/createParentCategory", async (req, res) => {
   }
 });
 
+router.post("/updateParentCategory/:parent_category_id", async (req, res) => {
+  const { parent_category_id } = req.params;
+  const  parentCategoryData = req.body;
+  console.log(parentCategoryData)
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Parent_Categories")
+      .update({...parentCategoryData})
+      .eq("parent_category_id",parent_category_id)
+      .select("*");
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get("/getParentCategory/:outletId", async (req, res) => {
+  const {outletId} = req.params
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Parent_Categories")
+      .select("*")
+      .eq("outletId",outletId)
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get("/getParentCategoryById/:parent_category_id", async (req, res) => {
+  const {parent_category_id} = req.params;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Parent_Categories")
+      .select("*")
+      .eq("parent_category_id",parent_category_id)
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post("/upsertParentCategoryImage",upload.single('file'), async (req, res) => {
+  const { parent_category_id } = req.body;
+  try {
+    const { data, error } = await supabaseInstance
+      .storage
+      .from('category-image')
+      .upload(parent_category_id + ".webp", req.file.buffer, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: 'image/webp'
+      })
+
+    if (data?.path) {
+      const publickUrlresponse = await supabaseInstance.storage.from('category-image').getPublicUrl(data?.path);
+      if (publickUrlresponse?.data?.publicUrl) {
+        const publicUrl = publickUrlresponse?.data?.publicUrl;
+        const parentCategoryData = await supabaseInstance.from("Menu_Parent_Categories").update({ parent_category_image_url: publicUrl }).eq("parent_category_id", parent_category_id).select("*").maybeSingle();
+        res.status(200).json({
+          success: true,
+          data: parentCategoryData.data,
+        });
+      } else {
+        throw publickUrlresponse.error || "Getting Error in PublicUrl"
+      }
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+})
+
 module.exports = router;

@@ -210,6 +210,74 @@ router.get("/getOutletListByRestaurantId/:restaurantId", async (req, res) => {
   }
 });
 
+router.post("/updateOutlet/:outletId", async (req, res) => {
+
+  const {outletId} = req.params;
+   const outletData = req.body;
+  const bankDetailsData= outletData.bankDetailsId;
+  const outletDetailsData = outletData.outletAdminId;
+  delete outletDetailsData?.email;
+  delete  outletData?.bankDetailsId;
+  delete  outletData?.outletAdminId;
+  delete  outletData?.Restaurant_category;
+  delete  outletData?.Timing;
+  delete  outletData?.isBoth;
+  delete  outletData?.isBothFood;
+  delete  outletData?.password;
+ 
+   try {
+     const { data, error } = await supabaseInstance
+     .from("Outlet")
+     .update( {...outletData})
+     .eq("outletId",outletId)
+     .select("*");
+     console.log(outletData.bankDetailsId)
+   
+     if (data) {
+ 
+       const bankDetails = await supabaseInstance.from("BankDetails").update({...bankDetailsData }).eq("bankDetailsId",bankDetailsData.bankDetailsId).select("*");
+       const outletDetails = await supabaseInstance.from("Outlet_Admin").update({...outletDetailsData }).eq("outletAdminId",outletDetailsData.outletAdminId).select("*");
+       
+         res.status(200).json({
+           success: true,
+           message: "Data updated succesfully",
+           data: data
+         });
+     } else {
+       throw error;
+     }
+   } catch (error) {
+     res.status(500).json({ success: false, error: error });
+   }
+ })
+
+
+router.post("/updatePackagingCharge/:outletId", async (req, res) => {
+  const { outletId } = req.params;
+  const {packaging_charge}  = req.body;
+
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Outlet")
+      .update({packaging_charge})
+      .eq("outletId",outletId)
+      .select("*");
+
+    if (data) {
+      console.log("data-->",data)
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
 
 
 module.exports = router;

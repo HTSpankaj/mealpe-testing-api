@@ -99,7 +99,7 @@ router.post("/adminLogin", async (req, res) => {
   }
 });
 
-router.post("/updateAdminPassword ", async (req, res) => {
+router.post("/updateAdminPassword", async (req, res) => {
   const { password, adminId} = req.body;
   
   try {
