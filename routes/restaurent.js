@@ -40,11 +40,11 @@ router.get("/getRestaurantList", async (req, res) => {
       .select("*, bankDetailsId(*), campusId(*),restaurantAdminId(*), Restaurant_category!left(*, categoryId(*)), Timing!left(*), Tax!left(taxid, taxname, tax)", { count: "exact" })
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("restaurantAdminId", { ascending: true });
-      if(searchText) {
-        query = query.or(`address.ilike.%${searchText}%,restaurantName.ilike.%${searchText}%`);
-        // query = query.ilike('outletName', `%${searchText}%`);
-      }
-      const { data, error, count } = await query;
+    if(searchText) {
+      query = query.or(`address.ilike.%${searchText}%,restaurantName.ilike.%${searchText}%`);
+      // query = query.ilike('outletName', `%${searchText}%`);
+    }
+    const { data, error, count } = await query;
     if (data) {
       const totalPages = Math.ceil(count / itemsPerPage);
       res.status(200).json({
@@ -105,23 +105,23 @@ router.post("/createRestaurant", async (req, res) => {
       const restaurantAdminDetails = await supabaseInstance.from("Restaurant_Admin").insert({ name: restaurantAdminId?.name, mobile: restaurantAdminId?.mobile || null, email: restaurantAdminId?.email, address: restaurantAdminId?.address, pancard: restaurantAdminId?.pancard }).select().maybeSingle();
       const _restaurantAdminId = restaurantAdminDetails.data.restaurantAdminId;
 
-      let objectData = { 
+      let objectData = {
         restaurantId,
-        restaurantName, 
+        restaurantName,
         email,
-        mobile, 
-        GSTIN, 
-        FSSAI_License, 
-        bankDetailsId: _bankDetailsId, 
-        restaurantAdminId: _restaurantAdminId, 
-        campusId, 
-        address, 
-        isVeg, 
-        isNonVeg, 
-        openTime, 
-        closeTime 
+        mobile,
+        GSTIN,
+        FSSAI_License,
+        bankDetailsId: _bankDetailsId,
+        restaurantAdminId: _restaurantAdminId,
+        campusId,
+        address,
+        isVeg,
+        isNonVeg,
+        openTime,
+        closeTime
       }
-      
+
       if (openTime) {
         objectData.openTime = openTime;
       }
@@ -129,7 +129,7 @@ router.post("/createRestaurant", async (req, res) => {
         objectData.closeTime = closeTime;
       }
       const inserRestaurentNewkDetails = await supabaseInstance.from("Restaurant").insert(objectData).select("*").maybeSingle();
-      
+
       const taxPostBody = [
         {restaurantId, taxname: "CGST"},
         {restaurantId, taxname: "SGST"}
@@ -243,8 +243,8 @@ router.post("/restaurantLogin", async (req, res) => {
           success: true,
           message: "LogIn successfully",
           data: {
-            outletData: outletData.data, 
-            outletStaffData: outletStaffData 
+            outletData: outletData.data,
+            outletStaffData: outletStaffData
           }
         });
       }
@@ -323,6 +323,27 @@ router.post("/updateCategory/:categoryid", async (req, res) => {
       });
     } else {
       throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get("/getCategoryById/:categoryid", async (req, res) => {
+  const {categoryid} = req.params
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Categories")
+      .select("*")
+      .eq("categoryid",categoryid)
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -503,4 +524,28 @@ router.post("/upsertParentCategoryImage",upload.single('file'), async (req, res)
   }
 })
 
+router.post("/updateTaxCharge", async (req, res) => {
+
+  const { tax } = req.body;
+  try {
+    for (let data of tax) {
+      taxData = await supabaseInstance
+        .from("Tax")
+        .update({ tax: data.tax })
+        .select("*")
+        .eq("taxid", data.taxid)
+    }
+    if (taxData) {
+      res.status(200).json({
+        success: true,
+        message: "Data updated succesfully",
+      });
+    } else {
+      throw error;
+    }
+   
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 module.exports = router;

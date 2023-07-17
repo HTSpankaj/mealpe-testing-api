@@ -251,7 +251,7 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
    }
  })
 
-
+ 
 router.post("/updatePackagingCharge/:outletId", async (req, res) => {
   const { outletId } = req.params;
   const {packaging_charge}  = req.body;
@@ -272,6 +272,31 @@ router.post("/updatePackagingCharge/:outletId", async (req, res) => {
     } else {
       throw error
     }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post("/updateTaxCharge", async (req, res) => {
+
+  const { tax } = req.body;
+  try {
+    for (let data of tax) {
+      taxData = await supabaseInstance
+        .from("Tax")
+        .update({ tax: data.tax })
+        .select("*")
+        .eq("taxid", data.taxid)
+    }
+    if (taxData) {
+      res.status(200).json({
+        success: true,
+        message: "Data updated succesfully",
+      });
+    } else {
+      throw error;
+    }
+   
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
