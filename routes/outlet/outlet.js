@@ -126,7 +126,7 @@ router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) =
       const publickUrlresponse = await supabaseInstance.storage.from('fssai-license').getPublicUrl(data?.path);
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const outletData = await supabaseInstance.from("Outlet").update({ FSSAI_License: publicUrl }).eq("outletId", outletId).select("*, bankDetailsId(*), campusId(*),restaurantId(*)").maybeSingle();
+        const outletData = await supabaseInstance.from("Outlet").update({ FSSAI_License: `${publicUrl}?${Date.now}` }).eq("outletId", outletId).select("*, bankDetailsId(*), campusId(*),restaurantId(*)").maybeSingle();
         res.status(200).json({
           success: true,
           data: outletData.data,

@@ -91,7 +91,7 @@ router.post("/upsertCategoryImage", upload.single('file'), async (req, res) => {
       console.log("publickUrlresponse",publickUrlresponse)
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const menuCategoryData = await supabaseInstance.from("Menu_Categories").update({ category_image_url: publicUrl }).eq("categoryid", categoryid).select("*").maybeSingle();
+        const menuCategoryData = await supabaseInstance.from("Menu_Categories").update({ category_image_url: `${publicUrl}?${Date.now}` }).eq("categoryid", categoryid).select("*").maybeSingle();
         res.status(200).json({
           success: true,
           data: menuCategoryData.data,
@@ -127,11 +127,19 @@ router.get("/getAttributes", async (req, res) => {
 });
 
 router.post("/addMenu", async (req, res) => {
-  const { itemname, attributeid, price, itemdescription, minimumpreparationtime, kcal, servinginfo, spicelevel, outletId, restaurantId } = req.body;
+  const { itemname, attributeid, price, itemdescription, minimumpreparationtime, kcal, servinginfo, spicelevel, outletId, restaurantId, item_categoryid, spice_level_id, dietary_restriction_id } = req.body;
   try {
+    let postBody = { itemname, attributeid, price, itemdescription, minimumpreparationtime, kcal, servinginfo, spicelevel, outletId, restaurantId, item_categoryid };
+    if (menuItemData?.dietary_restriction_id) {
+      postBody.dietary_restriction_id = dietary_restriction_id;
+    }
+    if (menuItemData?.spice_level_id) {
+      postBody.spice_level_id = spice_level_id;
+    }
+    
     const { data, error } = await supabaseInstance
       .from("Menu_Item")
-      .insert({ itemname, attributeid, price, itemdescription, minimumpreparationtime, kcal, servinginfo, spicelevel, outletId, restaurantId })
+      .insert(postBody)
       .select("*")
 
     if (data) {
@@ -144,6 +152,81 @@ router.post("/addMenu", async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.post("/updateMenu/:itemid", async (req, res) => {
+  const { itemid } = req.params;
+  console.log("itemid",itemid)
+  const menuItemData = {...req.body};
+  console.log("menuItemData",menuItemData)
+
+  try {
+
+    if (!menuItemData?.dietary_restriction_id) {
+      menuItemData.dietary_restriction_id = null;
+    }
+    if (!menuItemData?.spice_level_id) {
+      menuItemData.spice_level_id = null;
+    }
+
+    const { data, error } = await supabaseInstance
+    .from("Menu_Item")
+    .update({ ...menuItemData })
+    .select("*")
+    .eq("itemid",itemid)
+     
+    if (data) {
+      res.status(200).json({
+        success: true,
+        message: "Data updated succesfully",
+        data: data,
+      });
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/getItemList", async (req, res) => {
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Item")
+      .select("*")
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get("/getItem/:itemid", async (req, res) => {
+  const {itemid} = req.params;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Item")
+      .select("*")
+      .eq("itemid",itemid)
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -164,7 +247,7 @@ router.post("/upsertMenuItemImage",upload.single('file'), async (req, res) => {
       const publickUrlresponse = await supabaseInstance.storage.from('menu-item-image').getPublicUrl(data?.path);
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const menuData = await supabaseInstance.from("Menu_Item").update({ item_image_url: publicUrl }).eq("itemid", itemid).select("*").maybeSingle();
+        const menuData = await supabaseInstance.from("Menu_Item").update({ item_image_url: `${publicUrl}?${Date.now}` }).eq("itemid", itemid).select("*").maybeSingle();
         res.status(200).json({
           success: true,
           data: menuData.data,
@@ -296,7 +379,7 @@ router.get("/getParentCategoryById/:parent_category_id", async (req, res) => {
   try {
     const { data, error } = await supabaseInstance
       .from("Menu_Parent_Categories")
-      .select("*")
+      .select("*, Menu_Categories!left(*)")
       .eq("parent_category_id",parent_category_id)
 
     if (data) {
@@ -328,7 +411,7 @@ router.post("/upsertParentCategoryImage",upload.single('file'), async (req, res)
       const publickUrlresponse = await supabaseInstance.storage.from('category-image').getPublicUrl(data?.path);
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const parentCategoryData = await supabaseInstance.from("Menu_Parent_Categories").update({ parent_category_image_url: publicUrl }).eq("parent_category_id", parent_category_id).select("*").maybeSingle();
+        const parentCategoryData = await supabaseInstance.from("Menu_Parent_Categories").update({ parent_category_image_url: `${publicUrl}?${Date.now}` }).eq("parent_category_id", parent_category_id).select("*").maybeSingle();
         res.status(200).json({
           success: true,
           data: parentCategoryData.data,
