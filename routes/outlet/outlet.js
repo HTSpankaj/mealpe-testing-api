@@ -118,7 +118,7 @@ router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) =
       .from('fssai-license')
       .upload(outletId + ".webp", req.file.buffer, {
         cacheControl: '3600',
-        upsert: false,
+        upsert: true,
         contentType: 'image/webp'
       })
 

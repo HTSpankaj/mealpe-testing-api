@@ -82,7 +82,7 @@ router.post("/upsertCategoryImage", upload.single('file'), async (req, res) => {
       .from('category-image')
       .upload(categoryid + ".webp", req.file.buffer, {
         cacheControl: '3600',
-        upsert: false,
+        upsert: true,
         contentType: 'image/webp'
       })
 
@@ -156,7 +156,7 @@ router.post("/upsertMenuItemImage",upload.single('file'), async (req, res) => {
       .from('menu-item-image')
       .upload(itemid + ".webp", req.file.buffer, {
         cacheControl: '3600',
-        upsert: false,
+        upsert: true,
         contentType: 'image/webp'
       })
 
@@ -202,14 +202,23 @@ router.get("/getCategoryById/:categoryid", async (req, res) => {
 });
 
 router.post("/createParentCategory", async (req, res) => {
-  const { outletId, status, parentCategoryName } = req.body;
+  const { outletId, status, parentCategoryName, category } = req.body;
   try {
     const { data, error } = await supabaseInstance
       .from("Menu_Parent_Categories")
-      .insert({ outletId, status, parentCategoryName })
+      .insert( {outletId, status, parentCategoryName})
       .select("*")
 
     if (data) {
+      const  parent_category_id = data[0].parent_category_id;
+    
+      for(let value of category) {
+       const updatedData = await supabaseInstance
+        .from("Menu_Categories")
+        .update({parent_category_id:parent_category_id})
+        .eq("categoryid", value)
+        .select("*")
+      }
       res.status(200).json({
         success: true,
         data: data,
@@ -224,16 +233,31 @@ router.post("/createParentCategory", async (req, res) => {
 
 router.post("/updateParentCategory/:parent_category_id", async (req, res) => {
   const { parent_category_id } = req.params;
-  const  parentCategoryData = req.body;
-  console.log(parentCategoryData)
+  const  { status, parentCategoryName, category} = req.body;
+
   try {
     const { data, error } = await supabaseInstance
       .from("Menu_Parent_Categories")
-      .update({...parentCategoryData})
+      .update({status, parentCategoryName})
       .eq("parent_category_id",parent_category_id)
       .select("*");
 
     if (data) {
+
+      const parent_category_id =data[0].parent_category_id;
+      let updated =  await supabaseInstance
+         .from("Menu_Categories")
+         .update({parent_category_id:null})
+         .eq("parent_category_id", parent_category_id)
+         .select("*")
+
+      for(let value of category) {
+        const updatedData = await supabaseInstance
+         .from("Menu_Categories")
+         .update({parent_category_id:parent_category_id})
+         .eq("categoryid", value)
+         .select("*")
+       }
       res.status(200).json({
         success: true,
         data: data,
@@ -296,7 +320,7 @@ router.post("/upsertParentCategoryImage",upload.single('file'), async (req, res)
       .from('category-image')
       .upload(parent_category_id + ".webp", req.file.buffer, {
         cacheControl: '3600',
-        upsert: false,
+        upsert: true,
         contentType: 'image/webp'
       })
 
@@ -319,5 +343,27 @@ router.post("/upsertParentCategoryImage",upload.single('file'), async (req, res)
     res.status(500).json({ success: false, error: error });
   }
 })
+
+router.delete("/deleteCategory/:categoryid", async (req, res) => {
+  const { categoryid } = req.params;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Categories")
+      .delete()
+      .eq("categoryid",categoryid)
+      .select("*")
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        message:"Category Deleted"
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
 
 module.exports = router;
