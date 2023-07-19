@@ -595,20 +595,19 @@ router.delete("/deleteCategory/:categoryid", async (req, res) => {
 });
 
 router.post("/addMenu", async (req, res) => {
-  const { itemname, attributeid, price, itemdescription, minimumpreparationtime, kcal, servinginfo, spicelevel, outletId, restaurantId, item_categoryid, spice_level_id, dietary_restriction_id } = req.body;
+  const menuItemData = {...req.body};
   try {
-    let postBody = { itemname, attributeid, price, itemdescription, minimumpreparationtime, kcal, servinginfo, spicelevel, outletId, restaurantId, item_categoryid };
-    if (menuItemData?.dietary_restriction_id) {
-      postBody.dietary_restriction_id = dietary_restriction_id;
+    if (!menuItemData?.dietary_restriction_id) {
+      menuItemData.dietary_restriction_id = null;
     }
-    if (menuItemData?.spice_level_id) {
-      postBody.spice_level_id = spice_level_id;
+    if (!menuItemData?.spice_level_id) {
+      menuItemData.spice_level_id = null;
     }
-    
     const { data, error } = await supabaseInstance
       .from("Menu_Item")
-      .insert(postBody)
+      .insert(menuItemData)
       .select("*")
+      .maybeSingle()
 
     if (data) {
       res.status(200).json({
@@ -625,10 +624,7 @@ router.post("/addMenu", async (req, res) => {
 
 router.post("/updateMenu/:itemid", async (req, res) => {
   const { itemid } = req.params;
-  console.log("itemid",itemid)
   const menuItemData = {...req.body};
-  console.log("menuItemData",menuItemData)
-
   try {
 
     if (!menuItemData?.dietary_restriction_id) {
@@ -659,15 +655,26 @@ router.post("/updateMenu/:itemid", async (req, res) => {
 });
 
 router.get("/getItemList", async (req, res) => {
+  const { page, perPage} = req.query; // Extract query parameters
+  const pageNumber = parseInt(page) || 1;
+  const itemsPerPage = parseInt(perPage) || 10;
   try {
-    const { data, error } = await supabaseInstance
+    const { data, error, count } = await supabaseInstance
       .from("Menu_Item")
-      .select("*")
+      .select("*",{ count: "exact" })
+      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
 
     if (data) {
+      const totalPages = Math.ceil(count / itemsPerPage);
       res.status(200).json({
         success: true,
         data: data,
+        meta: {
+          page: pageNumber,
+          perPage: itemsPerPage,
+          totalPages,
+          totalCount: count,
+        },
       });
     } else {
       throw error
