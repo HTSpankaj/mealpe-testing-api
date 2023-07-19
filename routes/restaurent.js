@@ -204,7 +204,7 @@ router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) =
   }
 })
 
-router.post("/restaurantLogin", async (req, res) => {
+router.post("/restaurentLogin", async (req, res) => {
   const { email, password } = req.body;
   try {
     const { data, error } = await supabaseInstance.auth.signInWithPassword({
@@ -448,6 +448,8 @@ router.post("/updateParentCategory/:parent_category_id", async (req, res) => {
     if (data) {
       
       const parent_category_id =data[0].parent_category_id;
+      if(category){
+
       let updated =  await supabaseInstance
          .from("Menu_Categories")
          .update({parent_category_id:null})
@@ -461,6 +463,7 @@ router.post("/updateParentCategory/:parent_category_id", async (req, res) => {
          .eq("categoryid", value)
          .select("*")
        }
+      }
       res.status(200).json({
         success: true,
         data: data,
