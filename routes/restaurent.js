@@ -156,7 +156,7 @@ router.post("/createRestaurant", async (req, res) => {
 
       if (inserRestaurentNewkDetails.data) {
         res.send({
-          status: true,
+          success: true,
           message: "Restaurant created successfully",
           data: inserRestaurentNewkDetails.data,
 
