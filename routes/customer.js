@@ -4,7 +4,7 @@ var router = express.Router();
 var supabaseInstance = require("../services/supabaseClient").supabase;
 
 router.get("/", function (req, res, next) {
-  res.send({ status: true, message: "respond send from customer.js" });
+  res.send({ success: true, message: "respond send from customer.js" });
 });
 
 router.post("/signUp", async (req, res) => {

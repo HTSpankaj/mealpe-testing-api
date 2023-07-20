@@ -5,7 +5,7 @@ const multer = require("multer");
 const upload = multer();
 
 router.get("/", function (req, res, next) {
-  res.send({ status: true, message: "respond send from restaurent.js" });
+  res.send({ success: true, message: "respond send from restaurent.js" });
 });
 
 router.get("/getRestaurant", async (req, res) => {

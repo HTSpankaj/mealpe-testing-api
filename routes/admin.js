@@ -5,7 +5,7 @@ var supabaseInstance = require("../services/supabaseClient").supabase;
 
 /* GET users listing. */
 router.get("/", function (req, res, next) {
-  res.send({ status: true, message: "respond send from admin.js" });
+  res.send({ success: true, message: "respond send from admin.js" });
 });
 
 router.get("/getAdminList", async (req, res) => {

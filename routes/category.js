@@ -3,7 +3,7 @@ var router = express.Router();
 var supabaseInstance = require("../services/supabaseClient").supabase;
 
 router.get("/", function (req, res, next) {
-  res.send({ status: true, message: "respond send from category.js" });
+  res.send({ success: true, message: "respond send from category.js" });
 });
 
 router.get("/getCategoryList", async (req, res) => {

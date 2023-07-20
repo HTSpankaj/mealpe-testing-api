@@ -92,7 +92,7 @@ router.post("/createOutlet", async (req, res) => {
 
       if (inserRestaurentNewkDetails.data) {
         res.send({
-          status: true,
+          success: true,
           message: "Outlet created successfully",
           data: inserRestaurentNewkDetails.data,
 

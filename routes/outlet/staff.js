@@ -69,7 +69,7 @@ router.post("/createStaff", async (req, res) => {
                 .maybeSingle();
 
             if (staffDetails.data) {
-                res.send({ status: true, data: staffDetails.data });
+                res.send({ success: true, data: staffDetails.data });
             } else {
                 throw staffDetails.error;
             }

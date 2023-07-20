@@ -3,7 +3,7 @@ var router = express.Router();
 var supabaseInstance = require("../services/supabaseClient").supabase;
 
 router.get("/", function (req, res, next) {
-  res.send({ status: true, message: "respond send from campus.js" });
+  res.send({ success: true, message: "respond send from campus.js" });
 });
 
 router.post("/createCampus", async (req, res) => {
@@ -13,7 +13,7 @@ router.post("/createCampus", async (req, res) => {
    
     if (data) {
       res.send({
-        status: true,
+        success: true,
         message: "Campus created successfully",
         data: data,
       });
