@@ -16,7 +16,7 @@ var customerRouter = require("./routes/customer")
 var resturantRouter = require("./routes/restaurent")
 var outletRouter = require("./routes/outlet/outlet")
 var menuRouter = require("./routes/outlet/menu")
-var staffRouter = require("./routes/outlet/staff")
+var staffRouter = require("./routes/staff")
 var commonRouter = require("./routes/common")
 
 
@@ -43,7 +43,7 @@ app.use('/outlet', outletRouter);
 app.use("/days", daysRouter);
 app.use("/category", categoryRouter);
 app.use('/outlet/menu', menuRouter);
-app.use('/outlet/staff', staffRouter);
+app.use('/staff', staffRouter);
 app.use('/common', commonRouter);
 
 
