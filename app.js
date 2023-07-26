@@ -46,7 +46,7 @@ app.use("/category", categoryRouter);
 app.use('/outlet/menu', menuRouter);
 app.use('/staff', staffRouter);
 app.use('/common', commonRouter);
-app.use('/pushMenu', pushMenuRouter);
+app.use('/petpooja/pushMenu', pushMenuRouter);
 
 
 

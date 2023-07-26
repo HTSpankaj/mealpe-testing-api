@@ -85,6 +85,31 @@ router.get("/getRole/:restaurentType/:Id", async (req, res) => {
     }
 });
 
+router.post("/updateRole/:roleId", async (req, res) => {
+    const { roleId } = req.params;
+    const roleData = req.body;
+
+    try {
+        const { data, error } = await supabaseInstance
+            .from("Outlet_Role")
+            .update({ ...roleData })
+            .eq("roleId", roleId)
+            .select("*");
+
+        if (data) {
+            res.status(200).json({
+                success: true,
+                message: "Data updated succesfully",
+                data: data,
+            });
+        } else {
+            throw error;
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 router.post("/createStaff", async (req, res) => {
 
     const { outletId,restaurantId, email, password, name, mobile, address, pancard, roleId } = req.body;

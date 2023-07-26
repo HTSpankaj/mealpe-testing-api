@@ -55,6 +55,27 @@ router.get("/getCampusList", async (req, res) => {
   }
 });
 
+router.get("/getCampus/:cityId", async (req, res) => {
+  const {cityId} = req.params;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Campus")
+      .select("*")
+      .eq("cityId",cityId)
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data,
+      });
+    }else
+    {
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 router.post("/updateCampus/:id", async (req, res) => {
   const { id } = req.params;
   const { campusName, address } = req.body;
@@ -103,7 +124,6 @@ router.post("/deleteCampus/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 
 router.get("/getAllCampusList", async (req, res) => {
   try {

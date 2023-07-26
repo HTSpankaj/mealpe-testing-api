@@ -29,6 +29,28 @@ router.get("/getRestaurant", async (req, res) => {
   }
 });
 
+router.get("/getRestaurant/:restaurantId", async (req, res) => {
+  const {restaurantId} = req.params;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Restaurant")
+      .select("*")
+      .eq("restaurantId",restaurantId)
+   
+    if (data) {
+      res.status(200).json({
+        success: true,
+        message: "Data fetch succesfully",
+        data: data,
+      });
+    }else{
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 router.get("/getRestaurantList", async (req, res) => {
   const { page, perPage, searchText} = req.query; // Extract query parameters
   const pageNumber = parseInt(page) || 1;

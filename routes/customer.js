@@ -110,21 +110,25 @@ router.get("/cafeteriaDetails/:outletId", async (req, res) => {
 router.get("/homeData", async (req, res) => {
   const { categoryId, campusId } = req.query;
   try {
-    const { data, error } = await supabaseInstance.from("Outlet").select("*,cityId(*),restaurantId(*),bankDetailsId(*),campusId(*)").eq("campusId",campusId).limit(5);
-    if (data) {
-      const PopularCafeterias = await supabaseInstance.from("Restaurant_category").select("*,restaurantId(*),outletId(*),categoryId(*)").eq("categoryId",categoryId).limit(5);
-      if(categoryId == null || categoryId  && campusId ) {
+    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("*,cityId(*),restaurantId(*),bankDetailsId(*),campusId(*)").eq("campusId",campusId).limit(5);
+
+    let PopularCafeteriasQuery = supabaseInstance.from("Restaurant_category").select("*,restaurantId(*),outletId(*)");
+    if (categoryId) {
+      PopularCafeteriasQuery = PopularCafeteriasQuery.eq("categoryId",categoryId);
+    }
+    const PopularCafeterias = await PopularCafeteriasQuery.limit(5);
+
+    if (cafeteriasForYouDataResponse.data && PopularCafeterias.data) {
         res.status(200).json({
           success: true,
           message: "Data fetch succesfully",
           data:{
-            cafeteriasForYouData:data,
+            cafeteriasForYouData:cafeteriasForYouDataResponse.data,
             PopularCafeterias:PopularCafeterias.data
           }
         });
-      } 
     } else{
-      throw error
+      throw PopularCafeterias.error || cafeteriasForYouDataResponse.error;
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error });
