@@ -91,12 +91,15 @@ router.get("/cafeteriaDetails/:outletId", async (req, res) => {
     const { data, error } = await supabaseInstance.from("Menu_Item").select("*").eq("outletId", outletId);
     if (data) {
       const outdetails = await supabaseInstance.from("Outlet").select("*").eq("outletId", outletId);
+      const categorydetails = await supabaseInstance.from("Menu_Item").select("item_categoryid,Menu_Categories(categoryname,category_image_url)").eq("outletId", outletId);
+
       res.status(200).json({
         success: true,
         message: "Data fetch succesfully",
         data:{
           outdetails:outdetails.data,
-          menuItems:data
+          menuItems:data,
+          categoryDetails:categorydetails.data
         },
       });
     } else {

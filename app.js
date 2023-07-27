@@ -18,7 +18,8 @@ var outletRouter = require("./routes/outlet/outlet")
 var menuRouter = require("./routes/outlet/menu")
 var staffRouter = require("./routes/staff")
 var commonRouter = require("./routes/common")
-var pushMenuRouter = require("./routes/petpooja/pushMenu")
+var pushMenuRouter = require("./routes/petpooja/pushMenu");
+var orderRouter = require("./routes/order/order");
 
 
 var app = express();
@@ -47,6 +48,7 @@ app.use('/outlet/menu', menuRouter);
 app.use('/staff', staffRouter);
 app.use('/common', commonRouter);
 app.use('/petpooja/pushMenu', pushMenuRouter);
+app.use('/order/order', orderRouter);
 
 
 
