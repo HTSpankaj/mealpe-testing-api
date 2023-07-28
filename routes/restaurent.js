@@ -679,14 +679,15 @@ router.post("/updateMenu/:itemid", async (req, res) => {
   }
 });
 
-router.get("/getItemList", async (req, res) => {
+router.get("/getItemList/:restaurantId", async (req, res) => {
   const { page, perPage} = req.query; // Extract query parameters
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
+  const { restaurantId } = req.params;
   try {
     const { data, error, count } = await supabaseInstance
       .from("Menu_Item")
-      .select("*",{ count: "exact" })
+      .select("*",{ count: "exact" }).eq("restaurantId", restaurantId)
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
 
     if (data) {
