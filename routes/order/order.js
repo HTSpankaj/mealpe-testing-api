@@ -23,19 +23,27 @@ router.post("/createOrder", async (req, res) => {
           .select("*")
         orderData.push(orderitemData.data[0])
       }
-      console.log(pickupTime.date)
       const orderScheduleData = await supabaseInstance
         .from("Order_Schedule")
         .insert({ orderId: orderId, scheduleDate: pickupTime.orderDate, scheduleTime: pickupTime.time })
         .select("*")
-      res.status(200).json({
-        success: true,
-        data: {
-          data: data,
-          orderitemData: orderData,
-          pickupTime: orderScheduleData.data
-        }
-      });
+
+
+        saveOrderToPetpooja(restaurantId,customerAuthUID,orderId,outletId).then((saveOrderToPetpoojaResponse) => {
+          console.log('.then block ran: ', saveOrderToPetpoojaResponse.data);
+          res.status(200).json({
+            success: true,
+            data: {
+              data: data,
+              orderitemData: orderData,
+              pickupTime: orderScheduleData.data,
+              saveOrderToPetpooja:saveOrderToPetpoojaResponse.data
+            }
+          });
+        }).catch(err => {
+          console.log('.catch block ran: ',err);
+          throw err;
+        });
 
     } else {
       throw error;
@@ -51,9 +59,9 @@ router.post("/createOrder", async (req, res) => {
     try {
       let orderQuery, error;
       if (outletId && restaurantId) {
-        orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*)").eq("outletId", outletId).eq("restaurantId", restaurantId);
+        orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*),customerAuthUID(*)").eq("outletId", outletId).eq("restaurantId", restaurantId);
       } else if (restaurantId && !outletId) {
-        orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*)").eq("restaurantId", restaurantId);
+        orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*),customerAuthUID(*)").eq("restaurantId", restaurantId);
       }
       if (orderStatusId) {
         orderQuery = orderQuery.eq("orderStatusId", orderStatusId);
@@ -62,6 +70,7 @@ router.post("/createOrder", async (req, res) => {
       const orderData = await orderQuery;
 
       if (orderData) {
+      
         res.status(200).json({
           success: true,
           data: orderData.data,

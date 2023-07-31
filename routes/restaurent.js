@@ -239,7 +239,7 @@ router.post("/restaurentLogin", async (req, res) => {
       console.log("id", id)
       console.log("ata?.user?.user_metadata----->",data?.user?.user_metadata)
       if (data?.user?.user_metadata?.isRestaurant === true) {
-        const restaurantData = await supabaseInstance.from("Restaurant").select("*, bankDetailsId(*), restaurantAdminId(*), Tax!left(*)").eq("restaurantId", id).maybeSingle();
+        const restaurantData = await supabaseInstance.from("Restaurant").select("*, bankDetailsId(*), restaurantAdminId(*), Tax!left(*),Timing!left(*)").eq("restaurantId", id).maybeSingle();
 
         res.status(200).json({
           success: true,
@@ -250,7 +250,7 @@ router.post("/restaurentLogin", async (req, res) => {
         });
 
       } else if (data?.user?.user_metadata?.isOutlet === true) {
-        const outletData = await supabaseInstance.from("Outlet").select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*)").eq("outletId", id).maybeSingle();
+        const outletData = await supabaseInstance.from("Outlet").select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*)").eq("outletId", id).maybeSingle();
         res.status(200).json({
           success: true,
           message: "LogIn successfully",
@@ -260,7 +260,7 @@ router.post("/restaurentLogin", async (req, res) => {
         });
       } else if(data?.user?.user_metadata?.isOutletStaff === true) {
         const outletStaffData = await supabaseInstance.from("Outlet_Staff").select("*").eq("outletStaffAuthUId", id).maybeSingle();
-        const outletData = await supabaseInstance.from("Outlet").select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*)").eq("outletId", outletStaffData.data.outletId).maybeSingle();
+        const outletData = await supabaseInstance.from("Outlet").select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*)").eq("outletId", outletStaffData.data.outletId).maybeSingle();
         res.status(200).json({
           success: true,
           message: "LogIn successfully",
