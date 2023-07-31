@@ -1,62 +1,77 @@
 var express = require("express");
+const { saveOrderToPetpooja } = require("../petpooja/pushMenu");
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
 
 
 router.post("/createOrder", async (req, res) => {
-    const { customerAuthUID,outletId,restaurantId, isDineIn, isPickUp,totalPrice,paymentId,orderStatusId } = req.body;
-    try {
-      const { data, error } = await supabaseInstance
-        .from("Order")
-        .insert({customerAuthUID,outletId, restaurantId,isDineIn , isPickUp,totalPrice,paymentId,orderStatusId })
-        .select("*")
-        console.log(data)
-  
-      if (data) {
-        res.status(200).json({
-          success: true,
-          data: data,
-        });
-      } else {
-        throw error;
+  const { customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId, items, pickupTime } = req.body;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Order")
+      .insert({ customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId })
+      .select("*")
+
+    if (data) {
+      const orderId = data[0].orderId;
+      let orderData = [];
+      for (let data of items) {
+        let calculatedPrice = data.qty * data.price;
+        let orderitemData = await supabaseInstance
+          .from("Order_Item")
+          .insert({ orderId: orderId, itemId: data.id, quantity: data.qty, itemPrice: data.price, calculatedPrice: calculatedPrice })
+          .select("*")
+        orderData.push(orderitemData.data[0])
       }
-    } catch (error) {
-        console.error(error)
-      res.status(500).json({ success: false, error: error });
+      console.log(pickupTime.date)
+      const orderScheduleData = await supabaseInstance
+        .from("Order_Schedule")
+        .insert({ orderId: orderId, scheduleDate: pickupTime.orderDate, scheduleTime: pickupTime.time })
+        .select("*")
+      res.status(200).json({
+        success: true,
+        data: {
+          data: data,
+          orderitemData: orderData,
+          pickupTime: orderScheduleData.data
+        }
+      });
+
+    } else {
+      throw error;
     }
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, error: error });
+  }
   });
 
-  router.post("/orderitem", async (req, res) => {
-    const {orderId  } = req.body;
+  router.get("/getOrder", async (req, res) => {
+    const { restaurantId, outletId, orderStatusId } = req.query;
     try {
-      const { data, error } = await supabaseInstance
-        .from("Order")
-        .insert({ })
-        .select("*")
-        console.log(data)
-  
-      if (data) {
+      let orderQuery, error;
+      if (outletId && restaurantId) {
+        orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*)").eq("outletId", outletId).eq("restaurantId", restaurantId);
+      } else if (restaurantId && !outletId) {
+        orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*)").eq("restaurantId", restaurantId);
+      }
+      if (orderStatusId) {
+        orderQuery = orderQuery.eq("orderStatusId", orderStatusId);
+      }
+
+      const orderData = await orderQuery;
+
+      if (orderData) {
         res.status(200).json({
           success: true,
-          data: data,
+          data: orderData.data,
         });
       } else {
-        throw error;
+        throw error
       }
     } catch (error) {
-        console.error(error)
+      console.log(error)
       res.status(500).json({ success: false, error: error });
     }
-  });
-
-
-
-
-
-
-
-
-
-
-
+    });
 module.exports = router;

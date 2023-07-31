@@ -98,77 +98,6 @@
                         "AddonItem": {
                             "details": []
                         }
-                    },
-                    {
-                        "id": "118829149",
-                        "name": "Veg Loaded Pizza",
-                        "gst_liability": "vendor",
-                        "item_tax": [
-                            {
-                                "id": "11213",
-                                "name": "CGST",
-                                "amount": "2.75"
-                            },
-                            {
-                                "id": "20375",
-                                "name": "SGST",
-                                "amount": "2.75"
-                            }
-                        ],
-                        "item_discount": "",
-                        "price": "110.00",
-                        "final_price": "110.00",
-                        "quantity": "1",
-                        "description": "",
-                        "variation_name": "",
-                        "variation_id": "",
-                        "AddonItem": {
-                            "details": [
-                                {
-                                    "id": "1150783",
-                                    "name": "Mojito",
-                                    "group_name": "Add Beverage",
-                                    "price": "0",
-                                    "group_id": 135699,
-                                    "quantity": "1"
-                                },
-                                {
-                                    "id": "1150813",
-                                    "name": "Cheese",
-                                    "group_name": "Extra Toppings",
-                                    "price": "10",
-                                    "group_id": 135707,
-                                    "quantity": "1"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "id": "118807411",
-                        "name": "Chocolate Cake",
-                        "gst_liability": "restaurant",
-                        "item_tax": [
-                            {
-                                "id": "21866",
-                                "name": "CGST",
-                                "amount": "25.11"
-                            },
-                            {
-                                "id": "21867",
-                                "name": "SGST",
-                                "amount": "25.11"
-                            }
-                        ],
-                        "item_discount": "31",
-                        "price": "310.00",
-                        "final_price": "279",
-                        "quantity": "1",
-                        "description": "",
-                        "variation_name": "",
-                        "variation_id": "",
-                        "AddonItem": {
-                            "details": []
-                        }
                     }
                 ]
             },
@@ -189,35 +118,10 @@
                         "price": "2.5",
                         "tax": "5.9",
                         "restaurant_liable_amt": "0.00"
-                    },
-                    {
-                        "id": "21866",
-                        "title": "CGST",
-                        "type": "P",
-                        "price": "9",
-                        "tax": "25.11",
-                        "restaurant_liable_amt": "25.11"
-                    },
-                    {
-                        "id": "21867",
-                        "title": "SGST",
-                        "type": "P",
-                        "price": "9",
-                        "tax": "25.11",
-                        "restaurant_liable_amt": "25.11"
                     }
                 ]
             },
-            "Discount": {
-                "details": [
-                    {
-                        "id": "362",
-                        "title": "Discount",
-                        "type": "F",
-                        "price": "45"
-                    }
-                ]
-            }
+            "Discount": {}
         },
         "udid": "",
         "device_type": "Web"

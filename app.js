@@ -18,7 +18,7 @@ var outletRouter = require("./routes/outlet/outlet")
 var menuRouter = require("./routes/outlet/menu")
 var staffRouter = require("./routes/staff")
 var commonRouter = require("./routes/common")
-var pushMenuRouter = require("./routes/petpooja/pushMenu");
+var pushMenuRouter = require("./routes/petpooja/pushMenu").router;
 var orderRouter = require("./routes/order/order");
 
 
