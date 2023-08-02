@@ -188,27 +188,17 @@ router.post("/updateMenu/:itemid", async (req, res) => {
 });
 
 router.get("/getItemList/:outletId", async (req, res) => {
-  const { page, perPage} = req.query; // Extract query parameters
-  const pageNumber = parseInt(page) || 1;
-  const itemsPerPage = parseInt(perPage) || 10;
   const { outletId } = req.params;
   try {
-    const { data, error, count } = await supabaseInstance
+    const { data, error } = await supabaseInstance
       .from("Menu_Item")
-      .select("*",{ count: "exact" }).eq("outletId", outletId)
-      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-
+      .select("*")
+      .eq("outletId", outletId)
+     
     if (data) {
-      const totalPages = Math.ceil(count / itemsPerPage);
       res.status(200).json({
         success: true,
         data: data,
-        meta: {
-          page: pageNumber,
-          perPage: itemsPerPage,
-          totalPages,
-          totalCount: count,
-        },
       });
     } else {
       throw error

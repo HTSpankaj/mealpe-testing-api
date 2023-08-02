@@ -205,6 +205,40 @@ router.post("/pushData", async (req, res) => {
   }
 });
 
+router.post("/orderStatus", async (req, res) => {
+  const { restaurantId, orderId } = req.body;
+  try {
+
+    const { data, error } = await supabaseInstance.from("Order").select("*").eq("restaurantId",restaurantId).eq("orderId", orderId).maybeSingle()
+    let payload = {
+       restID:restaurantId,
+       orderID:orderId,
+       status:data.orderStatusId,
+       cancel_reason:"",
+       minimum_prep_time:20,
+       minimum_delivery_time:"",
+       rider_name:"",
+       rider_phone_number:"",
+       is_modified:"No"
+    }
+
+    //  const payloadData = await axios.post(petpoojaconfig.config.order_status_api, payload);
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: payload,
+        petpooja: payloadData?.data
+      });
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
 function saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -363,6 +397,7 @@ function saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId) {
 
       const payloadData = await axios.post(petpoojaconfig.config.save_order_api, payload);
 
+
       resolve({
         success: true,
         message: "",
@@ -375,6 +410,7 @@ function saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId) {
       })
     }
   })
-}
+};
+
 
 module.exports = { router, saveOrderToPetpooja };

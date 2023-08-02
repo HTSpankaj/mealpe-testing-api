@@ -20,6 +20,8 @@ var staffRouter = require("./routes/staff")
 var commonRouter = require("./routes/common")
 var pushMenuRouter = require("./routes/petpooja/pushMenu").router;
 var orderRouter = require("./routes/order/order");
+var favoriteRouter = require("./routes/favorite/favorite");
+var ratingRouter = require("./routes/rating/rating");
 
 
 var app = express();
@@ -49,6 +51,8 @@ app.use('/staff', staffRouter);
 app.use('/common', commonRouter);
 app.use('/petpooja/pushMenu', pushMenuRouter);
 app.use('/order/order', orderRouter);
+app.use('/favorite/favorite', favoriteRouter);
+app.use('/rating/rating', ratingRouter);
 
 
 

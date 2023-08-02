@@ -239,18 +239,17 @@ router.post("/restaurentLogin", async (req, res) => {
       console.log("id", id)
       console.log("ata?.user?.user_metadata----->",data?.user?.user_metadata)
       if (data?.user?.user_metadata?.isRestaurant === true) {
-        const restaurantData = await supabaseInstance.from("Restaurant").select("*, bankDetailsId(*), restaurantAdminId(*), Tax!left(*),Timing!left(*)").eq("restaurantId", id).maybeSingle();
-
+        const restaurantData = await supabaseInstance.from("Restaurant").select("*, bankDetailsId(*), restaurantAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)").eq("restaurantId", id).maybeSingle();
         res.status(200).json({
           success: true,
           message: "LogIn successfully",
           data: {
-            outletData: restaurantData.data
+            RestaurantData: restaurantData.data
           }
         });
 
       } else if (data?.user?.user_metadata?.isOutlet === true) {
-        const outletData = await supabaseInstance.from("Outlet").select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*)").eq("outletId", id).maybeSingle();
+        const outletData = await supabaseInstance.from("Outlet").select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)").eq("outletId", id).maybeSingle();
         res.status(200).json({
           success: true,
           message: "LogIn successfully",
@@ -260,7 +259,7 @@ router.post("/restaurentLogin", async (req, res) => {
         });
       } else if(data?.user?.user_metadata?.isOutletStaff === true) {
         const outletStaffData = await supabaseInstance.from("Outlet_Staff").select("*").eq("outletStaffAuthUId", id).maybeSingle();
-        const outletData = await supabaseInstance.from("Outlet").select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*)").eq("outletId", outletStaffData.data.outletId).maybeSingle();
+        const outletData = await supabaseInstance.from("Outlet").select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)").eq("outletId", outletStaffData.data.outletId).maybeSingle();
         res.status(200).json({
           success: true,
           message: "LogIn successfully",
@@ -680,27 +679,17 @@ router.post("/updateMenu/:itemid", async (req, res) => {
 });
 
 router.get("/getItemList/:restaurantId", async (req, res) => {
-  const { page, perPage} = req.query; // Extract query parameters
-  const pageNumber = parseInt(page) || 1;
-  const itemsPerPage = parseInt(perPage) || 10;
   const { restaurantId } = req.params;
   try {
-    const { data, error, count } = await supabaseInstance
+    const { data, error } = await supabaseInstance
       .from("Menu_Item")
-      .select("*",{ count: "exact" }).eq("restaurantId", restaurantId)
-      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-
+      .select("*")
+      .eq("restaurantId", restaurantId)
+     
     if (data) {
-      const totalPages = Math.ceil(count / itemsPerPage);
       res.status(200).json({
         success: true,
         data: data,
-        meta: {
-          page: pageNumber,
-          perPage: itemsPerPage,
-          totalPages,
-          totalCount: count,
-        },
       });
     } else {
       throw error

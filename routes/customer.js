@@ -1,5 +1,9 @@
 var express = require("express");
 var router = express.Router();
+const multer = require("multer");
+const upload = multer();
+var msg91config = require("../configs/msg91Config");
+const axios = require('axios');
 
 var supabaseInstance = require("../services/supabaseClient").supabase;
 
@@ -37,49 +41,36 @@ router.post("/signUp", async (req, res) => {
 });
 
 router.post("/sendOTP", async (req, res) => {
-  const { mobile } = req.body;
-
+  const { mobile  } = req.body;
   try {
-    const { data, error } = await supabaseInstance.auth.signInWithOtp({
-      // phone: mobile
-      phone: "+919130743559"
-    })
-
-    if (data) {
+    sendOTP(mobile ).then((responseData) => {
+      console.log('.then block ran: ', responseData);
       res.status(200).json({
         success: true,
-        message: "OTP Send Successfully",
+        data: responseData,
       });
-    } else {
-      throw error;
-    }
+    }).catch(err => {
+      console.log('.catch block ran: ',err);
+      throw err;
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 router.post("/verifyOTP", async (req, res) => {
-  const { otp, phone } = req.body;
+  const { mobile , otp } = req.body;
   try {
-    const { data, error } = await supabaseInstance.auth.verifyOtp({ phone, token: otp, type: 'sms' })
-    if (data?.user) {
-      const customerAuthUID = data.user.id;
-      console.log("customerAuthUID", customerAuthUID)
-      const customerResponse = await supabaseInstance.from("Customer").select("*").eq("customerAuthUID", customerAuthUID).maybeSingle();
-      console.log("customerResponse", customerResponse)
-      if (customerResponse.data) {
-        res.status(200).json({
-          success: true,
-          message: "OTP Verified",
-          data: customerResponse.data,
-        });
-      } else {
-        throw customerResponse.error;
-      }
-    }
-    else {
-      throw error;
-    }
+    verifyOTP(mobile , otp).then((responseData) => {
+      console.log('.then block ran: ', responseData);
+      res.status(200).json({
+        success: true,
+        data: responseData,
+      });
+    }).catch(err => {
+      console.log('.catch block ran: ',err);
+      throw err;
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -137,5 +128,89 @@ router.get("/homeData", async (req, res) => {
     res.status(500).json({ success: false, error: error });
   }
 })
+
+router.post("/upsertUserImage",upload.single('file'), async (req, res) => {
+  const { customerAuthUID } = req.body;
+  try {
+    const { data, error } = await supabaseInstance
+      .storage
+      .from('user-photo')
+      .upload(customerAuthUID + ".webp", req.file.buffer, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: 'image/webp'
+      })
+
+    if (data?.path) {
+      const publickUrlresponse = await supabaseInstance.storage.from('user-photo').getPublicUrl(data?.path);
+      if (publickUrlresponse?.data?.publicUrl) {
+        const publicUrl = publickUrlresponse?.data?.publicUrl;
+        const userData = await supabaseInstance.from("Customer").update({ photo: `${publicUrl}?${Date.now}` }).eq("customerAuthUID", customerAuthUID).select("*").maybeSingle();
+        res.status(200).json({
+          success: true,
+          data: userData.data,
+        });
+      } else {
+        throw publickUrlresponse.error || "Getting Error in PublicUrl"
+      }
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+})
+
+const MSG91_AUTH_KEY = msg91config.config.auth_key;
+const MSG91_OTP_ENDPOINT = 'https://control.msg91.com/api/v5/otp';
+
+async function sendOTP(mobile ) {
+  try {
+    const response = await axios.post(MSG91_OTP_ENDPOINT, {
+      authkey: MSG91_AUTH_KEY,
+      mobile: mobile,
+    });
+
+    const responseData = response.data;
+    console.log("response.data",response.data)
+    if (responseData.type === 'success') {
+      console.log('OTP sent successfully');
+      console.log(responseData);
+      return responseData;
+    } else {
+      console.error('Failed to send OTP:', responseData.message);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error sending OTP:', error.message);
+    return null;
+  }
+}
+
+const MSG91_OTP_VERIFY_ENDPOINT = 'https://api.msg91.com/api/v5/otp/verify';
+
+async function verifyOTP(mobile , otp) {
+  try {
+    const response = await axios.post(MSG91_OTP_VERIFY_ENDPOINT, {
+      authkey: MSG91_AUTH_KEY,
+      mobile: mobile ,
+      otp: otp,
+    });
+
+    const responseData = response.data;
+    console.log("response.data",response.data)
+    if (responseData.type === 'success') {
+      console.log('OTP verification successful');
+      return responseData;
+    } else {
+      console.error('OTP verification failed:', responseData.message);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error verifying OTP:', error.message);
+    return null;
+  }
+}
+
 
 module.exports = router;

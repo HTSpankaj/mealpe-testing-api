@@ -107,8 +107,6 @@ router.post("/createOutlet", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 })
-
-
 router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) => {
   const { outletId } = req.body;
   console.log("outletId--->",outletId)
@@ -251,7 +249,6 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
    }
  })
 
- 
 router.post("/updatePackagingCharge/:outletId", async (req, res) => {
   const { outletId } = req.params;
   const {packaging_charge}  = req.body;
@@ -301,8 +298,5 @@ router.post("/updateTaxCharge", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
-
-
 
 module.exports = router;

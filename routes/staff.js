@@ -201,7 +201,7 @@ router.get("/getStaff/:staffType/:Id", async (req, res) => {
         if (staffType== "outletstaff") {
             const { data, error } = await supabaseInstance
                 .from("Outlet_Staff")
-                .select("*")
+                .select("*,roleId(*)")
                 .eq("outletId",Id)
 
             if (data) {
