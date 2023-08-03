@@ -210,10 +210,12 @@ router.get("/getOutletListByRestaurantId/:restaurantId", async (req, res) => {
 
 router.post("/updateOutlet/:outletId", async (req, res) => {
 
-  const {outletId} = req.params;
+  const { outletId } = req.params;
    const outletData = req.body;
   const bankDetailsData= outletData.bankDetailsId;
   const outletDetailsData = outletData.outletAdminId;
+  const timeDetailsData = outletData.Timing;
+  const categoryDetailsData = outletData.Restaurant_category;
   delete outletDetailsData?.email;
   delete  outletData?.bankDetailsId;
   delete  outletData?.outletAdminId;
@@ -224,22 +226,21 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
   delete  outletData?.password;
  
    try {
-     const { data, error } = await supabaseInstance
+    const bankDetails = await supabaseInstance.from("BankDetails").update({...bankDetailsData }).eq("bankDetailsId",bankDetailsData.bankDetailsId).select("*");
+    const categoryData = await supabaseInstance.from("Restaurant_category").update({...categoryDetailsData}).eq("outletId",outletId).select("*");
+    const timingData = await supabaseInstance.from("Timing").update({...timeDetailsData}).eq("timeId",timeDetailsData.timeId).select("*");
+    const outletAdminDetails = await supabaseInstance.from("Outlet_Admin").update({...outletDetailsData }).eq("outletAdminId",outletDetailsData.outletAdminId).select("*");
+    const { data, error } = await supabaseInstance
      .from("Outlet")
      .update( {...outletData})
      .eq("outletId",outletId)
-     .select("*");
-     console.log(outletData.bankDetailsId)
-   
+     .select("*,bankDetailsId(*),outletAdminId(*),Timing!left(*),Restaurant_category!left(categoryId)");
+  
      if (data) {
- 
-       const bankDetails = await supabaseInstance.from("BankDetails").update({...bankDetailsData }).eq("bankDetailsId",bankDetailsData.bankDetailsId).select("*");
-       const outletDetails = await supabaseInstance.from("Outlet_Admin").update({...outletDetailsData }).eq("outletAdminId",outletDetailsData.outletAdminId).select("*");
-       
          res.status(200).json({
            success: true,
            message: "Data updated succesfully",
-           data: data
+           data:data
          });
      } else {
        throw error;
