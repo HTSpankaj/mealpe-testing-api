@@ -211,7 +211,7 @@ router.get("/getOutletListByRestaurantId/:restaurantId", async (req, res) => {
 router.post("/updateOutlet/:outletId", async (req, res) => {
 
   const { outletId } = req.params;
-   const outletData = req.body;
+  const outletData = req.body;
   const bankDetailsData= outletData.bankDetailsId;
   const outletDetailsData = outletData.outletAdminId;
   const timeDetailsData = outletData.Timing;
@@ -227,9 +227,23 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
  
    try {
     const bankDetails = await supabaseInstance.from("BankDetails").update({...bankDetailsData }).eq("bankDetailsId",bankDetailsData.bankDetailsId).select("*");
-    const categoryData = await supabaseInstance.from("Restaurant_category").update({...categoryDetailsData}).eq("outletId",outletId).select("*");
-    const timingData = await supabaseInstance.from("Timing").update({...timeDetailsData}).eq("timeId",timeDetailsData.timeId).select("*");
+    
+    if (categoryDetailsData?.length > 0) {
+      const categoryDataDelete =await  supabaseInstance.from("Restaurant_category").delete().eq("outletId",outletId);
+    }
+    for(let category of categoryDetailsData ) {
+      const categoryData = await supabaseInstance.from("Restaurant_category").insert({categoryId:category,outletId}).select("*");
+    }
+
+    if (timeDetailsData?.length > 0) {
+      const timingDataDelete = await supabaseInstance.from("Timing").delete().eq("outletId",outletId);
+    }
+    for(let data of timeDetailsData){
+    const timingData = await supabaseInstance.from("Timing").insert({outletId, dayId: data.dayId, openTime: data.openTime, closeTime: data.closeTime }).select("*");
+    }
+    
     const outletAdminDetails = await supabaseInstance.from("Outlet_Admin").update({...outletDetailsData }).eq("outletAdminId",outletDetailsData.outletAdminId).select("*");
+
     const { data, error } = await supabaseInstance
      .from("Outlet")
      .update( {...outletData})
@@ -237,6 +251,7 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
      .select("*,bankDetailsId(*),outletAdminId(*),Timing!left(*),Restaurant_category!left(categoryId)");
   
      if (data) {
+      console.log
          res.status(200).json({
            success: true,
            message: "Data updated succesfully",

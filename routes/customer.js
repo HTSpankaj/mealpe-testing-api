@@ -41,6 +41,27 @@ router.post("/signUp", async (req, res) => {
   }
 });
 
+router.post("/signUp", async (req, res) => {
+  const { email, mobile, name } = req.body;
+
+  try {
+    const { data, error } = await supabaseInstance.from("Customer").insert({ email, mobile, customerName: name  }).select("*").maybeSingle()
+
+    if (data) {
+        res.status(200).json({
+          success: true,
+          message: "SignUp Successfully",
+          data:data
+        });
+      } else {
+        throw error;
+      }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error?.message || error });
+  }
+});
+
+
 router.post("/sendOTP", async (req, res) => {
   const { mobile  } = req.body;
   try {
