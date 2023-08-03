@@ -192,7 +192,7 @@ router.post("/upsertUserImage",upload.single('file'), async (req, res) => {
       const publickUrlresponse = await supabaseInstance.storage.from('user-photo').getPublicUrl(data?.path);
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const userData = await supabaseInstance.from("Customer").update({ photo: `${publicUrl}?${Date.now}` }).eq("customerAuthUID", customerAuthUID).select("*").maybeSingle();
+        const userData = await supabaseInstance.from("Customer").update({ photo: `${publicUrl}?${new Date().getTime()}`}).eq("customerAuthUID", customerAuthUID).select("*").maybeSingle();
         res.status(200).json({
           success: true,
           data: userData.data,

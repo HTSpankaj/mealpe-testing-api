@@ -91,7 +91,7 @@ router.post("/upsertCategoryImage", upload.single('file'), async (req, res) => {
       console.log("publickUrlresponse",publickUrlresponse)
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const menuCategoryData = await supabaseInstance.from("Menu_Categories").update({ category_image_url: `${publicUrl}?${Date.now}` }).eq("categoryid", categoryid).select("*").maybeSingle();
+        const menuCategoryData = await supabaseInstance.from("Menu_Categories").update({ category_image_url: `${publicUrl}?${new Date().getTime()}`}).eq("categoryid", categoryid).select("*").maybeSingle();
         res.status(200).json({
           success: true,
           data: menuCategoryData.data,
@@ -246,7 +246,7 @@ router.post("/upsertMenuItemImage",upload.single('file'), async (req, res) => {
       const publickUrlresponse = await supabaseInstance.storage.from('menu-item-image').getPublicUrl(data?.path);
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const menuData = await supabaseInstance.from("Menu_Item").update({ item_image_url: `${publicUrl}?${Date.now}` }).eq("itemid", itemid).select("*").maybeSingle();
+        const menuData = await supabaseInstance.from("Menu_Item").update({ item_image_url: `${publicUrl}?${new Date().getTime()}`}).eq("itemid", itemid).select("*").maybeSingle();
         res.status(200).json({
           success: true,
           data: menuData.data,
@@ -413,7 +413,7 @@ router.post("/upsertParentCategoryImage",upload.single('file'), async (req, res)
       const publickUrlresponse = await supabaseInstance.storage.from('category-image').getPublicUrl(data?.path);
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const parentCategoryData = await supabaseInstance.from("Menu_Parent_Categories").update({ parent_category_image_url: `${publicUrl}?${Date.now}` }).eq("parent_category_id", parent_category_id).select("*").maybeSingle();
+        const parentCategoryData = await supabaseInstance.from("Menu_Parent_Categories").update({ parent_category_image_url:`${publicUrl}?${new Date().getTime()}`}).eq("parent_category_id", parent_category_id).select("*").maybeSingle();
         res.status(200).json({
           success: true,
           data: parentCategoryData.data,
