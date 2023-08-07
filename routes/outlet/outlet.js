@@ -8,11 +8,12 @@ router.post("/createOutlet", async (req, res) => {
   const {
     outletName,
     email,
+    isPrimaryOutlet,
+    primaryOutletId,
     password,
     bankDetailsId,
     outletAdminId,
     cityId,
-    restaurantId,
     restaurantName,
     mobile,
     GSTIN,
@@ -44,7 +45,6 @@ router.post("/createOutlet", async (req, res) => {
 
       const outletDetails = await supabaseInstance.from("Outlet_Admin").insert({ name: outletAdminId?.name, mobile: outletAdminId?.mobile, email: outletAdminId?.email, address: outletAdminId?.address, pancard: outletAdminId?.pancard }).select().maybeSingle();
       const _outletAdminId = outletDetails.data.outletAdminId;
-      console.log("_outletAdminId",_outletAdminId)
 
       let postObject = { 
         outletId,
@@ -58,13 +58,20 @@ router.post("/createOutlet", async (req, res) => {
         campusId,
         address,
         cityId,
-        restaurantId
+        isPrimaryOutlet,
+        primaryOutletId,
       }
       if (openTime) {
         postObject.openTime = openTime;
       }
       if (closeTime) {
         postObject.closeTime = closeTime;
+      }
+
+      if (!isPrimaryOutlet) {
+       postObject.primaryOutletId = primaryOutletId;
+      } else {
+        postObject.primaryOutletId = null;
       }
       const inserRestaurentNewkDetails = await supabaseInstance.from("Outlet").insert(postObject).select("*").maybeSingle();
 
@@ -170,8 +177,8 @@ router.get("/getOutletList", async (req, res) => {
   }
 });
 
-router.get("/getOutletListByRestaurantId/:restaurantId", async (req, res) => {
-  const { restaurantId } = req.params;
+router.get("/getOutletListByRestaurantId/:outletId", async (req, res) => {
+  const { outletId } = req.params;
   const { page, perPage, searchText } = req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
@@ -181,7 +188,7 @@ router.get("/getOutletListByRestaurantId/:restaurantId", async (req, res) => {
       .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outletName", { ascending: true })
-      .eq("restaurantId", restaurantId)
+      .eq("outletId", outletId)
       if(searchText) {
         query = query.or(`address.ilike.%${searchText}%,outletName.ilike.%${searchText}%`);
         // query = query.ilike('outletName', `%${searchText}%`);

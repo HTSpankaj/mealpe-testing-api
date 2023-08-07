@@ -99,6 +99,44 @@ router.post("/adminLogin", async (req, res) => {
   }
 });
 
+router.post("/resetPassword", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const resetPasswordForEmailResponse = await supabaseInstance.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://mealpe-super-admin-testing.web.app',
+    })
+    if (resetPasswordForEmailResponse?.data) {
+      res.send({
+        success: true,
+        message: "Link Shared",
+      });
+    } else {
+      throw resetPasswordForEmailResponse.error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || error });
+  }
+});
+
+router.post("/updatePassword", async (req, res) => {
+  const { new_password } = req.body;
+  try {
+    const updatePasswordForEmailResponse = await supabaseInstance.auth.updateUser({
+      password: new_password
+    })
+    if (updatePasswordForEmailResponse?.data) {
+      res.send({
+        success: true,
+        message: "Password Updated succesfully",
+      });
+    } else {
+      throw updatePasswordForEmailResponse.error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || error });
+  }
+});
+
 router.post("/updateAdminPassword", async (req, res) => {
   const { password, adminId} = req.body;
   

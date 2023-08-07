@@ -11,35 +11,35 @@ router.get("/", function (req, res, next) {
   res.send({ success: true, message: "respond send from customer.js" });
 });
 
-router.post("/signUp", async (req, res) => {
-  const { email, mobile, name } = req.body;
+// router.post("/signUp", async (req, res) => {
+//   const { email, mobile, name } = req.body;
 
-  try {
-    const { data, error } = await supabaseInstance.auth.admin.createUser({
-      email,
-      phone: mobile,
-      phone_confirm: true
-    })
+//   try {
+//     const { data, error } = await supabaseInstance.auth.admin.createUser({
+//       email,
+//       phone: mobile,
+//       phone_confirm: true
+//     })
 
-    if (data?.user) {
-      const customerAuthUID = data.user.id;
-      const customerResponse = await supabaseInstance.from("Customer").insert({ email, mobile, customerName: name, customerAuthUID }).select("*").maybeSingle();
-      if (customerResponse.data) {
-        res.status(200).json({
-          success: true,
-          message: "SignUp Successfully",
-          data:customerResponse.data
-        });
-      } else {
-        throw error;
-      }
-    } else {
-      throw error;
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, error: error?.message || error });
-  }
-});
+//     if (data?.user) {
+//       const customerAuthUID = data.user.id;
+//       const customerResponse = await supabaseInstance.from("Customer").insert({ email, mobile, customerName: name, customerAuthUID }).select("*").maybeSingle();
+//       if (customerResponse.data) {
+//         res.status(200).json({
+//           success: true,
+//           message: "SignUp Successfully",
+//           data:customerResponse.data
+//         });
+//       } else {
+//         throw error;
+//       }
+//     } else {
+//       throw error;
+//     }
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error?.message || error });
+//   }
+// });
 
 router.post("/signUp", async (req, res) => {
   const { email, mobile, name } = req.body;
@@ -108,13 +108,18 @@ router.post("/userlogin", async (req, res) => {
       loginQuery = supabaseInstance.from("Customer").select("*").eq("email", email);
     }
 
-    const userData = await loginQuery;
+    const userData = await loginQuery.maybeSingle();
     if (userData?.data) {
       res.send({
         success: true,
         message: "Login successfully",
         data: userData.data,
       });
+    } else if (!userData.data && !userData.error) {
+      const err = {
+        message: "User not found."
+      }
+      throw err;
     } else {
       throw error;
     }
@@ -207,6 +212,31 @@ router.post("/upsertUserImage",upload.single('file'), async (req, res) => {
     res.status(500).json({ success: false, error: error });
   }
 })
+
+router.get("/getCustomer/:outletId", async (req, res) => {
+  const { outletId } = req.params;
+  try {
+    let orderData = [];
+    let orderCustomerData = await supabaseInstance.rpc('get_distinct_customer', { outletid: outletId })
+
+    if (orderCustomerData.data) {
+      for (let order of orderCustomerData.data) {
+        data = await supabaseInstance.from("Customer").select("*").eq("customerAuthUID", order)
+        orderData.push(data.data)
+      }
+      res.status(200).json({
+        success: true,
+        data: orderData,
+      })
+    } else {
+      throw orderCustomerData.error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error.message });
+  }
+})
+
 
 const MSG91_AUTH_KEY = msg91config.config.auth_key;
 const MSG91_OTP_ENDPOINT = 'https://control.msg91.com/api/v5/otp';
