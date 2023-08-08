@@ -24,10 +24,12 @@ router.post("/createRole", async (req, res) => {
 });
 
 router.get("/getRoleByOutletId/:outletId", async (req, res) => {
+    const {outletId} = req.params;
     try {
         const { data, error } = await supabaseInstance
             .from("Outlet_Role")
             .select("*")
+            .eq("outletId",outletId)
 
         if (data) {
             res.status(200).json({

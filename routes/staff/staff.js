@@ -70,10 +70,12 @@ router.post("/updateStaff/:outletStaffAuthUId", async (req, res) => {
 });
 
 router.get("/getStaff/:outletId", async (req, res) => {
+    const {outletId} = req.params;
     try {
         const { data, error } = await supabaseInstance
             .from("Outlet_Staff")
             .select("*")
+            .eq("outletId",outletId)
 
         if (data) {
             res.status(200).json({

@@ -239,6 +239,96 @@ router.post("/orderStatus", async (req, res) => {
   }
 });
 
+router.post("/fetchMenu", async (req, res) => {
+  const { outletId } = req.body;
+  try {
+    let catgoryData = [];
+    let taxData = [];
+    let itemData = [];
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'app-key': petpoojaconfig.config.app_key,
+        'app-secret': petpoojaconfig.config.app_secret,
+        'access-token': petpoojaconfig.config.access_token
+      },
+    };
+
+    const data = {
+      "restID": outletId
+    };
+    const payloadData = await axios.post(petpoojaconfig.config.fetch_menu_api, data);
+
+    for (let data of payloadData?.data?.taxes) {
+      taxQuery = await supabaseInstance.from("Tax").insert({ taxid: data.taxid, taxname: data.taxname, tax: data.tax, outletId: outletId }).select("*");
+      taxData.push(taxQuery.data[0])
+    }
+
+    for (let data of payloadData?.data?.categories) {
+      categoryQuery = await supabaseInstance.from("Menu_Categories")
+        .insert({
+          outletId: outletId,
+          categoryid: data.categoryid,
+          categoryname: data.categoryname,
+          status: data.active,
+          //  parent_category_id:data.parent_category_id,
+          category_image_url: data.category_image_url
+        }).select("*");
+      catgoryData.push(categoryQuery.data[0])
+    }
+
+    for (let data of payloadData?.data?.items) {
+
+      let price = Number(data.price);
+      let minimumpreparationtime = Number(data.minimumpreparationtime);
+      itemQuery = await supabaseInstance.from("Menu_Item")
+        .insert({
+          itemid: data.itemid,
+          // item_categoryid:data.item_categoryid,
+          itemname: data.itemname,
+          outletId: outletId,
+          itemdescription: data.itemdescription,
+          minimumpreparationtime: minimumpreparationtime,
+          price: price,
+          status: data.active,
+          item_image_url: data.item_image_url,
+          attributeid: data.item_attributeid,
+          itemdescription: data.itemdescription,
+        }).select("*")
+      itemData.push(itemQuery.data[0])
+    }
+
+    for (let data of payloadData?.data?.parentcategories) {
+      parentcategoryQuery = await supabaseInstance.from("Menu_Parent_Categories")
+        .insert({
+          outletId: outletId,
+          parent_category_id: data.id,
+          parentCategoryName: data.name,
+          status: data.active,
+          parent_category_image_url: data.image_url
+        }).select("*");
+    }
+
+    if (payloadData?.data) {
+      res.status(200).json({
+        success: true,
+        data: {
+          categories: catgoryData,
+          items: itemData,
+          taxes: taxData,
+          // parentcategory:parentcategoryQuery.data
+        }
+      });
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
 function saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId) {
   return new Promise(async (resolve, reject) => {
     try {

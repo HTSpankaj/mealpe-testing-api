@@ -11,68 +11,68 @@ router.get("/", function (req, res, next) {
   res.send({ success: true, message: "respond send from customer.js" });
 });
 
-// router.post("/signUp", async (req, res) => {
-//   const { email, mobile, name } = req.body;
-
-//   try {
-//     const { data, error } = await supabaseInstance.auth.admin.createUser({
-//       email,
-//       phone: mobile,
-//       phone_confirm: true
-//     })
-
-//     if (data?.user) {
-//       const customerAuthUID = data.user.id;
-//       const customerResponse = await supabaseInstance.from("Customer").insert({ email, mobile, customerName: name, customerAuthUID }).select("*").maybeSingle();
-//       if (customerResponse.data) {
-//         res.status(200).json({
-//           success: true,
-//           message: "SignUp Successfully",
-//           data:customerResponse.data
-//         });
-//       } else {
-//         throw error;
-//       }
-//     } else {
-//       throw error;
-//     }
-//   } catch (error) {
-//     res.status(500).json({ success: false, error: error?.message || error });
-//   }
-// });
-
 router.post("/signUp", async (req, res) => {
   const { email, mobile, name } = req.body;
 
   try {
-    const { data, error } = await supabaseInstance.from("Customer").insert({ email, mobile, customerName: name  }).select("*").maybeSingle()
+    const { data, error } = await supabaseInstance.auth.admin.createUser({
+      email,
+      phone: mobile,
+      phone_confirm: true
+    })
 
-    if (data) {
+    if (data?.user) {
+      const customerAuthUID = data.user.id;
+      const customerResponse = await supabaseInstance.from("Customer").insert({ email, mobile, customerName: name, customerAuthUID }).select("*").maybeSingle();
+      if (customerResponse.data) {
         res.status(200).json({
           success: true,
           message: "SignUp Successfully",
-          data:data
+          data: customerResponse.data
         });
       } else {
         throw error;
       }
+    } else {
+      throw error;
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error?.message || error });
   }
 });
 
+// router.post("/signUp", async (req, res) => {
+//   const { email, mobile, name } = req.body;
+
+//   try {
+//     const { data, error } = await supabaseInstance.from("Customer").insert({ email, mobile, customerName: name  }).select("*").maybeSingle()
+
+//     if (data) {
+//         res.status(200).json({
+//           success: true,
+//           message: "SignUp Successfully",
+//           data:data
+//         });
+//       } else {
+//         throw error;
+//       }
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error?.message || error });
+//   }
+// });
+
 
 router.post("/sendOTP", async (req, res) => {
-  const { mobile  } = req.body;
+  const { mobile } = req.body;
   try {
-    sendOTP(mobile ).then((responseData) => {
+    sendOTP(mobile).then((responseData) => {
       console.log('.then block ran: ', responseData);
       res.status(200).json({
         success: true,
         data: responseData,
       });
     }).catch(err => {
-      console.log('.catch block ran: ',err);
+      console.log('.catch block ran: ', err);
       throw err;
     });
   } catch (error) {
@@ -81,16 +81,16 @@ router.post("/sendOTP", async (req, res) => {
 });
 
 router.post("/verifyOTP", async (req, res) => {
-  const { mobile , otp } = req.body;
+  const { mobile, otp } = req.body;
   try {
-    verifyOTP(mobile , 123456).then((responseData) => {
+    verifyOTP(mobile, 123456).then((responseData) => {
       console.log('.then block ran: ', responseData);
       res.status(200).json({
         success: true,
         data: responseData,
       });
     }).catch(err => {
-      console.log('.catch block ran: ',err);
+      console.log('.catch block ran: ', err);
       throw err;
     });
   } catch (error) {
@@ -121,7 +121,7 @@ router.post("/userlogin", async (req, res) => {
       }
       throw err;
     } else {
-      throw error;
+      throw err;
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -134,15 +134,25 @@ router.get("/cafeteriaDetails/:outletId", async (req, res) => {
     const { data, error } = await supabaseInstance.from("Menu_Item").select("*").eq("outletId", outletId);
     if (data) {
       const outdetails = await supabaseInstance.from("Outlet").select("*").eq("outletId", outletId);
-      const categorydetails = await supabaseInstance.from("Menu_Item").select("item_categoryid,Menu_Categories(categoryname,category_image_url)").eq("outletId", outletId);
+      let categorydetails = await supabaseInstance.from("Menu_Item").select("item_categoryid,Menu_Categories(categoryname,category_image_url),FavoriteMenuItem!left(*)").eq("outletId", outletId);
+
+      const uniqueObjects = {};
+      for (const obj of categorydetails.data) {
+        const objId = obj.item_categoryid;
+        uniqueObjects[objId] = obj;
+      }
+      const uniqueObjectsArray = Object.values(uniqueObjects);
+
+      const taxdetails = await supabaseInstance.from("Tax").select("*").eq("outletId", outletId);
 
       res.status(200).json({
         success: true,
         message: "Data fetch succesfully",
-        data:{
-          outdetails:outdetails.data,
-          menuItems:data,
-          categoryDetails:categorydetails.data
+        data: {
+           outdetails:outdetails.data,
+           menuItems:data,
+           categoryDetails: uniqueObjectsArray,
+           taxdetails:taxdetails.data
         },
       });
     } else {
@@ -165,14 +175,14 @@ router.get("/homeData", async (req, res) => {
     const PopularCafeterias = await PopularCafeteriasQuery.limit(5);
 
     if (cafeteriasForYouDataResponse.data && PopularCafeterias.data) {
-        res.status(200).json({
-          success: true,
-          message: "Data fetch succesfully",
-          data:{
-            cafeteriasForYouData:cafeteriasForYouDataResponse.data,
-            PopularCafeterias:PopularCafeterias.data
-          }
-        });
+      res.status(200).json({
+        success: true,
+        message: "Data fetch succesfully",
+        data:{
+          cafeteriasForYouData:cafeteriasForYouDataResponse.data,
+          PopularCafeterias:PopularCafeterias.data
+        }
+      });
     } else{
       throw PopularCafeterias.error || cafeteriasForYouDataResponse.error;
     }
@@ -222,7 +232,7 @@ router.get("/getCustomer/:outletId", async (req, res) => {
     if (orderCustomerData.data) {
       for (let order of orderCustomerData.data) {
         data = await supabaseInstance.from("Customer").select("*").eq("customerAuthUID", order)
-        orderData.push(data.data)
+        orderData.push(data.data[0])
       }
       res.status(200).json({
         success: true,
@@ -237,11 +247,35 @@ router.get("/getCustomer/:outletId", async (req, res) => {
   }
 })
 
+router.post("/updateCustomer/:customerAuthUID", async (req, res) => {
+  const { customerAuthUID } = req.params;
+  const {customerName,email,mobile,dob,genderId} =req.body;
+  try {
+    const { data, error } = await supabaseInstance
+    .from("Customer")
+    .update({customerName,dob,genderId})
+    .select("*")
+    .eq("customerAuthUID",customerAuthUID)
+     
+    if (data) {
+      res.status(200).json({
+        success: true,
+        message: "Data updated succesfully",
+        data: data,
+      });
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
 
 const MSG91_AUTH_KEY = msg91config.config.auth_key;
 const MSG91_OTP_ENDPOINT = 'https://control.msg91.com/api/v5/otp';
 
-async function sendOTP(mobile ) {
+async function sendOTP(mobile) {
   try {
     const response = await axios.post(MSG91_OTP_ENDPOINT, {
       authkey: MSG91_AUTH_KEY,
@@ -249,7 +283,6 @@ async function sendOTP(mobile ) {
     });
 
     const responseData = response.data;
-    console.log("response.data",response.data)
     if (responseData.type === 'success') {
       console.log('OTP sent successfully');
       console.log(responseData);
@@ -266,7 +299,7 @@ async function sendOTP(mobile ) {
 
 const MSG91_OTP_VERIFY_ENDPOINT = 'https://api.msg91.com/api/v5/otp/verify';
 
-async function verifyOTP(mobile , otp) {
+async function verifyOTP(mobile, otp) {
   try {
     // const response = await axios.post(MSG91_OTP_VERIFY_ENDPOINT, {
     //   authkey: MSG91_AUTH_KEY,
@@ -289,7 +322,7 @@ async function verifyOTP(mobile , otp) {
       console.log('OTP verification successful');
       return {
         success: true,
-        message:'OTP verification successful'
+        message: 'OTP verification successful'
 
       };
     } else {
