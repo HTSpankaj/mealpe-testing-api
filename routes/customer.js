@@ -225,21 +225,26 @@ router.post("/upsertUserImage",upload.single('file'), async (req, res) => {
 
 router.get("/getCustomer/:outletId", async (req, res) => {
   const { outletId } = req.params;
+  const { page, perPage } = req.query;
+  const pageNumber = parseInt(page) || 1;
+  const itemsPerPage = parseInt(perPage) || 10;
   try {
-    let orderData = [];
-    let orderCustomerData = await supabaseInstance.rpc('get_distinct_customer', { outletid: outletId })
-
-    if (orderCustomerData.data) {
-      for (let order of orderCustomerData.data) {
-        data = await supabaseInstance.from("Customer").select("*").eq("customerAuthUID", order)
-        orderData.push(data.data[0])
-      }
+    const { data, error } = await supabaseInstance
+      .rpc('get_distinct_customer_name', { outlet_id: outletId })
+      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+      
+    if (data) {
+      const sortedCustomers = data.slice().sort((a, b) => a.customername.localeCompare(b.customername));
       res.status(200).json({
         success: true,
-        data: orderData,
-      })
+        data: sortedCustomers,
+        meta: {
+          page: pageNumber,
+          perPage: itemsPerPage,
+        },
+      });
     } else {
-      throw orderCustomerData.error
+      throw error
     }
   } catch (error) {
     console.log(error)
