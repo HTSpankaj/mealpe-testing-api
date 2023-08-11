@@ -22,7 +22,11 @@ router.post("/createRating", async (req, res) => {
       }
      
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      if (error.code === "23505") {
+        res.send({ success: false, message: "Rating Already Taken" });
+      }else{
+        res.status(500).json({ success: false, error: error.message });
+      }
     }
   });
   

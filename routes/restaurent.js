@@ -244,7 +244,7 @@ router.post("/restaurentLogin", async (req, res) => {
           success: true,
           message: "LogIn successfully",
           data: {
-            RestaurantData: restaurantData.data
+            outletData: restaurantData.data
           }
         });
 

@@ -128,32 +128,21 @@ router.post("/userlogin", async (req, res) => {
   }
 });
 
-router.get("/cafeteriaDetails/:outletId", async (req, res) => {
-  const { outletId } =req.params;
+router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
+  const { outletId,customerAuthUID } =req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Menu_Item").select("*").eq("outletId", outletId);
+    const { data, error } = await supabaseInstance.from("Menu_Item").select("*, item_categoryid(*, parent_category_id(*)), FavoriteMenuItem!left(*)").eq("outletId", outletId).eq("FavoriteMenuItem.customerAuthUID", customerAuthUID);
     if (data) {
       const outdetails = await supabaseInstance.from("Outlet").select("*").eq("outletId", outletId);
-      let categorydetails = await supabaseInstance.from("Menu_Item").select("item_categoryid,Menu_Categories(categoryname,category_image_url),FavoriteMenuItem!left(*)").eq("outletId", outletId);
-
-      const uniqueObjects = {};
-      for (const obj of categorydetails.data) {
-        const objId = obj.item_categoryid;
-        uniqueObjects[objId] = obj;
-      }
-      const uniqueObjectsArray = Object.values(uniqueObjects);
-
       const taxdetails = await supabaseInstance.from("Tax").select("*").eq("outletId", outletId);
-
       res.status(200).json({
         success: true,
         message: "Data fetch succesfully",
         data: {
            outdetails:outdetails.data,
-           menuItems:data,
-           categoryDetails: uniqueObjectsArray,
-           taxdetails:taxdetails.data
-        },
+           menuItems:data.map(m => ({...m, isFavoriteMenuItem: m.FavoriteMenuItem?.length > 0})),
+           taxdetails:taxdetails.data,
+        }
       });
     } else {
       throw error
@@ -225,19 +214,19 @@ router.post("/upsertUserImage",upload.single('file'), async (req, res) => {
 
 router.get("/getCustomer/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const { page, perPage } = req.query;
+  const { page, perPage,sort } = req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
     const { data, error } = await supabaseInstance
       .rpc('get_distinct_customer_name', { outlet_id: outletId })
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-      
+      .order("customername",{ascending:sort == 'true' ? true : false})
+
     if (data) {
-      const sortedCustomers = data.slice().sort((a, b) => a.customername.localeCompare(b.customername));
       res.status(200).json({
         success: true,
-        data: sortedCustomers,
+        data: data,
         meta: {
           page: pageNumber,
           perPage: itemsPerPage,

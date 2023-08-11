@@ -210,17 +210,17 @@ router.post("/orderStatus", async (req, res) => {
   try {
 
     const { data, error } = await supabaseInstance.from("Order").select("*").eq("restaurantId",restaurantId).eq("orderId", orderId).maybeSingle()
-    let payload = {
-       restID:restaurantId,
-       orderID:orderId,
-       status:data.orderStatusId,
-       cancel_reason:"",
-       minimum_prep_time:20,
-       minimum_delivery_time:"",
-       rider_name:"",
-       rider_phone_number:"",
-       is_modified:"No"
-    }
+      let payload = {
+        restID:restaurantId,
+        orderID:orderId,
+        status:data.orderStatusId,
+        cancel_reason:"",
+        minimum_prep_time:20,
+        minimum_delivery_time:"",
+        rider_name:"",
+        rider_phone_number:"",
+        is_modified:"No"
+      }
 
     //  const payloadData = await axios.post(petpoojaconfig.config.order_status_api, payload);
 
@@ -254,6 +254,22 @@ router.post("/fetchMenu", async (req, res) => {
         'access-token': petpoojaconfig.config.access_token
       },
     };
+
+    const categoryid = await supabaseInstance.from("Menu_Categories").select("categoryid").eq("outletId", outletId);
+    const taxid = await supabaseInstance.from("Tax").select("taxid").eq("outletId", outletId);
+    const itemid = await supabaseInstance.from("Menu_Item").select("itemid").eq("outletId", outletId);
+    const parentcategoryid = await supabaseInstance.from("Menu_Parent_Categories").select("parent_category_id").eq("outletId", outletId);
+
+
+    const categoryId = categoryid.data.map(c => c.categoryid);
+    const taxId = taxid.data.map(t => t.taxid);
+    const itemId = itemid.data.map(i => i.itemid);
+    const parentcategoryId = parentcategoryid.data.map(c => c.parent_category_id);
+
+    // const menuCategoryDataRemove = await supabaseInstance.from("Menu_Categories").delete().in("categoryid", categoryId);
+    // const menuItemDataRemove = await supabaseInstance.from("Menu_Item").delete().in("itemid", itemId);
+    // const parentDataRemove = await supabaseInstance.from("Menu_Parent_Categories").delete().in("parent_category_id", parentcategoryId);
+    // const taxDataRemove = await supabaseInstance.from("Tax").delete().in("taxid", taxId);
 
     const data = {
       "restID": outletId
