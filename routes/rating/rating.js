@@ -51,4 +51,25 @@ router.get("/getRating/:outletId", async (req, res) => {
     }
 });
 
+router.delete("/deleteRating/:reviewId", async (req, res) => {
+  const { reviewId } = req.params;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Review")
+      .delete()
+      .eq("reviewId",reviewId)
+      .select("*")
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        message:"Rating Deleted"
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
 module.exports = router;

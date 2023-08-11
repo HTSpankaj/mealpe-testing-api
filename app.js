@@ -23,6 +23,7 @@ var pushMenuRouter = require("./routes/petpooja/pushMenu").router;
 var orderRouter = require("./routes/order/order");
 var favoriteRouter = require("./routes/favorite/favorite");
 var ratingRouter = require("./routes/rating/rating");
+var messageRouter = require("./routes/message");
 
 
 var app = express();
@@ -55,6 +56,7 @@ app.use('/petpooja/pushMenu', pushMenuRouter);
 app.use('/order/order', orderRouter);
 app.use('/favorite/favorite', favoriteRouter);
 app.use('/rating/rating', ratingRouter);
+app.use('/message', messageRouter);
 
 
 

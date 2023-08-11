@@ -22,7 +22,8 @@ router.post("/createOutlet", async (req, res) => {
     openTime,
     closeTime,
     Restaurant_category,
-    Timing
+    Timing,
+    isGSTShow
   } = req.body;
   try {
     const { data, error } = await supabaseInstance.auth.signUp(
@@ -60,6 +61,7 @@ router.post("/createOutlet", async (req, res) => {
         cityId,
         isPrimaryOutlet,
         primaryOutletId,
+        isGSTShow
       }
       if (openTime) {
         postObject.openTime = openTime;
@@ -111,6 +113,7 @@ router.post("/createOutlet", async (req, res) => {
       throw error;
     }
   } catch (error) {
+    console.log(error)
     res.status(500).json({ success: false, error: error.message });
   }
 })
