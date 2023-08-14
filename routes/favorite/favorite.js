@@ -26,15 +26,22 @@ router.post("/favoriteMenuItem", async (req, res) => {
 router.get("/getfavoriteMenuItem/:customerAuthUID", async (req, res) => {
   const { customerAuthUID } = req.params;
   try {
-    const { data, error } = await supabaseInstance
+    let { data, error } = await supabaseInstance
       .from("FavoriteMenuItem")
-      .select("*")
+      .select("itemid(*)")
       .eq("customerAuthUID", customerAuthUID)
+
+      const uniqueObjects = {};
+      for (const obj of data) {
+        const objId = obj.itemid.itemid;
+        uniqueObjects[objId] = obj;
+      }
+      const uniqueObjectsArray = Object.values(uniqueObjects);
 
     if (data) {
       res.status(200).json({
         success: true,
-        data: data,
+        data: uniqueObjectsArray,
       });
     } else {
       throw error

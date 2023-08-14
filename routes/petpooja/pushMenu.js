@@ -164,12 +164,12 @@ router.post("/pushData", async (req, res) => {
 
     }
 
-    const taxQuery = supabaseInstance.from("Tax").select("*");
-    if (restaurantId && outletId) {
-      taxDataQuery = taxQuery.eq("restaurantId", restaurantId).eq("outletId", outletId);
-    } else if (restaurantId) {
-      taxDataQuery = taxQuery.eq("restaurantId", restaurantId).is("outletId", null);
-    }
+    // const taxQuery = supabaseInstance.from("Tax").select("*");
+    // if (restaurantId && outletId) {
+    //   taxDataQuery = taxQuery.eq("restaurantId", restaurantId).eq("outletId", outletId);
+    // } else if (restaurantId) {
+    //   taxDataQuery = taxQuery.eq("restaurantId", restaurantId).is("outletId", null);
+    // }
     const taxData = await taxDataQuery;
     for (let data of taxData.data) {
       let petpoojaObj = {
@@ -276,10 +276,10 @@ router.post("/fetchMenu", async (req, res) => {
     };
     const payloadData = await axios.post(petpoojaconfig.config.fetch_menu_api, data);
 
-    for (let data of payloadData?.data?.taxes) {
-      taxQuery = await supabaseInstance.from("Tax").insert({ taxid: data.taxid, taxname: data.taxname, tax: data.tax, outletId: outletId }).select("*");
-      taxData.push(taxQuery.data[0])
-    }
+    // for (let data of payloadData?.data?.taxes) {
+    //   taxQuery = await supabaseInstance.from("Tax").insert({ taxid: data.taxid, taxname: data.taxname, tax: data.tax, outletId: outletId }).select("*");
+    //   taxData.push(taxQuery.data[0])
+    // }
 
     for (let data of payloadData?.data?.categories) {
       categoryQuery = await supabaseInstance.from("Menu_Categories")
@@ -488,18 +488,18 @@ function saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId) {
         payload.orderinfo.OrderInfo.OrderItem.details.push(petpoojaOrderObj);
       }
 
-      const taxData = await supabaseInstance.from("Tax").select("*").eq("restaurantId", restaurantId);
-      for (let data of taxData.data) {
-        let petpoojaTaxObj = {
-          id: data.taxid,
-          title: data.taxname,
-          type: "P",
-          price: "2.5",
-          tax: data.tax,
-          restaurant_liable_amt: "0.00"
-        }
-        payload.orderinfo.OrderInfo.Tax.details.push(petpoojaTaxObj);
-      }
+      // const taxData = await supabaseInstance.from("Tax").select("*").eq("restaurantId", restaurantId);
+      // for (let data of taxData.data) {
+      //   let petpoojaTaxObj = {
+      //     id: data.taxid,
+      //     title: data.taxname,
+      //     type: "P",
+      //     price: "2.5",
+      //     tax: data.tax,
+      //     restaurant_liable_amt: "0.00"
+      //   }
+      //   payload.orderinfo.OrderInfo.Tax.details.push(petpoojaTaxObj);
+      // }
 
       const payloadData = await axios.post(petpoojaconfig.config.save_order_api, payload);
 

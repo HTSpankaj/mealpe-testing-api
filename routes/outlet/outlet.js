@@ -155,25 +155,50 @@ router.get("/getOutletList", async (req, res) => {
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
-    const { data, error, count } = await supabaseInstance
+
+    if(searchText){
+      const { data, error, count } = await supabaseInstance
       .from("Outlet")
       .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
       .or(`address.ilike.${searchText},outletName.ilike.${searchText}`)
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outletName", { ascending: true });
-
-    if (data) {
-      const totalPages = Math.ceil(count / itemsPerPage);
-      res.status(200).json({
-        success: true,
-        data,
-        meta: {
-          page: pageNumber,
-          perPage: itemsPerPage,
-          totalPages,
-          totalCount: count,
-        },
-      });
+      if (data) {
+        const totalPages = Math.ceil(count / itemsPerPage);
+        res.status(200).json({
+          success: true,
+          data,
+          meta: {
+            page: pageNumber,
+            perPage: itemsPerPage,
+            totalPages,
+            totalCount: count,
+          },
+        });
+      }else{
+        throw error
+      }
+    }else{
+      const { data, error, count } = await supabaseInstance
+      .from("Outlet")
+      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
+      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+      .order("outletName", { ascending: true });
+      if (data) {
+        const totalPages = Math.ceil(count / itemsPerPage);
+        res.status(200).json({
+          success: true,
+          data,
+          meta: {
+            page: pageNumber,
+            perPage: itemsPerPage,
+            totalPages,
+            totalCount: count,
+          },
+        });
+      }else{
+        throw error
+      }
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
