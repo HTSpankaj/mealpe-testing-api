@@ -160,7 +160,9 @@ router.get("/getOutletList", async (req, res) => {
       const { data, error, count } = await supabaseInstance
       .from("Outlet")
       .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
-      .or(`address.ilike.${searchText},outletName.ilike.${searchText}`)
+      // .ilike(`outletName,${searchText}`)
+      // .or(`address.ilike.${searchText},outletName.ilike.${searchText}`)
+      .or(`address.ilike.%${searchText}%,outletName.ilike.%${searchText}%`)
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outletName", { ascending: true });
       if (data) {
