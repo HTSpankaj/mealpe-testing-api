@@ -170,23 +170,23 @@ router.post("/pushData", async (req, res) => {
     // } else if (restaurantId) {
     //   taxDataQuery = taxQuery.eq("restaurantId", restaurantId).is("outletId", null);
     // }
-    const taxData = await taxDataQuery;
-    for (let data of taxData.data) {
-      let petpoojaObj = {
-        taxid: data.taxid,
-        taxname: data.taxname,
-        tax: data.tax,
-        taxtype: "1",
-        tax_ordertype: "",
-        active: "1",
-        tax_coreortotal: "2",
-        tax_taxtype: "1",
-        rank: "1",
-        consider_in_core_amount: "0",
-        description: ""
-      }
-      payload.taxes.push(petpoojaObj)
-    }
+    // const taxData = await taxDataQuery;
+    // for (let data of taxData.data) {
+    //   let petpoojaObj = {
+    //     taxid: data.taxid,
+    //     taxname: data.taxname,
+    //     tax: data.tax,
+    //     taxtype: "1",
+    //     tax_ordertype: "",
+    //     active: "1",
+    //     tax_coreortotal: "2",
+    //     tax_taxtype: "1",
+    //     rank: "1",
+    //     consider_in_core_amount: "0",
+    //     description: ""
+    //   }
+    //   payload.taxes.push(petpoojaObj)
+    // }
 
     const payloadData = await axios.post(petpoojaconfig.config.push_menu_api, payload);
 

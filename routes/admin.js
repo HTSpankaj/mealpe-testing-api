@@ -181,4 +181,38 @@ router.post("/updateAdmin/:adminId", async (req, res) => {
     res.status(500).json({ success: false, error: error });
   }
 });
+
+router.get("/getOutletAdminList", async (req, res) => {
+  const { page, perPage, searchText } = req.query; 
+  const pageNumber = parseInt(page) || 1;
+  const itemsPerPage = parseInt(perPage) || 10;
+
+  try {
+    const { data, error, count } = await supabaseInstance
+      .from("Outlet_Admin")
+      .select("*", { count: "exact" })
+      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+      .or(`name.ilike.%${searchText}%`)
+      // .order("outletAdminId", { ascending: true });
+
+    if (data) {
+      const totalPages = Math.ceil(count / itemsPerPage);
+      res.status(200).json({
+        success: true,
+        data,
+        meta: {
+          page: pageNumber,
+          perPage: itemsPerPage,
+          totalPages,
+          totalCount: count,
+        },
+      });
+    }else{
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
