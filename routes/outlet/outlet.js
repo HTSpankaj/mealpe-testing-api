@@ -355,13 +355,17 @@ router.post("/updateTaxCharge", async (req, res) => {
 
 router.post("/updatePetPooja/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const {petPoojaAppKey,petPoojaAppSecret,petPoojaApAccessToken,petPoojaRestId } = req.body;
+  const {petPoojaAppKey,petPoojaAppSecret,petPoojaApAccessToken,petPoojaRestId,publishProcessingStep} = req.body;
   
   try {
+    const postbody = { petPoojaAppKey,petPoojaAppSecret,petPoojaApAccessToken,petPoojaRestId };
+    if (publishProcessingStep) {
+      postbody.publishProcessingStep = publishProcessingStep;
+    }
     const {data, error} = await supabaseInstance
         .from("Outlet")
-        .update({ petPoojaAppKey,petPoojaAppSecret,petPoojaApAccessToken,petPoojaRestId })
-        .select("*")
+        .update(postbody)
+        .select("*, bankDetailsId(*), restaurantAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)")
         .eq("outletId",outletId)
 
     if (data) {

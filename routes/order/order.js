@@ -21,7 +21,7 @@ router.post("/createOrder", async (req, res) => {
           .from("Order_Item")
           .insert({ orderId: orderId, itemId: data.id, quantity: data.qty, itemPrice: data.price, calculatedPrice: calculatedPrice })
           .select("*")
-        orderData.push(orderitemData.data[0])
+        orderData.push(orderitemData.data)
       }
       const orderScheduleData = await supabaseInstance
         .from("Order_Schedule")
@@ -58,11 +58,14 @@ router.post("/createOrder", async (req, res) => {
     const { restaurantId, outletId, orderStatusId } = req.query;
     try {
       let orderQuery, error;
-      if (outletId && restaurantId) {
-        orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*),customerAuthUID(*)").eq("outletId", outletId).eq("restaurantId", restaurantId);
-      } else if (restaurantId && !outletId) {
-        orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*),customerAuthUID(*)").eq("restaurantId", restaurantId);
-      }
+
+        orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*),customerAuthUID(*)").eq("outletId", outletId)
+
+      // if (outletId && restaurantId) {
+      //   orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*),customerAuthUID(*)").eq("outletId", outletId).eq("restaurantId", restaurantId);
+      // } else if (restaurantId && !outletId) {
+      //   orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*),customerAuthUID(*)").eq("restaurantId", restaurantId);
+      // }
       if (orderStatusId) {
         orderQuery = orderQuery.eq("orderStatusId", orderStatusId);
       }

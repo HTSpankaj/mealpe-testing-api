@@ -6,22 +6,23 @@ var petpoojaconfig = require("../../configs/petpoojaConfig");
 
 
 router.post("/pushData", async (req, res) => {
-  const { restaurantId, outletId } = req.body;
+  const { outletId } = req.body;
   try {
 
-    let restaurentDataQuery;
-    if (restaurantId) {
-      restaurentDataQuery = supabaseInstance.from("Restaurant").select("*").eq("restaurantId", restaurantId);
-    } else if (restaurantId && outletId) {
-      restaurentDataQuery = supabaseInstance.from("Outlet").select("*").eq("restaurantId", restaurantId).eq("outletId", outletId);
-    }
+    let restaurentDataQuery= await supabaseInstance.from("Outlet").select("*").eq("outletId", outletId);
+    // if (restaurantId) {
+    //   restaurentDataQuery = supabaseInstance.from("Restaurant").select("*").eq("restaurantId", restaurantId);
+    // } else if (restaurantId && outletId) {
+    //   restaurentDataQuery = supabaseInstance.from("Outlet").select("*").eq("restaurantId", restaurantId).eq("outletId", outletId);
+    // }
+   
     const restaurentData = await restaurentDataQuery;
 
     let payload = {
       success: 1,
       restaurants: [
         {
-          restaurantid: restaurantId,
+          restaurantid: outletId,
           active: restaurentData.data.status,
           details: {
             menusharingcode: "xxxxxx",
@@ -88,12 +89,12 @@ router.post("/pushData", async (req, res) => {
       http_code: 200
     }
 
-    let parentCategoryQuery;
-    if (restaurantId && outletId) {
-      parentCategoryQuery = await supabaseInstance.from("Menu_Parent_Categories").select("*").eq("restaurantId", restaurantId).eq("outletId", outletId);
-    } else if (restaurantId) {
-      parentCategoryQuery = await supabaseInstance.from("Menu_Parent_Categories").select("*").eq("restaurantId", restaurantId).is("outletId", null);
-    }
+    let parentCategoryQuery= await supabaseInstance.from("Menu_Parent_Categories").select("*").eq("outletId", outletId);
+    // if (restaurantId && outletId) {
+    //   parentCategoryQuery = await supabaseInstance.from("Menu_Parent_Categories").select("*").eq("restaurantId", restaurantId).eq("outletId", outletId);
+    // } else if (restaurantId) {
+    //   parentCategoryQuery = await supabaseInstance.from("Menu_Parent_Categories").select("*").eq("restaurantId", restaurantId).is("outletId", null);
+    // }
     const parentCategoryData = await parentCategoryQuery;
     for (let data of parentCategoryData.data) {
       payload.parentcategories.push(data)
@@ -104,12 +105,12 @@ router.post("/pushData", async (req, res) => {
       payload.attributes.push(data)
     }
 
-    let menucategoryQuery;
-    if (restaurantId && outletId) {
-      menucategoryQuery = await supabaseInstance.from("Menu_Categories").select("*").eq("restaurantId", restaurantId).eq("outletId", outletId);
-    } else if (restaurantId) {
-      menucategoryQuery = await supabaseInstance.from("Menu_Categories").select("*").eq("restaurantId", restaurantId).is("outletId", null);
-    }
+    let menucategoryQuery = await supabaseInstance.from("Menu_Categories").select("*").eq("outletId", outletId)
+    // if (restaurantId && outletId) {
+    //   menucategoryQuery = await supabaseInstance.from("Menu_Categories").select("*").eq("restaurantId", restaurantId).eq("outletId", outletId);
+    // } else if (restaurantId) {
+    //   menucategoryQuery = await supabaseInstance.from("Menu_Categories").select("*").eq("restaurantId", restaurantId).is("outletId", null);
+    // }
     const categoryData = await menucategoryQuery;
     for (let data of categoryData.data) {
       let petpoojaObj = {
@@ -124,12 +125,12 @@ router.post("/pushData", async (req, res) => {
       payload.categories.push(petpoojaObj)
     }
 
-    let itemQuery;
-    if (restaurantId && outletId) {
-      itemQuery = await supabaseInstance.from("Menu_Item").select("*").eq("restaurantId", restaurantId).eq("outletId", outletId);
-    } else if (restaurantId) {
-      itemQuery = await supabaseInstance.from("Menu_Item").select("*").eq("restaurantId", restaurantId).is("outletId", null);
-    }
+    let itemQuery = await supabaseInstance.from("Menu_Item").select("*").eq("outletId", outletId);
+    // if (restaurantId && outletId) {
+    //   itemQuery = await supabaseInstance.from("Menu_Item").select("*").eq("restaurantId", restaurantId).eq("outletId", outletId);
+    // } else if (restaurantId) {
+    //   itemQuery = await supabaseInstance.from("Menu_Item").select("*").eq("restaurantId", restaurantId).is("outletId", null);
+    // }
     const itemData = await itemQuery;
     for (let data of itemData.data) {
       let petpoojaObj = {
