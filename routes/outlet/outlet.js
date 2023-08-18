@@ -41,7 +41,7 @@ router.post("/createOutlet", async (req, res) => {
       const outletId = data.user.id;
 
 
-      const bankDetails = await supabaseInstance.from("BankDetails").insert({ accountNumber: bankDetailsId.accountNumber, BankName: bankDetailsId.BankName, IFSCCode: bankDetailsId.IFSCCode }).select().maybeSingle();
+      const bankDetails = await supabaseInstance.from("BankDetails").insert({ accountNumber: bankDetailsId?.accountNumber || null, BankName: bankDetailsId?.BankName || null, IFSCCode: bankDetailsId?.IFSCCode || null }).select().maybeSingle();
       const _bankDetailsId = bankDetails.data.bankDetailsId;
 
       const outletDetails = await supabaseInstance.from("Outlet_Admin").insert({ name: outletAdminId?.name, mobile: outletAdminId?.mobile, email: outletAdminId?.email, address: outletAdminId?.address, pancard: outletAdminId?.pancard }).select().maybeSingle();
@@ -117,6 +117,7 @@ router.post("/createOutlet", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 })
+
 router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) => {
   const { outletId } = req.body;
   console.log("outletId--->",outletId)
