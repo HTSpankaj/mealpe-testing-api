@@ -208,6 +208,66 @@ router.get("/getOutletList", async (req, res) => {
   }
 });
 
+router.get("/getPrimaryOutletList", async (req, res) => {
+  const { page, perPage, searchText } = req.query;
+  const pageNumber = parseInt(page) || 1;
+  const itemsPerPage = parseInt(perPage) || 10;
+  try {
+
+    if(searchText){
+      const { data, error, count } = await supabaseInstance
+      .from("Outlet")
+      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
+      // .ilike(`outletName,${searchText}`)
+      // .or(`address.ilike.${searchText},outletName.ilike.${searchText}`)
+      .or(`address.ilike.%${searchText}%,outletName.ilike.%${searchText}%`)
+      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+      .order("outletName", { ascending: true })
+      .eq("isPrimaryOutlet",true)
+      if (data) {
+        const totalPages = Math.ceil(count / itemsPerPage);
+        res.status(200).json({
+          success: true,
+          data,
+          meta: {
+            page: pageNumber,
+            perPage: itemsPerPage,
+            totalPages,
+            totalCount: count,
+          },
+        });
+      }else{
+        throw error
+      }
+    }else{
+      const { data, error, count } = await supabaseInstance
+      .from("Outlet")
+      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
+      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+      .order("outletName", { ascending: true })
+      .eq("isPrimaryOutlet",true)
+
+      if (data) {
+        const totalPages = Math.ceil(count / itemsPerPage);
+        res.status(200).json({
+          success: true,
+          data,
+          meta: {
+            page: pageNumber,
+            perPage: itemsPerPage,
+            totalPages,
+            totalCount: count,
+          },
+        });
+      }else{
+        throw error
+      }
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 router.get("/getOutletListByRestaurantId/:outletId", async (req, res) => {
   const { outletId } = req.params;
   const { page, perPage, searchText } = req.query;
@@ -220,6 +280,44 @@ router.get("/getOutletListByRestaurantId/:outletId", async (req, res) => {
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outletName", { ascending: true })
       .eq("outletId", outletId)
+      if(searchText) {
+        query = query.or(`address.ilike.%${searchText}%,outletName.ilike.%${searchText}%`);
+        // query = query.ilike('outletName', `%${searchText}%`);
+      }
+      const { data, error, count } = await query;
+
+    if (data) {
+      const totalPages = Math.ceil(count / itemsPerPage);
+      res.status(200).json({
+        success: true,
+        data,
+        meta: {
+          page: pageNumber,
+          perPage: itemsPerPage,
+          totalPages,
+          totalCount: count,
+        },
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get("/getOutletListByPrimaryOutletId/:primaryOutletId", async (req, res) => {
+  const { primaryOutletId } = req.params;
+  const { page, perPage, searchText } = req.query;
+  const pageNumber = parseInt(page) || 1;
+  const itemsPerPage = parseInt(perPage) || 10;
+  try {
+    let query = supabaseInstance
+      .from("Outlet")
+      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
+      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+      .order("outletName", { ascending: true })
+      .eq("primaryOutletId", primaryOutletId)
       if(searchText) {
         query = query.or(`address.ilike.%${searchText}%,outletName.ilike.%${searchText}%`);
         // query = query.ilike('outletName', `%${searchText}%`);
