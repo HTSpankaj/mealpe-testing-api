@@ -345,6 +345,41 @@ router.post("/fetchMenu", async (req, res) => {
   }
 });
 
+router.post("/fetchMenuCard", async (req, res) => {
+  const { outletId } = req.body;
+  try {
+
+    const petPoojaQuery =await supabaseInstance.from("Outlet").select("*").eq("outletId",outletId);
+
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'app-key': petPoojaQuery.data[0].petPoojaAppKey,
+        'app-secret': petPoojaQuery.data[0].petPoojaAppSecret,
+        'access-token': petPoojaQuery.data[0].petPoojaApAccessToken
+      },
+    };
+
+    const data = {
+      "restID": petPoojaQuery.data[0].petPoojaRestId
+    };
+    const payloadData = await axios.post(petpoojaconfig.config.fetch_menu_api, data);
+
+    if (payloadData?.data) {
+      res.status(200).json({
+        success: true,
+        data: payloadData.data
+      });
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ success: false, error: error });
+  }
+})
+
 function saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId) {
   return new Promise(async (resolve, reject) => {
     try {

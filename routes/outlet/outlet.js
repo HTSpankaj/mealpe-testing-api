@@ -354,12 +354,12 @@ router.post("/updateTaxCharge", async (req, res) => {
 
 router.post("/updatePetPooja/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const {petPoojaAppKey,petPoojaAppSecret,petPoojaApAccessToken } = req.body;
+  const {petPoojaAppKey,petPoojaAppSecret,petPoojaApAccessToken,petPoojaRestId } = req.body;
   
   try {
     const {data, error} = await supabaseInstance
         .from("Outlet")
-        .update({ petPoojaAppKey,petPoojaAppSecret,petPoojaApAccessToken })
+        .update({ petPoojaAppKey,petPoojaAppSecret,petPoojaApAccessToken,petPoojaRestId })
         .select("*")
         .eq("outletId",outletId)
 
@@ -379,5 +379,68 @@ router.post("/updatePetPooja/:outletId", async (req, res) => {
   }
 });
 
+router.post("/upsertLogoImage",upload.single('file'), async (req, res) => {
+  const { outletId } = req.body;
+  try {
+    const { data, error } = await supabaseInstance
+      .storage
+      .from('logo-images')
+      .upload(outletId + ".webp", req.file.buffer, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: 'image/webp'
+      })
+
+    if (data?.path) {
+      const publickUrlresponse = await supabaseInstance.storage.from('logo-images').getPublicUrl(data?.path);
+      if (publickUrlresponse?.data?.publicUrl) {
+        const publicUrl = publickUrlresponse?.data?.publicUrl;
+        const outletData = await supabaseInstance.from("Outlet").update({ logo:`${publicUrl}?${new Date().getTime()}`}).eq("outletId", outletId).select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)").maybeSingle();
+        res.status(200).json({
+          success: true,
+          data: outletData.data,
+        });
+      } else {
+        throw publickUrlresponse.error || "Getting Error in PublicUrl"
+      }
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+})
+
+router.post("/upsertHeaderImage",upload.single('file'), async (req, res) => {
+  const { outletId } = req.body;
+  try {
+    const { data, error } = await supabaseInstance
+      .storage
+      .from('header-images')
+      .upload(outletId + ".webp", req.file.buffer, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: 'image/webp'
+      })
+
+    if (data?.path) {
+      const publickUrlresponse = await supabaseInstance.storage.from('header-images').getPublicUrl(data?.path);
+      if (publickUrlresponse?.data?.publicUrl) {
+        const publicUrl = publickUrlresponse?.data?.publicUrl;
+        const outletData = await supabaseInstance.from("Outlet").update({ headerImage:`${publicUrl}?${new Date().getTime()}`}).eq("outletId", outletId).select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)").maybeSingle();
+        res.status(200).json({
+          success: true,
+          data: outletData.data,
+        });
+      } else {
+        throw publickUrlresponse.error || "Getting Error in PublicUrl"
+      }
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+})
 
 module.exports = router;
