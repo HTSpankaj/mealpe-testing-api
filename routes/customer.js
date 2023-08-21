@@ -131,9 +131,9 @@ router.post("/userlogin", async (req, res) => {
 router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
   const { outletId,customerAuthUID } =req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Menu_Item").select("*, item_categoryid(*, parent_category_id(*)), FavoriteMenuItem!left(*)").eq("outletId", outletId).eq("FavoriteMenuItem.customerAuthUID", customerAuthUID);
+    const { data, error } = await supabaseInstance.from("Menu_Item").select("*, item_categoryid(*, parent_category_id(*)), FavoriteMenuItem!left(*)").eq("outletId", outletId).eq("FavoriteMenuItem.customerAuthUID", customerAuthUID).eq("status",true);
     if (data) {
-      const outdetails = await supabaseInstance.from("Outlet").select("*").eq("outletId", outletId);
+      const outdetails = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*)").eq("outletId", outletId);
       const taxdetails = await supabaseInstance.from("Tax").select("*").eq("outletId", outletId);
       res.status(200).json({
         success: true,
@@ -155,7 +155,7 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
 router.get("/homeData", async (req, res) => {
   const { categoryId, campusId } = req.query;
   try {
-    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("*,cityId(*),restaurantId(*),bankDetailsId(*),campusId(*)").eq("campusId",campusId).limit(5);
+    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("*,cityId(*),restaurantId(*),bankDetailsId(*),campusId(*)").eq("campusId",campusId).eq("isPublished",true).eq("isActive",true).limit(5);
 
     let PopularCafeteriasQuery = supabaseInstance.from("Restaurant_category").select("*,restaurantId(*),outletId(*)");
     if (categoryId) {
