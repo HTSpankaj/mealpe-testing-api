@@ -353,7 +353,6 @@ router.post("/fetchMenuCard", async (req, res) => {
     const petPoojaQuery =await supabaseInstance.from("Outlet").select("*").eq("outletId",outletId);
 
     const options = {
-      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'app-key': petPoojaQuery.data[0].petPoojaAppKey,
@@ -365,12 +364,13 @@ router.post("/fetchMenuCard", async (req, res) => {
     const data = {
       "restID": petPoojaQuery.data[0].petPoojaRestId
     };
-    const payloadData = await axios.post(petpoojaconfig.config.fetch_menu_api, data);
+    const payloadData = await axios.post(petpoojaconfig.config.fetch_menu_api, data, options);
 
     if (payloadData?.data) {
       res.status(200).json({
         success: true,
-        data: payloadData.data
+        data: payloadData.data,
+        op: {fetch_menu_api: petpoojaconfig.config.fetch_menu_api, data, options}
       });
     } else {
       throw error;

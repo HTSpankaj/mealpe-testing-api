@@ -5,6 +5,6 @@ const config = {
     push_menu_api: "https://private-anon-e8405b2d6a-onlineorderingapisv210.apiary-mock.com/pushmenu_endpoint",
     save_order_api: "https://private-anon-588a10f15c-onlineorderingapisv210.apiary-mock.com/saveorder",
     order_status_api: "https://private-anon-588a10f15c-onlineorderingapisv210.apiary-mock.com/callback",
-    fetch_menu_api:"https://private-anon-166e7bdbc4-onlineorderingapisv210.apiary-mock.com/fetchmenu"
+    fetch_menu_api:"https://qle1yy2ydc.execute-api.ap-southeast-1.amazonaws.com/V1/mapped_restaurant_menus"
 };
 exports.config = config;
