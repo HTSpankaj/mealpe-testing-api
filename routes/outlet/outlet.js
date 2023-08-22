@@ -429,6 +429,27 @@ router.post("/updatePackagingCharge/:outletId", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+router.post("/publishOutlet/:outletId", async (req, res) => {
+  const { outletId } = req.params;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Outlet")
+      .update({isPublished: true, publishProcessingStep: 3})
+      .eq("outletId",outletId)
+      .select("*").maybeSingle();
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 router.post("/updateTaxCharge", async (req, res) => {
 

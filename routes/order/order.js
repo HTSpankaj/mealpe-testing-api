@@ -9,7 +9,7 @@ router.post("/createOrder", async (req, res) => {
   try {
     const { data, error } = await supabaseInstance
       .from("Order")
-      .insert({ customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId,orderPriceBreakDown })
+      .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId,orderPriceBreakDown })
       .select("*")
 
     if (data) {
@@ -27,7 +27,7 @@ router.post("/createOrder", async (req, res) => {
         .from("Order_Schedule")
         .insert({ orderId: orderId, scheduleDate: pickupTime.orderDate, scheduleTime: pickupTime.time })
         .select("*")
-
+ 
 
       saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId).then((saveOrderToPetpoojaResponse) => {
         console.log('.then block ran: ', saveOrderToPetpoojaResponse.data);

@@ -385,12 +385,13 @@ function saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId) {
   return new Promise(async (resolve, reject) => {
     try {
 
-      let restaurentDataQuery;
-      if (restaurantId) {
-        restaurentDataQuery = supabaseInstance.from("Restaurant").select("*").eq("restaurantId", restaurantId);
-      } else if (restaurantId && outletId) {
-        restaurentDataQuery = supabaseInstance.from("Outlet").select("*").eq("restaurantId", restaurantId).eq("outletId", outletId);
-      }
+      let restaurentDataQuery= await supabaseInstance.from("Outlet").select("*").eq("outletId", outletId);
+
+      // if (restaurantId) {
+      //   restaurentDataQuery = supabaseInstance.from("Restaurant").select("*").eq("restaurantId", restaurantId);
+      // } else if (restaurantId && outletId) {
+      //   restaurentDataQuery = supabaseInstance.from("Outlet").select("*").eq("restaurantId", restaurantId).eq("outletId", outletId);
+      // }
       const restaurentData = await restaurentDataQuery;
 
       const customerData = await supabaseInstance.from("Customer").select("*").eq("customerAuthUID", customerAuthUID).maybeSingle();
@@ -408,7 +409,7 @@ function saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId) {
                 res_name: restaurentData.data[0].restaurantName,
                 address: restaurentData.data[0].address,
                 contact_information: restaurentData.data[0].mobile,
-                restID: restaurantId
+                restID: outletId
               }
             },
             Customer: {
