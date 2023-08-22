@@ -127,7 +127,7 @@ router.get("/getUpcomingOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
   try {
     let currentDate =new Date().toJSON().slice(0, 10);
-    const {data,error} = await supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*))").gt("scheduleDate",currentDate).eq("orderId.outletId", outletId);
+    const {data,error} = await supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").gt("scheduleDate",currentDate).eq("orderId.outletId", outletId);
     if (data) {
       res.status(200).json({
         success: true,
@@ -146,7 +146,7 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
   try {
     let currentDate =new Date().toJSON().slice(0, 10);
-    const {data,error} = await supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*))").eq("scheduleDate",currentDate).eq("orderId.outletId", outletId);
+    const {data,error} = await supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").eq("scheduleDate",currentDate).eq("orderId.outletId", outletId);
 
     if (data) {
       res.status(200).json({
