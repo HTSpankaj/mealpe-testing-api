@@ -348,11 +348,11 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
 
   const { outletId } = req.params;
   const outletData = req.body;
-  const bankDetailsData= outletData.bankDetailsId;
-  const outletDetailsData = outletData.outletAdminId;
-  const timeDetailsData = outletData.Timing;
-  const categoryDetailsData = outletData.Restaurant_category;
-  delete outletDetailsData?.email;
+  const bankDetailsData= outletData?.bankDetailsId;
+  const outletAdminId = outletData?.outletAdminId;
+  const timeDetailsData = outletData?.Timing;
+  const categoryDetailsData = outletData?.Restaurant_category;
+  delete outletAdminId?.email;
   delete  outletData?.bankDetailsId;
   delete  outletData?.outletAdminId;
   delete  outletData?.Restaurant_category;
@@ -362,13 +362,15 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
   delete  outletData?.password;
  
    try {
-    const bankDetails = await supabaseInstance.from("BankDetails").update({...bankDetailsData }).eq("bankDetailsId",bankDetailsData.bankDetailsId).select("*");
+    if (bankDetailsData) {
+      const bankDetails = await supabaseInstance.from("BankDetails").update({...bankDetailsData }).eq("bankDetailsId",bankDetailsData.bankDetailsId).select("*");
+    }
     
     if (categoryDetailsData?.length > 0) {
       const categoryDataDelete =await  supabaseInstance.from("Restaurant_category").delete().eq("outletId",outletId);
-    }
-    for(let category of categoryDetailsData ) {
-      const categoryData = await supabaseInstance.from("Restaurant_category").insert({categoryId:category,outletId}).select("*");
+      for(let category of categoryDetailsData ) {
+        const categoryData = await supabaseInstance.from("Restaurant_category").insert({categoryId:category,outletId}).select("*");
+      }
     }
 
     if (timeDetailsData?.length > 0) {
@@ -378,7 +380,9 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
     const timingData = await supabaseInstance.from("Timing").insert({outletId, dayId: data.dayId, openTime: data.openTime, closeTime: data.closeTime }).select("*");
     }
     
-    const outletAdminDetails = await supabaseInstance.from("Outlet_Admin").update({...outletDetailsData }).eq("outletAdminId",outletDetailsData.outletAdminId).select("*");
+    if (outletAdminId) {
+      const outletAdminDetails = await supabaseInstance.from("Outlet_Admin").update({...outletAdminId }).eq("outletAdminId",outletAdminId.outletAdminId).select("*");
+    }
 
     const { data, error } = await supabaseInstance
      .from("Outlet")
