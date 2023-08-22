@@ -190,7 +190,7 @@ router.get("/getOutletAdminList", async (req, res) => {
   try {
     const { data, error, count } = await supabaseInstance
       .from("Outlet_Admin")
-      .select("*", { count: "exact" })
+      .select("*,Outlet(*)", { count: "exact" })
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .or(`name.ilike.%${searchText}%`)
       // .order("outletAdminId", { ascending: true });

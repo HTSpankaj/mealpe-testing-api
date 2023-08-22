@@ -463,7 +463,7 @@ router.post("/updatePetPooja/:outletId", async (req, res) => {
     const {data, error} = await supabaseInstance
         .from("Outlet")
         .update(postbody)
-        .select("*, bankDetailsId(*), restaurantAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)")
+        .select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)")
         .eq("outletId",outletId)
 
     if (data) {
