@@ -25,6 +25,9 @@ router.post("/createOutlet", async (req, res) => {
     closeTime,
     Restaurant_category,
     Timing,
+    isDelivery,
+    isDineIn,
+    isPickUp,
     isGSTShow
   } = req.body;
   try {
@@ -63,13 +66,25 @@ router.post("/createOutlet", async (req, res) => {
         cityId,
         isPrimaryOutlet,
         primaryOutletId,
-        isGSTShow
+        isGSTShow,
+        isDelivery,    
+        isDineIn,
+        isPickUp,
       }
       if (openTime) {
         postObject.openTime = openTime;
       }
       if (closeTime) {
         postObject.closeTime = closeTime;
+      }
+      if (isDelivery) {
+        postObject.isDelivery = true;
+      }
+      if (isDineIn) {
+        postObject.isDineIn = true;
+      }
+      if (isPickUp) {
+        postObject.isPickUp = true;
       }
 
       if (!isPrimaryOutlet) {
@@ -412,6 +427,7 @@ router.post("/updatePackagingCharge/:outletId", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 router.post("/publishOutlet/:outletId", async (req, res) => {
   const { outletId } = req.params;
   try {

@@ -182,6 +182,30 @@ router.post("/updateAdmin/:adminId", async (req, res) => {
   }
 });
 
+router.post("/updateOutletAdmin/:outletAdminId", async (req, res) => {
+  const { outletAdminId } = req.params;
+  const {name,mobile} = req.body;
+   try {
+    const { data, error } = await supabaseInstance
+      .from("Outlet_Admin")
+      .update({name,mobile})
+      .eq("outletAdminId", outletAdminId)
+      .select("*");
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        message: "Data updated succesfully",
+        data: data,
+      });
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
 router.get("/getOutletAdminList", async (req, res) => {
   const { page, perPage, searchText } = req.query; 
   const pageNumber = parseInt(page) || 1;

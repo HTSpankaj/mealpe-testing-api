@@ -125,9 +125,34 @@ router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
 
 router.get("/getUpcomingOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
+  const {isDineIn, orderStatusId,orderId} = req.query;
   try {
     let currentDate =new Date().toJSON().slice(0, 10);
-    const {data,error} = await supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").gt("scheduleDate",currentDate).eq("orderId.outletId", outletId);
+    
+    let query =  supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").gt("scheduleDate", currentDate).eq("orderId.outletId", outletId);
+   
+    if (isDineIn) {
+      if (isDineIn == 'true') {
+        query = query.eq("orderId.isDineIn", true)
+      }
+      else if (isDineIn == 'false') {
+        query = query.eq("orderId.isDineIn", false)
+      }
+    }
+
+    if (orderStatusId) {
+      const _orderStatusId = eval(orderStatusId);
+      if (_orderStatusId.length > 0) {
+        query = query.in('orderId.orderStatusId',_orderStatusId);
+      }
+    }
+    
+    if (orderId) {
+      query = query.ilike("orderId.order_id_search", `%${orderId}%`);
+    }
+
+    const { data, error, } = await query;
+
     if (data) {
       res.status(200).json({
         success: true,
@@ -144,9 +169,32 @@ router.get("/getUpcomingOrder/:outletId", async (req, res) => {
 
 router.get("/getCurrentOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
+  const {isDineIn, orderStatusId,orderId} = req.query;
   try {
-    let currentDate =new Date().toJSON().slice(0, 10);
-    const {data,error} = await supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").eq("scheduleDate",currentDate).eq("orderId.outletId", outletId);
+    let currentDate = new Date().toJSON().slice(0, 10);
+    let query =  supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").eq("scheduleDate", currentDate).eq("orderId.outletId", outletId);
+   
+    if (isDineIn) {
+      if (isDineIn == 'true') {
+        query = query.eq("orderId.isDineIn", true)
+      }
+      else if (isDineIn == 'false') {
+        query = query.eq("orderId.isDineIn", false)
+      }
+    }
+
+    if (orderStatusId) {
+      const _orderStatusId = eval(orderStatusId);
+      if (_orderStatusId.length > 0) {
+        query = query.in('orderId.orderStatusId',_orderStatusId);
+      }
+    }
+    
+    if (orderId) {
+      query = query.ilike("orderId.order_id_search", `%${orderId}%`);
+    }
+   
+    const { data, error, } = await query;
 
     if (data) {
       res.status(200).json({
@@ -164,10 +212,32 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
 
 router.get("/getHistoryOrders/:outletId", async (req, res) => {
   const { outletId } = req.params;
+  const {isDineIn, orderStatusId,orderId} = req.query;
+
   try {
     let currentDate =new Date().toJSON().slice(0, 10);
-    const {data,error} = await supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").lt("scheduleDate",currentDate).eq("orderId.outletId", outletId);
+    let query =  supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").lt("scheduleDate", currentDate).eq("orderId.outletId", outletId);
 
+    if (isDineIn) {
+      if (isDineIn == 'true') {
+        query = query.eq("orderId.isDineIn", true)
+      }
+      else if (isDineIn == 'false') {
+        query = query.eq("orderId.isDineIn", false)
+      }
+    }
+
+    if (orderStatusId) {
+      const _orderStatusId = eval(orderStatusId);
+      if (_orderStatusId.length > 0) {
+        query = query.in('orderId.orderStatusId',_orderStatusId);
+      }
+    }
+    
+    if (orderId) {
+      query = query.ilike("orderId.order_id_search", `%${orderId}%`);
+    }
+    const { data, error, } = await query;
     if (data) {
       res.status(200).json({
         success: true,
@@ -185,7 +255,7 @@ router.get("/getHistoryOrders/:outletId", async (req, res) => {
 router.get("/getCancelledOrders/:outletId", async (req, res) => {
   const { outletId } = req.params;
   try {
-    const {data,error} = await supabaseInstance.from("Order").select("*,orderStatusId(*),customerAuthUID(*))").eq("outletId", outletId).in('orderStatusId', ['-1', '-2']);
+    const {data,error} = await supabaseInstance.from("Order").select("*,orderStatusId(*),customerAuthUID(*),Order_Schedule(*))").eq("outletId", outletId).in('orderStatusId', ['-1', '-2']);
     if (data) {
       res.status(200).json({
         success: true,

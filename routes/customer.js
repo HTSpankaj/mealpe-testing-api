@@ -155,9 +155,9 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
 router.get("/homeData", async (req, res) => {
   const { categoryId, campusId } = req.query;
   try {
-    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("*,cityId(*),restaurantId(*),bankDetailsId(*),campusId(*)").eq("campusId",campusId).eq("isPublished",true).eq("isActive",true).limit(5);
+    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId").eq("campusId",campusId).eq("isPublished",true).eq("isActive",true).limit(5);
 
-    let PopularCafeteriasQuery = supabaseInstance.from("Restaurant_category").select("*,restaurantId(*),outletId(*)");
+    let PopularCafeteriasQuery = supabaseInstance.from("Restaurant_category").select("*,outletId(outletName,address,logo,headerImage)").not("outletId","is",null);
     if (categoryId) {
       PopularCafeteriasQuery = PopularCafeteriasQuery.eq("categoryId",categoryId);
     }
