@@ -90,7 +90,7 @@ router.get("/getOrder", async (req, res) => {
 router.get("/getOrder/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const {data,error} = await supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*),orderStatusId(*))").eq("orderId", orderId).maybeSingle();
+    const {data,error} = await supabaseInstance.from("Order").select("*,customerAuthUID(*),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*))").eq("orderId", orderId).maybeSingle();
     if (data) {
       res.status(200).json({
         success: true,
@@ -108,7 +108,7 @@ router.get("/getOrder/:orderId", async (req, res) => {
 router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
   const { customerAuthUID } = req.params;
   try {
-    const {data,error} = await supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*),orderStatusId(*))").eq("customerAuthUID", customerAuthUID)
+    const {data,error} = await supabaseInstance.from("Order").select("*,outletId(outletName,logo),Order_Item(*),Order_Schedule(*),orderStatusId(*))").eq("customerAuthUID", customerAuthUID)
     if (data) {
       res.status(200).json({
         success: true,
@@ -152,6 +152,44 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
       res.status(200).json({
         success: true,
         data:data?.filter(f => f.orderId)
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/getHistoryOrders/:outletId", async (req, res) => {
+  const { outletId } = req.params;
+  try {
+    let currentDate =new Date().toJSON().slice(0, 10);
+    const {data,error} = await supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").lt("scheduleDate",currentDate).eq("orderId.outletId", outletId);
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data:data?.filter(f => f.orderId)
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/getCancelledOrders/:outletId", async (req, res) => {
+  const { outletId } = req.params;
+  try {
+    const {data,error} = await supabaseInstance.from("Order").select("*,orderStatusId(*),customerAuthUID(*))").eq("outletId", outletId).in('orderStatusId', ['-1', '-2']);
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data:data
       });
     } else {
       throw error

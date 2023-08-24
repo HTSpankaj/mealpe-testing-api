@@ -3,6 +3,8 @@ var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
 const multer = require("multer");
 const upload = multer();
+const axios = require('axios');
+
 
 router.post("/createOutlet", async (req, res) => {
   const {
@@ -152,56 +154,37 @@ router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) =
 })
 
 router.get("/getOutletList", async (req, res) => {
-  const { page, perPage, searchText } = req.query;
+  const { page, perPage, searchText, categoryId } = req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
+    let query = supabaseInstance
+      .rpc('get_outlet_list', { category_id: categoryId ? categoryId : null }, {count: "exact"})
+      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+      .order("outlet_name", { ascending: true })
 
-    if(searchText){
-      const { data, error, count } = await supabaseInstance
-      .from("Outlet")
-      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
-      // .ilike(`outletName,${searchText}`)
-      // .or(`address.ilike.${searchText},outletName.ilike.${searchText}`)
-      .or(`address.ilike.%${searchText}%,outletName.ilike.%${searchText}%`)
-      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-      .order("outletName", { ascending: true });
-      if (data) {
-        const totalPages = Math.ceil(count / itemsPerPage);
-        res.status(200).json({
-          success: true,
-          data,
-          meta: {
-            page: pageNumber,
-            perPage: itemsPerPage,
-            totalPages,
-            totalCount: count,
-          },
-        });
-      }else{
-        throw error
-      }
-    }else{
-      const { data, error, count } = await supabaseInstance
-      .from("Outlet")
-      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
-      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-      .order("outletName", { ascending: true });
-      if (data) {
-        const totalPages = Math.ceil(count / itemsPerPage);
-        res.status(200).json({
-          success: true,
-          data,
-          meta: {
-            page: pageNumber,
-            perPage: itemsPerPage,
-            totalPages,
-            totalCount: count,
-          },
-        });
-      }else{
-        throw error
-      }
+    if (searchText) {
+      query = query.or(`address.ilike.%${searchText}%,outlet_name.ilike.%${searchText}%`);
+    }
+  
+    
+    const { data, error, count } = await query;
+
+    if (data) {
+      const totalPages = Math.ceil(count / itemsPerPage);
+      res.status(200).json({
+        success: true,
+        data,
+        categoryId,
+        meta: {
+          page: pageNumber,
+          perPage: itemsPerPage,
+          totalPages,
+          totalCount: count,
+        },
+      });
+    } else{
+      throw error
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
