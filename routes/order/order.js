@@ -90,7 +90,7 @@ router.get("/getOrder", async (req, res) => {
 router.get("/getOrder/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const {data,error} = await supabaseInstance.from("Order").select("*,customerAuthUID(*),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*))").eq("orderId", orderId).maybeSingle();
+    const {data,error} = await supabaseInstance.from("Order").select("*,customerAuthUID(*),outletId(outletId,outletName,logo),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*))").eq("orderId", orderId).maybeSingle();
     if (data) {
       res.status(200).json({
         success: true,
