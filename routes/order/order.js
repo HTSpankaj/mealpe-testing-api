@@ -141,7 +141,7 @@ router.get("/getUpcomingOrder/:outletId", async (req, res) => {
     }
 
     if (orderStatusId) {
-      const _orderStatusId = eval(orderStatusId);
+      const _orderStatusId = orderStatusId.split(',');
       if (_orderStatusId.length > 0) {
         query = query.in('orderId.orderStatusId',_orderStatusId);
       }
@@ -184,7 +184,7 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
     }
 
     if (orderStatusId) {
-      const _orderStatusId = eval(orderStatusId);
+      const _orderStatusId = orderStatusId.split(',');
       if (_orderStatusId.length > 0) {
         query = query.in('orderId.orderStatusId',_orderStatusId);
       }
@@ -228,7 +228,7 @@ router.get("/getHistoryOrders/:outletId", async (req, res) => {
     }
 
     if (orderStatusId) {
-      const _orderStatusId = eval(orderStatusId);
+      const _orderStatusId = orderStatusId.split(',');
       if (_orderStatusId.length > 0) {
         query = query.in('orderId.orderStatusId',_orderStatusId);
       }

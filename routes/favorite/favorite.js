@@ -28,7 +28,7 @@ router.get("/getfavoriteMenuItem/:customerAuthUID", async (req, res) => {
   try {
     let { data, error } = await supabaseInstance
       .from("FavoriteMenuItem")
-      .select("favoriteMenuItemId,itemid(*)")
+      .select("favoriteMenuItemId,itemid(*,outletId(outletId,outletName,address,logo,headerImage))")
       .eq("customerAuthUID", customerAuthUID)
 
       const uniqueObjects = {};
