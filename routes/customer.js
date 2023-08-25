@@ -63,9 +63,9 @@ router.post("/signUp", async (req, res) => {
 
 
 router.post("/sendOTP", async (req, res) => {
-  const { mobile } = req.body;
+  const { email } = req.body;
   try {
-    sendOTP(mobile).then((responseData) => {
+    sendEmail(email).then((responseData) => {
       console.log('.then block ran: ', responseData);
       res.status(200).json({
         success: true,
@@ -76,6 +76,7 @@ router.post("/sendOTP", async (req, res) => {
       throw err;
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -328,5 +329,40 @@ async function verifyOTP(mobile, otp) {
     return null;
   }
 }
+
+const MSG91_EMAIL_ENDPOINT ="https://control.msg91.com/api/v5/email/send"
+
+async function sendEmail( email) {
+  try {
+    const response = await axios.post(MSG91_EMAIL_ENDPOINT, {
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        authkey: MSG91_AUTH_KEY,
+      },
+      data: {
+        recipients: [
+          {
+            to: [{ email: email }],
+          },
+        ],
+      },
+    });
+
+    const responseData = response.data;
+    if (responseData.type === 'success') {
+      console.log('Email sent successfully');
+      console.log(responseData);
+      return responseData;
+    } else {
+      console.error('Failed to send email:', responseData.message);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error sending email:', error.message);
+    return null;
+  }
+}
+
 
 module.exports = router;

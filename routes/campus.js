@@ -35,7 +35,7 @@ router.get("/getCampusList", async (req, res) => {
       .from("Campus")
       .select("*", { count: "exact" })
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-      .order("campusId", { ascending: true });
+      .order("created_at", { ascending: false });
 
     if (data) {
       const totalPages = Math.ceil(count / itemsPerPage);
@@ -127,7 +127,7 @@ router.post("/deleteCampus/:id", async (req, res) => {
 
 router.get("/getAllCampusList", async (req, res) => {
   try {
-    const { data, error } = await supabaseInstance.from("Campus").select();
+    const { data, error } = await supabaseInstance.from("Campus").select("*").order("created_at", { ascending: false });
     if (data) {
       res.status(200).json({
         success: true,
