@@ -168,13 +168,14 @@ router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) =
   }
 })
 
-router.get("/getOutletList", async (req, res) => {
+router.get("/getOutletList/:campusId", async (req, res) => {
+  const {campusId} = req.params;
   const { page, perPage, searchText, categoryId } = req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
     let query = supabaseInstance
-      .rpc('get_outlet_list', { category_id: categoryId ? categoryId : null }, {count: "exact"})
+      .rpc('get_outlet_list', { category_id: categoryId ? categoryId : null,campus_id:campusId }, {count: "exact"})
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outlet_name", { ascending: true })
 
