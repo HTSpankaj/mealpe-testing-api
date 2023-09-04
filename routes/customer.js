@@ -215,14 +215,22 @@ router.post("/upsertUserImage",upload.single('file'), async (req, res) => {
 
 router.get("/getCustomer/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const { page, perPage,sort } = req.query;
+  const { page, perPage,sort,searchText } = req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
-    const { data, error } = await supabaseInstance
+    let query =  supabaseInstance
       .rpc('get_distinct_customer_name', { outlet_id: outletId })
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("customername",{ascending:sort == 'true' ? true : false})
+      .order("created_at",{ascending:false})
+
+
+    if(searchText){
+      query =query.ilike('customername',`%${searchText}%`)
+    }
+
+    const { data, error, } = await query;
 
     if (data) {
       res.status(200).json({
@@ -248,7 +256,7 @@ router.post("/updateCustomer/:customerAuthUID", async (req, res) => {
   try {
     const { data, error } = await supabaseInstance
     .from("Customer")
-    .update({customerName,dob,genderId})
+    .update({customerName,email,mobile,dob,genderId})
     .select("*")
     .eq("customerAuthUID",customerAuthUID)
      

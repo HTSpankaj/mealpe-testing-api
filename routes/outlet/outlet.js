@@ -178,12 +178,10 @@ router.get("/getOutletList/:campusId", async (req, res) => {
       .rpc('get_outlet_list', { category_id: categoryId ? categoryId : null,campus_id:campusId }, {count: "exact"})
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outlet_name", { ascending: true })
-
     if (searchText) {
       query = query.or(`address.ilike.%${searchText}%,outlet_name.ilike.%${searchText}%`);
     }
   
-    
     const { data, error, count } = await query;
 
     if (data) {
