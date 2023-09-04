@@ -158,11 +158,7 @@ router.get("/homeData", async (req, res) => {
   try {
     const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId").eq("campusId",campusId).eq("isPublished",true).eq("isActive",true).limit(5);
 
-    let PopularCafeteriasQuery = supabaseInstance.from("Restaurant_category").select("*,outletId(outletId,outletName,address,logo,headerImage)").not("outletId","is",null);
-    if (categoryId) {
-      PopularCafeteriasQuery = PopularCafeteriasQuery.eq("categoryId",categoryId);
-    }
-    const PopularCafeterias = await PopularCafeteriasQuery.limit(5);
+    let PopularCafeterias = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId").eq("campusId",campusId).eq("isPublished",true).eq("isActive",true).limit(5);
 
     if (cafeteriasForYouDataResponse.data && PopularCafeterias.data) {
       res.status(200).json({

@@ -419,24 +419,24 @@ router.post("/dashboardData", async (req, res) => {
   }
 });
 
-router.post("/orderPrice", async (req, res) => {
-  const { outlet_id,target_date,analyticalType } = req.body;
-  try {
-    const { data, error } = await supabaseInstance.rpc('get_total_price', { outlet_id,target_date,analyticaltype: analyticalType}).maybeSingle();
+// router.post("/orderPrice", async (req, res) => {
+//   const { outlet_id,target_date,analyticalType } = req.body;
+//   try {
+//     const { data, error } = await supabaseInstance.rpc('get_total_price', { outlet_id,target_date,analyticaltype: analyticalType}).maybeSingle();
 
-    if (data) {
-      res.status(200).json({
-        success: true,
-        data: data,
-      });
-    } else {
-      throw error
-    }
-  } catch (error) {
-    console.log(error)
-    res.status(500).json({ success: false, error: error });
-  }
-});
+//     if (data) {
+//       res.status(200).json({
+//         success: true,
+//         data: data,
+//       });
+//     } else {
+//       throw error
+//     }
+//   } catch (error) {
+//     console.log(error)
+//     res.status(500).json({ success: false, error: error });
+//   }
+// });
 
 router.post("/dineInPickUp", async (req, res) => {
   const { outlet_id,target_date,analyticalType } = req.body;
@@ -459,7 +459,7 @@ router.post("/dineInPickUp", async (req, res) => {
 router.post("/totalRevenue", async (req, res) => {
   const { outlet_id,target_date,analyticalType } = req.body;
   try {
-    const { data, error } = await supabaseInstance.rpc('get_total_revenue_count', { target_date,outlet_id,analyticaltype: analyticalType}).maybeSingle();
+    const { data, error } = await supabaseInstance.rpc('get_total_revenue_count', { target_date,outlet_id,analyticaltype: analyticalType});
 
     if (data) {
       res.status(200).json({
@@ -517,7 +517,7 @@ router.post("/adminOrderType", async (req, res) => {
 router.post("/adminSalesThroughApp", async (req, res) => {
   const { target_date,analyticalType} = req.body;
   try {
-    const { data, error } = await supabaseInstance.rpc('get_total_customer_revenue_count', { target_date,analyticaltype: analyticalType}).maybeSingle();
+    const { data, error } = await supabaseInstance.rpc('get_total_customer_revenue_count', { target_date,analyticaltype: analyticalType});
 
     if (data) {
       res.status(200).json({
