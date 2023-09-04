@@ -129,15 +129,14 @@ router.get("/getUpcomingOrder/:outletId", async (req, res) => {
   const { isDineIn, orderStatusId, orderSequenceId } = req.query;
   const now = new Date();
   const formattedTime = moment(now).format('HH:mm:ss');
-  console.log("formattedTime=>",formattedTime)
-  // const formattedTimeMinus2Hours = moment(formattedTime, 'HH:mm:ss').subtract(2, 'hours').format('HH:mm:ss');
+  const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(2, 'hours').format('HH:mm:ss');
+
   try {
     let currentDate = new Date().toJSON().slice(0, 10);
-
     let query = supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))")
     .gte("scheduleDate", currentDate)
     .eq("orderId.outletId", outletId)
-    .gt("scheduleTime", formattedTime)
+    .gt("scheduleTime", formattedTimeAdd2Hours)
     .order("scheduleTime", { ascending: false })
 
     if (isDineIn) {
@@ -181,9 +180,9 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
   const { isDineIn, orderStatusId, orderSequenceId } = req.query;
 
   const now = new Date();
-  const formattedTime = moment(now).format('HH:mm:ss');console.log(formattedTime)
-  const formattedTimeMinus2Hours = moment(formattedTime, 'HH:mm:ss').subtract(2, 'hours').format('HH:mm:ss');console.log(formattedTimeMinus2Hours)
-  
+  const formattedTime = moment(now).format('HH:mm:ss');
+  const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(2, 'hours').format('HH:mm:ss');  
+
   try {
     let currentDate = new Date().toJSON().slice(0, 10);
 
@@ -192,8 +191,8 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
     let query = supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))")
       .eq("scheduleDate", currentDate)
       .eq("orderId.outletId", outletId)
-      .lt("scheduleTime", formattedTime)
-      .gt("scheduleTime", formattedTimeMinus2Hours)
+      .gt("scheduleTime", formattedTime)
+      .lt("scheduleTime", formattedTimeAdd2Hours)
       .order("scheduleTime", { ascending: false })
 
     if (isDineIn) {
@@ -348,10 +347,64 @@ router.post("/rejectOrder/:orderId", async (req, res) => {
   }
 });
 
+router.post("/dispatchOrder/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 4 }).select("*").eq("orderId", orderId);
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.post("/foodReadyOrder/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 5 }).select("*").eq("orderId", orderId);
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.post("/deliveredOrder/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 10 }).select("*").eq("orderId", orderId);
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
 router.post("/dashboardData", async (req, res) => {
   const { target_date, outlet_id, analyticalType} = req.body;
   try {
-    const { data, error } = await supabaseInstance.rpc('get_dashboard_count', { target_date, outlet_id,analyticaltype:analyticalType });
+    const { data, error } = await supabaseInstance.rpc('get_dashboard_count', { target_date, outlet_id,analyticaltype:analyticalType }).maybeSingle();
 
     if (data) {
       res.status(200).json({
@@ -369,7 +422,7 @@ router.post("/dashboardData", async (req, res) => {
 router.post("/orderPrice", async (req, res) => {
   const { outlet_id,target_date,analyticalType } = req.body;
   try {
-    const { data, error } = await supabaseInstance.rpc('get_total_price', { outlet_id,target_date,analyticaltype: analyticalType});
+    const { data, error } = await supabaseInstance.rpc('get_total_price', { outlet_id,target_date,analyticaltype: analyticalType}).maybeSingle();
 
     if (data) {
       res.status(200).json({
@@ -406,7 +459,116 @@ router.post("/dineInPickUp", async (req, res) => {
 router.post("/totalRevenue", async (req, res) => {
   const { outlet_id,target_date,analyticalType } = req.body;
   try {
-    const { data, error } = await supabaseInstance.rpc('get_total_revenue_count', { target_date,outlet_id,analyticaltype: analyticalType});
+    const { data, error } = await supabaseInstance.rpc('get_total_revenue_count', { target_date,outlet_id,analyticaltype: analyticalType}).maybeSingle();
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.post("/adminCardDashboard", async (req, res) => { 
+  const { outlet_id,target_date,analyticalType} = req.body;
+  const now = new Date();
+  let currentTime = moment(now).format('HH:mm:ss');
+  const formated_time = moment(currentTime, 'HH:mm:ss').add(2, 'hours').format('HH:mm:ss'); 
+  try {
+    const { data, error } = await supabaseInstance.rpc('get_customer_dashboard_count', { target_date,outlet_id,analyticaltype: analyticalType,currenttime:currentTime,formated_time}).maybeSingle();
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: {...data, total_downloads: 0},
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.post("/adminOrderType", async (req, res) => {
+  const { target_date,analyticalType} = req.body;
+  try {
+    const { data, error } = await supabaseInstance.rpc('get_customer_dinein_pickup__delivery_count', { target_date,analyticaltype: analyticalType}).maybeSingle();
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      }
+      );
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.post("/adminSalesThroughApp", async (req, res) => {
+  const { target_date,analyticalType} = req.body;
+  try {
+    const { data, error } = await supabaseInstance.rpc('get_total_customer_revenue_count', { target_date,analyticaltype: analyticalType}).maybeSingle();
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/topFiveCustomer", async (req, res) => {
+  try {
+    const { data, error } = await supabaseInstance.rpc('get_top_five_customer');
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/topFiveOutlets", async (req, res) => {
+  try {
+    const { data, error } = await supabaseInstance.rpc('get_top_five_outlets');
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/topFiveMenuItem", async (req, res) => {
+  try {
+    const { data, error } = await supabaseInstance.rpc('get_top_five_menuitem');
 
     if (data) {
       res.status(200).json({
