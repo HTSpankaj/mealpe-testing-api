@@ -55,29 +55,43 @@ router.post("/createOrder", async (req, res) => {
   }
 });
 
-router.get("/getOrder", async (req, res) => {
-  const { restaurantId, outletId, orderStatusId } = req.query;
+router.get("/getAllOrder", async (req, res) => {
+  const {page,perPage,orderType}=req.query;
+  const pageNumber = parseInt(page) || 1;
+  const itemsPerPage = parseInt(perPage) || 10;
   try {
-    let orderQuery, error;
+    let query =  supabaseInstance
+    .rpc("get__all_orders_for_outlet",{},{count:"exact"})
+    .order("order_schedule_date",{ascending:true})
+    .order("order_schedule_time",{ascending:true})
+    .not("outlet_id", "is", null)
+    .not("order_schedule_date", "is", null)
+    .not("order_schedule_time", "is", null)
+    .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
 
-    orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*),customerAuthUID(*)").eq("outletId", outletId)
 
-    // if (outletId && restaurantId) {
-    //   orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*),customerAuthUID(*)").eq("outletId", outletId).eq("restaurantId", restaurantId);
-    // } else if (restaurantId && !outletId) {
-    //   orderQuery = supabaseInstance.from("Order").select("*,Order_Item(*),Order_Schedule(*), orderStatusId(*),customerAuthUID(*)").eq("restaurantId", restaurantId);
-    // }
-    if (orderStatusId) {
-      orderQuery = orderQuery.eq("orderStatusId", orderStatusId);
+      
+    if (orderType === "dinein") {
+      query = query.eq("is_dine_in", true)
+    } else if (orderType === "pickup") {
+        query = query.eq("is_pick_up", true)
+    } else if (orderType === "delivery") {
+      query = query.eq("is_delivery", true)
     }
 
-    const orderData = await orderQuery;
+    const {data,error,count} = await query;
 
-    if (orderData) {
-
+    if (data) {
+      const totalPages = Math.ceil(count / itemsPerPage);
       res.status(200).json({
         success: true,
-        data: orderData.data,
+        data: data,
+        data: data, meta: {
+          page: pageNumber,
+          perPage: itemsPerPage,
+          totalPages,
+          totalCount: count,
+        },
       });
     } else {
       throw error
@@ -126,45 +140,44 @@ router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
 
 router.get("/getUpcomingOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const { isDineIn, orderStatusId, orderSequenceId } = req.query;
+  const { orderType, orderStatusId, orderSequenceId } = req.query;
   const now = new Date();
   const formattedTime = moment(now).format('HH:mm:ss');
-  const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(2, 'hours').format('HH:mm:ss');
+  const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
+  console.log("formattedTimeAdd2Hours",formattedTimeAdd2Hours)
 
   try {
     let currentDate = new Date().toJSON().slice(0, 10);
-    let query = supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))")
-    .gte("scheduleDate", currentDate)
-    .eq("orderId.outletId", outletId)
-    .gt("scheduleTime", formattedTimeAdd2Hours)
-    .order("scheduleTime", { ascending: false })
+    let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
+    .gte("order_schedule_date", currentDate)
+    .gt("order_schedule_time", formattedTimeAdd2Hours)
+    .eq("order_status_id",0)
+    .order("order_schedule_time", { ascending: false })
 
-    if (isDineIn) {
-      if (isDineIn == 'true') {
-        query = query.eq("orderId.isDineIn", true)
-      }
-      else if (isDineIn == 'false') {
-        query = query.eq("orderId.isDineIn", false)
-      }
+    if (orderType === "dinein") {
+      query = query.eq("is_dine_in", true)
+    } else if (orderType === "pickup") {
+        query = query.eq("is_pick_up", true)
+    } else if (orderType === "delivery") {
+      query = query.eq("is_delivery", true)
     }
 
-    if (orderStatusId) {
-      const _orderStatusId = orderStatusId.split(',');
-      if (_orderStatusId.length > 0) {
-        query = query.in('orderId.orderStatusId', _orderStatusId);
-      }
-    }
+    // if (orderStatusId) {
+    //   const _orderStatusId = orderStatusId.split(',');
+    //   if (_orderStatusId.length > 0) {
+    //     query = query.in('order_status_id', _orderStatusId);
+    //   }
+    // }
 
     if (orderSequenceId) {
-      query = query.ilike("orderId.order_id_search", `%${orderSequenceId}%`);
+      query = query.ilike("order_sequence_id", `%${orderSequenceId}%`);
     }
-
     const { data, error, } = await query;
 
     if (data) {
       res.status(200).json({
         success: true,
-        data: data?.filter(f => f.orderId),
+        data: data
       });
     } else {
       throw error
@@ -177,42 +190,39 @@ router.get("/getUpcomingOrder/:outletId", async (req, res) => {
 
 router.get("/getCurrentOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const { isDineIn, orderStatusId, orderSequenceId } = req.query;
+  const { orderType, orderStatusId, orderSequenceId } = req.query;
 
   const now = new Date();
   const formattedTime = moment(now).format('HH:mm:ss');
-  const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(2, 'hours').format('HH:mm:ss');  
+  const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
 
   try {
     let currentDate = new Date().toJSON().slice(0, 10);
 
-    // let query =  supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").eq("scheduleDate", currentDate).eq("orderId.outletId", outletId);
-
-    let query = supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))")
-      .eq("scheduleDate", currentDate)
-      .eq("orderId.outletId", outletId)
-      .gt("scheduleTime", formattedTime)
-      .lt("scheduleTime", formattedTimeAdd2Hours)
-      .order("scheduleTime", { ascending: false })
-
-    if (isDineIn) {
-      if (isDineIn == 'true') {
-        query = query.eq("orderId.isDineIn", true)
-      }
-      else if (isDineIn == 'false') {
-        query = query.eq("orderId.isDineIn", false)
-      }
+    let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
+      .eq("order_schedule_date", currentDate)
+      .gte("order_schedule_time", formattedTime)
+      .lte("order_schedule_time", formattedTimeAdd2Hours)
+      .eq("order_status_id",0)
+      .order("order_schedule_time", { ascending: false });
+    
+    if (orderType === "dinein") {
+      query = query.eq("is_dine_in", true)
+    } else if (orderType === "pickup") {
+        query = query.eq("is_pick_up", true)
+    } else if (orderType === "delivery") {
+      query = query.eq("is_delivery", true)
     }
 
-    if (orderStatusId) {
-      const _orderStatusId = orderStatusId.split(',');
-      if (_orderStatusId.length > 0) {
-        query = query.in('orderId.orderStatusId', _orderStatusId);
-      }
-    }
+    // if (orderStatusId) {
+    //   const _orderStatusId = orderStatusId.split(',');
+    //   if (_orderStatusId.length > 0) {
+    //     query = query.in('order_status_id', _orderStatusId);
+    //   }
+    // }
 
     if (orderSequenceId) {
-      query = query.ilike("orderId.order_id_search", `%${orderSequenceId}%`);
+      query = query.ilike("order_sequence_id", `%${orderSequenceId}%`);
     }
 
     const { data, error, } = await query;
@@ -220,7 +230,109 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
     if (data) {
       res.status(200).json({
         success: true,
-        data: data?.filter(f => f.orderId)
+        data: data
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/getLiveOrders/:outletId", async (req, res) => {
+  const { outletId } = req.params;
+  const { orderType, orderStatusId, orderSequenceId } = req.query;
+
+  // const now = new Date();
+  // const formattedTime = moment(now).format('HH:mm:ss');
+  // const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
+
+  try {
+    let currentDate = new Date().toJSON().slice(0, 10);
+
+    let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
+      .eq("order_schedule_date", currentDate)
+      .in("order_status_id",[1,2,3])
+      .order("order_schedule_time", { ascending: false });
+    
+    if (orderType === "dinein") {
+      query = query.eq("is_dine_in", true)
+    } else if (orderType === "pickup") {
+        query = query.eq("is_pick_up", true)
+    } else if (orderType === "delivery") {
+      query = query.eq("is_delivery", true)
+    }
+
+    // if (orderStatusId) {
+    //   const _orderStatusId = orderStatusId.split(',');
+    //   if (_orderStatusId.length > 0) {
+    //     query = query.in('order_status_id', _orderStatusId);
+    //   }
+    // }
+
+    if (orderSequenceId) {
+      query = query.ilike("order_sequence_id", `%${orderSequenceId}%`);
+    }
+
+    const { data, error, } = await query;
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/getReadyOrders/:outletId", async (req, res) => {
+  const { outletId } = req.params;
+  const { orderType, orderStatusId, orderSequenceId } = req.query;
+
+  // const now = new Date();
+  // const formattedTime = moment(now).format('HH:mm:ss');
+  // const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
+
+  try {
+    let currentDate = new Date().toJSON().slice(0, 10);
+
+    let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
+      .eq("order_schedule_date", currentDate)
+      .in("order_status_id",[4,5])
+      .order("order_schedule_time", { ascending: false });
+    
+    if (orderType === "dinein") {
+      query = query.eq("is_dine_in", true)
+    } else if (orderType === "pickup") {
+        query = query.eq("is_pick_up", true)
+    } else if (orderType === "delivery") {
+      query = query.eq("is_delivery", true)
+    }
+
+    // if (orderStatusId) {
+    //   const _orderStatusId = orderStatusId.split(',');
+    //   if (_orderStatusId.length > 0) {
+    //     query = query.in('order_status_id', _orderStatusId);
+    //   }
+    // }
+
+    if (orderSequenceId) {
+      query = query.ilike("order_sequence_id", `%${orderSequenceId}%`);
+    }
+
+    const { data, error, } = await query;
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data
       });
     } else {
       throw error
@@ -233,40 +345,54 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
 
 router.get("/getHistoryOrders/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const { isDineIn, orderStatusId, orderSequenceId, startDate, endDate } = req.query;
+  const { orderType, orderStatusId, orderSequenceId, startDate, endDate,page, perPage  } = req.query;
+  const pageNumber = parseInt(page) || 1;
+  const itemsPerPage = parseInt(perPage) || 10;
 
   try {
+    const now = new Date();
+    const formattedTime = moment(now).format('HH:mm:ss');
     let currentDate = new Date().toJSON().slice(0, 10);
-    let query = supabaseInstance.from("Order_Schedule").select("*,orderId(*,orderStatusId(*),customerAuthUID(*))").lte("scheduleDate", currentDate).eq("orderId.outletId", outletId);
+    let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId},{count:"exact"})
+    .lte("order_schedule_date", currentDate)
+    .lte("order_schedule_time",formattedTime)
+    .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
 
-    if (isDineIn) {
-      if (isDineIn == 'true') {
-        query = query.eq("orderId.isDineIn", true)
-      }
-      else if (isDineIn == 'false') {
-        query = query.eq("orderId.isDineIn", false)
-      }
+
+    if (orderType === "dinein") {
+      query = query.eq("is_dine_in", true)
+    } else if (orderType === "pickup") {
+        query = query.eq("is_pick_up", true)
+    } else if (orderType === "delivery") {
+      query = query.eq("is_delivery", true)
     }
 
     if (orderStatusId) {
       const _orderStatusId = orderStatusId.split(',');
       if (_orderStatusId.length > 0) {
-        query = query.in('orderId.orderStatusId', _orderStatusId);
+        query = query.in('order_status_id', _orderStatusId);
       }
     }
 
     if (orderSequenceId) {
-      query = query.ilike("orderId.order_id_search", `%${orderSequenceId}%`);
+      query = query.ilike("order_sequence_id", `%${orderSequenceId}%`);
     }
 
     if (startDate && endDate ) {
-      query = query.gte("scheduleDate",startDate).lte("scheduleDate",endDate);
+      query = query.gte("order_schedule_date",startDate).lte("order_schedule_date",endDate);
     }
-    const { data, error, } = await query;
+
+    const { data, error,count } = await query;
     if (data) {
+      const totalPages = Math.ceil(count / itemsPerPage);
       res.status(200).json({
         success: true,
-        data: data?.filter(f => f.orderId)
+        data: data, meta: {
+          page: pageNumber,
+          perPage: itemsPerPage,
+          totalPages,
+          totalCount: count,
+        },
       });
     } else {
       throw error
@@ -279,16 +405,27 @@ router.get("/getHistoryOrders/:outletId", async (req, res) => {
 
 router.get("/getCancelledOrders/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const { page, perPage } = req.query; // Extract query parameters
+  const { page, perPage,orderType } = req.query; // Extract query parameters
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
-    const { data, error,count } = await supabaseInstance
+   let query =  supabaseInstance
     .from("Order")
     .select("*,orderStatusId(*),customerAuthUID(*),Order_Schedule(*))",{ count: "exact" })
     .eq("outletId", outletId)
     .in('orderStatusId', ['-1', '-2'])
     .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+
+    
+    if (orderType === "dinein") {
+      query = query.eq("isDineIn", true)
+    } else if (orderType === "pickup") {
+        query = query.eq("isPickUp", true)
+    } else if (orderType === "delivery") {
+      query = query.eq("isDelivery", true)
+    }
+
+    const { data, error,count } = await query;
 
     if (data) {
       const totalPages = Math.ceil(count / itemsPerPage);
@@ -569,6 +706,24 @@ router.get("/topFiveOutlets", async (req, res) => {
 router.get("/topFiveMenuItem", async (req, res) => {
   try {
     const { data, error } = await supabaseInstance.rpc('get_top_five_menuitem');
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/topThreeMenuItem/:outletId", async (req, res) => {
+  const {outletId} =req.params;
+  try {
+    const { data, error } = await supabaseInstance.rpc('get_top_three_menuitem',{outlet_id:outletId});
 
     if (data) {
       res.status(200).json({
