@@ -55,7 +55,8 @@ router.post("/createOrder", async (req, res) => {
   }
 });
 
-router.get("/getAllOrder", async (req, res) => {
+router.get("/getAllOrder/:outletId", async (req, res) => {
+  const {outletId} =req.params
   const {page,perPage,orderType}=req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
@@ -67,6 +68,7 @@ router.get("/getAllOrder", async (req, res) => {
     .not("outlet_id", "is", null)
     .not("order_schedule_date", "is", null)
     .not("order_schedule_time", "is", null)
+    .eq("outlet_id",outletId)
     .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
 
 
