@@ -207,6 +207,10 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
   try {
     let currentDate = new Date().toJSON().slice(0, 10);
 
+    console.log("currentDate => ", currentDate);
+    console.log("formattedTime => ", formattedTime);
+    console.log("formattedTimeAdd2Hours => ", formattedTimeAdd2Hours);
+
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
       .eq("order_schedule_date", currentDate)
       .gte("order_schedule_time", formattedTime)
