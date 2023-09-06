@@ -1,6 +1,7 @@
 var express = require("express");
-const { saveOrderToPetpooja } = require("../petpooja/pushMenu");
-const moment = require("moment/moment");
+const { saveOrderToPetpooja,updateOrderStatus} = require("../petpooja/pushMenu");
+const moment = require("moment-timezone");
+moment().tz("Asia/Kolkata").format();
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
 
@@ -147,13 +148,13 @@ router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
 router.get("/getUpcomingOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
   const { orderType, orderStatusId, orderSequenceId } = req.query;
-  const now = new Date();
-  const formattedTime = moment(now).format('HH:mm:ss');
+  const formattedTime = moment().format('HH:mm:ss');
   const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
   console.log("formattedTimeAdd2Hours",formattedTimeAdd2Hours)
 
   try {
-    let currentDate = new Date().toJSON().slice(0, 10);
+    // let currentDate = moment().toJSON().slice(0, 10);
+    let currentDate = moment().format('YYYY-MM-DD');
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
     .gte("order_schedule_date", currentDate)
     .gt("order_schedule_time", formattedTimeAdd2Hours)
@@ -200,17 +201,13 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
   const { orderType, orderStatusId, orderSequenceId } = req.query;
 
-  const now = new Date();
-  const formattedTime = moment(now).format('HH:mm:ss');
+  const formattedTime = moment().format('HH:mm:ss');
   const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
 
   try {
-    let currentDate = new Date().toJSON().slice(0, 10);
-
-    console.log("currentDate => ", currentDate);
-    console.log("formattedTime => ", formattedTime);
-    console.log("formattedTimeAdd2Hours => ", formattedTimeAdd2Hours);
-
+    // let currentDate = moment().toJSON().slice(0, 10);
+    let currentDate = moment().format('YYYY-MM-DD');
+    console.log("currentDate",currentDate)
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
       .eq("order_schedule_date", currentDate)
       .gte("order_schedule_time", formattedTime)
@@ -263,7 +260,8 @@ router.get("/getLiveOrders/:outletId", async (req, res) => {
   // const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
 
   try {
-    let currentDate = new Date().toJSON().slice(0, 10);
+    // let currentDate = moment().toJSON().slice(0, 10);
+    let currentDate = moment().format('YYYY-MM-DD');
 
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
       .eq("order_schedule_date", currentDate)
@@ -315,7 +313,8 @@ router.get("/getReadyOrders/:outletId", async (req, res) => {
   // const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
 
   try {
-    let currentDate = new Date().toJSON().slice(0, 10);
+    // let currentDate = moment().toJSON().slice(0, 10);
+    let currentDate = moment().format('YYYY-MM-DD');
 
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
       .eq("order_schedule_date", currentDate)
@@ -365,10 +364,9 @@ router.get("/getHistoryOrders/:outletId", async (req, res) => {
   const itemsPerPage = parseInt(perPage) || 10;
 
   try {
-    const now = new Date();
-    const formattedTime = moment(now).format('HH:mm:ss');
-    console.log("formattedTime=",formattedTime)
-    let currentDate = new Date().toJSON().slice(0, 10);
+    const formattedTime = moment().format('HH:mm:ss');
+    // let currentDate = moment().toJSON().slice(0, 10);
+    let currentDate = moment().format('YYYY-MM-DD');
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId},{count:"exact"})
     // .lte("order_schedule_date", currentDate)
     // .lt("order_schedule_time",formattedTime)
@@ -441,12 +439,13 @@ router.get("/getCancelledOrders/:outletId", async (req, res) => {
     .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
 
     
+  
     if (orderType === "dinein") {
-      query = query.eq("isDineIn", true)
+      query = query.eq("is_dine_in", true)
     } else if (orderType === "pickup") {
-        query = query.eq("isPickUp", true)
+        query = query.eq("is_pick_up", true)
     } else if (orderType === "delivery") {
-      query = query.eq("isDelivery", true)
+      query = query.eq("is_delivery", true)
     }
 
     const { data, error,count } = await query;
@@ -475,11 +474,21 @@ router.get("/getCancelledOrders/:outletId", async (req, res) => {
 router.post("/acceptOrder/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 1 }).select("*").eq("orderId", orderId)
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 1 }).select("*").eq("orderId", orderId).maybeSingle()
     if (data) {
-      res.status(200).json({
-        success: true,
-        data: data,
+
+      updateOrderStatus(orderId,"1").then((updateOrderStatusToPetpoojaResponse) => {
+        console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
+        res.status(200).json({
+          success: true,
+          data: {
+            orderData: data,
+            saveOrderToPetpooja: updateOrderStatusToPetpoojaResponse
+          }
+        });
+      }).catch(err => {
+        console.log('.catch block ran: ', err);
+        throw err;
       });
     } else {
       throw error
@@ -493,15 +502,24 @@ router.post("/acceptOrder/:orderId", async (req, res) => {
 router.post("/rejectOrder/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: -2 }).select("*").eq("orderId", orderId);
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: -2 }).select("*").eq("orderId", orderId).maybeSingle();
     if (data) {
-      res.status(200).json({
-        success: true,
-        data: data,
+      updateOrderStatus(orderId,"-2").then((updateOrderStatusToPetpoojaResponse) => {
+        console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
+        res.status(200).json({
+          success: true,
+          data: {
+            orderData: data,
+            saveOrderToPetpooja: updateOrderStatusToPetpoojaResponse
+          }
+        });
+      }).catch(err => {
+        console.log('.catch block ran: ', err);
+        throw err;
       });
     } else {
       throw error
-    }
+    } 
   } catch (error) {
     console.log(error)
     res.status(500).json({ success: false, error: error });
@@ -511,15 +529,24 @@ router.post("/rejectOrder/:orderId", async (req, res) => {
 router.post("/dispatchOrder/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 4 }).select("*").eq("orderId", orderId);
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 4 }).select("*").eq("orderId", orderId).maybeSingle();
     if (data) {
-      res.status(200).json({
-        success: true,
-        data: data,
+      updateOrderStatus(orderId,"4").then((updateOrderStatusToPetpoojaResponse) => {
+        console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
+        res.status(200).json({
+          success: true,
+          data: {
+            orderData: data,
+            saveOrderToPetpooja: updateOrderStatusToPetpoojaResponse
+          }
+        });
+      }).catch(err => {
+        console.log('.catch block ran: ', err);
+        throw err;
       });
     } else {
       throw error
-    }
+    } 
   } catch (error) {
     console.log(error)
     res.status(500).json({ success: false, error: error });
@@ -529,15 +556,24 @@ router.post("/dispatchOrder/:orderId", async (req, res) => {
 router.post("/foodReadyOrder/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 5 }).select("*").eq("orderId", orderId);
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 5 }).select("*").eq("orderId", orderId).maybeSingle();
     if (data) {
-      res.status(200).json({
-        success: true,
-        data: data,
+      updateOrderStatus(orderId,"5").then((updateOrderStatusToPetpoojaResponse) => {
+        console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
+        res.status(200).json({
+          success: true,
+          data: {
+            orderData: data,
+            saveOrderToPetpooja: updateOrderStatusToPetpoojaResponse
+          }
+        });
+      }).catch(err => {
+        console.log('.catch block ran: ', err);
+        throw err;
       });
     } else {
       throw error
-    }
+    } 
   } catch (error) {
     console.log(error)
     res.status(500).json({ success: false, error: error });
@@ -547,15 +583,24 @@ router.post("/foodReadyOrder/:orderId", async (req, res) => {
 router.post("/deliveredOrder/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 10 }).select("*").eq("orderId", orderId);
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 10 }).select("*").eq("orderId", orderId).maybeSingle();
     if (data) {
-      res.status(200).json({
-        success: true,
-        data: data,
+      updateOrderStatus(orderId,"10").then((updateOrderStatusToPetpoojaResponse) => {
+        console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
+        res.status(200).json({
+          success: true,
+          data: {
+            orderData: data,
+            saveOrderToPetpooja: updateOrderStatusToPetpoojaResponse
+          }
+        });
+      }).catch(err => {
+        console.log('.catch block ran: ', err);
+        throw err;
       });
     } else {
       throw error
-    }
+    } 
   } catch (error) {
     console.log(error)
     res.status(500).json({ success: false, error: error });
@@ -637,9 +682,8 @@ router.post("/totalRevenue", async (req, res) => {
 
 router.post("/adminCardDashboard", async (req, res) => { 
   const { outlet_id,target_date,analyticalType} = req.body;
-  const now = new Date();
-  let currentTime = moment(now).format('HH:mm:ss');
-  const formated_time = moment(currentTime, 'HH:mm:ss').add(2, 'hours').format('HH:mm:ss'); 
+  let currentTime = moment().format('HH:mm:ss');
+  const formated_time = moment(currentTime, 'HH:mm:ss').add(45, "minute").format('HH:mm:ss'); 
   try {
     const { data, error } = await supabaseInstance.rpc('get_customer_dashboard_count', { target_date,outlet_id,analyticaltype: analyticalType,currenttime:currentTime,formated_time}).maybeSingle();
 
