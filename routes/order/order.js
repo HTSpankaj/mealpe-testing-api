@@ -57,14 +57,14 @@ router.post("/createOrder", async (req, res) => {
 
 router.get("/getAllOrder/:outletId", async (req, res) => {
   const {outletId} =req.params
-  const {page,perPage,orderType}=req.query;
+  const {page,perPage,orderType,orderSequenceId}=req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
     let query =  supabaseInstance
-    .rpc("get__all_orders_for_outlet",{},{count:"exact"})
-    .order("order_schedule_date",{ascending:true})
-    .order("order_schedule_time",{ascending:true})
+    .rpc("get_orders_for_outlet",{outlet_uuid: outletId},{count:"exact"})
+    .order("order_schedule_date",{ascending:false})
+    .order("order_schedule_time",{ascending:false})
     .not("outlet_id", "is", null)
     .not("order_schedule_date", "is", null)
     .not("order_schedule_time", "is", null)
@@ -79,6 +79,10 @@ router.get("/getAllOrder/:outletId", async (req, res) => {
         query = query.eq("is_pick_up", true)
     } else if (orderType === "delivery") {
       query = query.eq("is_delivery", true)
+    }
+
+    if (orderSequenceId) {
+      query = query.ilike("order_sequence_id", `%${orderSequenceId}%`);
     }
 
     const {data,error,count} = await query;
@@ -154,6 +158,8 @@ router.get("/getUpcomingOrder/:outletId", async (req, res) => {
     .gte("order_schedule_date", currentDate)
     .gt("order_schedule_time", formattedTimeAdd2Hours)
     .eq("order_status_id",0)
+    .order("order_schedule_date",{ascending:false})
+    .order("order_schedule_time",{ascending:false})
     .order("order_schedule_time", { ascending: false })
 
     if (orderType === "dinein") {
@@ -206,7 +212,8 @@ router.get("/getCurrentOrder/:outletId", async (req, res) => {
       .gte("order_schedule_time", formattedTime)
       .lte("order_schedule_time", formattedTimeAdd2Hours)
       .eq("order_status_id",0)
-      .order("order_schedule_time", { ascending: false });
+      .order("order_schedule_date",{ascending:false})
+      .order("order_schedule_time",{ascending:false});
     
     if (orderType === "dinein") {
       query = query.eq("is_dine_in", true)
@@ -257,7 +264,8 @@ router.get("/getLiveOrders/:outletId", async (req, res) => {
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
       .eq("order_schedule_date", currentDate)
       .in("order_status_id",[1,2,3])
-      .order("order_schedule_time", { ascending: false });
+      .order("order_schedule_date",{ascending:false})
+      .order("order_schedule_time",{ascending:false});
     
     if (orderType === "dinein") {
       query = query.eq("is_dine_in", true)
@@ -308,7 +316,8 @@ router.get("/getReadyOrders/:outletId", async (req, res) => {
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
       .eq("order_schedule_date", currentDate)
       .in("order_status_id",[4,5])
-      .order("order_schedule_time", { ascending: false });
+      .order("order_schedule_date",{ascending:false})
+      .order("order_schedule_time",{ascending:false});
     
     if (orderType === "dinein") {
       query = query.eq("is_dine_in", true)
@@ -354,11 +363,17 @@ router.get("/getHistoryOrders/:outletId", async (req, res) => {
   try {
     const now = new Date();
     const formattedTime = moment(now).format('HH:mm:ss');
+    console.log("formattedTime=",formattedTime)
     let currentDate = new Date().toJSON().slice(0, 10);
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId},{count:"exact"})
-    .lte("order_schedule_date", currentDate)
-    .lte("order_schedule_time",formattedTime)
+    // .lte("order_schedule_date", currentDate)
+    // .lt("order_schedule_time",formattedTime)
+    .order("order_schedule_date",{ascending:false})
+    .order("order_schedule_time",{ascending:false})
+    .or(`order_schedule_date.lte.${currentDate},and(order_schedule_date.eq.${currentDate},order_schedule_time.lte.${formattedTime})`)
     .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+
+    // "Order_Schedule"."scheduleDate" <= '2023-09-06' OR ("Order_Schedule"."scheduleDate" = '2023-09-06' AND "Order_Schedule"."scheduleTime" <= '12:03:00');
 
 
     if (orderType === "dinein") {
@@ -411,11 +426,14 @@ router.get("/getCancelledOrders/:outletId", async (req, res) => {
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
-   let query =  supabaseInstance
-    .from("Order")
-    .select("*,orderStatusId(*),customerAuthUID(*),Order_Schedule(*))",{ count: "exact" })
-    .eq("outletId", outletId)
-    .in('orderStatusId', ['-1', '-2'])
+  //  let query =  supabaseInstance
+  //   .from("Order")
+  //   .select("*,orderStatusId(*),customerAuthUID(*),Order_Schedule(*))",{ count: "exact" })
+
+    let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId},{count:"exact"})
+    .in('order_status_id', ['-1', '-2'])
+    .order("order_schedule_date",{ascending:false})
+    .order("order_schedule_time",{ascending:false})
     .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
 
     
