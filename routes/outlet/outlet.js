@@ -168,43 +168,6 @@ router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) =
   }
 })
 
-router.get("/getOutletList/:campusId", async (req, res) => {
-  const {campusId} = req.params;
-  const { page, perPage, searchText, categoryId } = req.query;
-  const pageNumber = parseInt(page) || 1;
-  const itemsPerPage = parseInt(perPage) || 10;
-  try {
-    let query = supabaseInstance
-      .rpc('get_outlet_list', { category_id: categoryId ? categoryId : null,campus_id:campusId }, {count: "exact"})
-      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-      .order("outlet_name", { ascending: true })
-    if (searchText) {
-      query = query.or(`address.ilike.%${searchText}%,outlet_name.ilike.%${searchText}%`);
-    }
-  
-    const { data, error, count } = await query;
-
-    if (data) {
-      const totalPages = Math.ceil(count / itemsPerPage);
-      res.status(200).json({
-        success: true,
-        data,
-        categoryId,
-        meta: {
-          page: pageNumber,
-          perPage: itemsPerPage,
-          totalPages,
-          totalCount: count,
-        },
-      });
-    } else{
-      throw error
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 router.get("/getPrimaryOutletList", async (req, res) => {
   const { page, perPage, searchText } = req.query;
   const pageNumber = parseInt(page) || 1;

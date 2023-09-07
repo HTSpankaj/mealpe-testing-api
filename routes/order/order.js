@@ -9,9 +9,10 @@ var supabaseInstance = require("../../services/supabaseClient").supabase;
 router.post("/createOrder", async (req, res) => {
   const { customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId, items, pickupTime, orderPriceBreakDown } = req.body;
   try {
+    const orderOTP = generateOTP();
     const { data, error } = await supabaseInstance
       .from("Order")
-      .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId, orderPriceBreakDown })
+      .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId, orderPriceBreakDown, orderOTP })
       .select("*")
 
     if (data) {
@@ -807,3 +808,7 @@ router.get("/topThreeMenuItem/:outletId", async (req, res) => {
 });
 
 module.exports = router;
+
+function generateOTP() {
+  return Math.floor(1000 + Math.random() * 9000);
+}
