@@ -24,6 +24,7 @@ var orderRouter = require("./routes/order/order");
 var favoriteRouter = require("./routes/favorite/favorite");
 var ratingRouter = require("./routes/rating/rating");
 var messageRouter = require("./routes/message");
+var serverRouter = require("./routes/server");
 
 
 var app = express();
@@ -57,6 +58,8 @@ app.use('/order/order', orderRouter);
 app.use('/favorite/favorite', favoriteRouter);
 app.use('/rating/rating', ratingRouter);
 app.use('/message', messageRouter);
+app.use('/server', serverRouter);
+
 
 
 
