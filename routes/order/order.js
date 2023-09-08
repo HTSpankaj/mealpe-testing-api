@@ -807,6 +807,30 @@ router.get("/topThreeMenuItem/:outletId", async (req, res) => {
   }
 });
 
+// router.get("/realtimeOrder", function (req, res) {
+//   const {} =req.body;
+//   res.writeHead(200, {
+//     Connection: "keep-alive",
+//     "Content-Type": "text/event-stream",
+//     "Cache-Control": "no-cache",
+//   });
+//   setInterval(() => {
+//     supabaseInstance.channel('custom-insert-channel')
+//   .on(
+//     'postgres_changes',
+//     { event: 'INSERT', schema: 'public', table: 'Order', filter: 'id=eq.200' },
+//     (payload) => {
+//       res.write(
+//         "data:" +
+//           JSON.stringify({ payload})
+//       );      
+//     }
+//   )
+//   .subscribe()
+//     res.write(payload);
+//   }, 10000);
+// });
+
 module.exports = router;
 
 function generateOTP() {
