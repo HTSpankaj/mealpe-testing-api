@@ -200,11 +200,6 @@ router.get("/homeData", async (req, res) => {
           const time = moment();
           const beforeTime = moment(m?.Timing?.openTime, 'hh:mm:ss');
           const afterTime = moment(m?.Timing?.closeTime, 'hh:mm:ss');
-
-          console.log("time => ", time);
-          console.log("beforeTime => ", beforeTime);
-          console.log("afterTime => ", afterTime);
-          console.log("time.isBetween(beforeTime, afterTime) => ", time.isBetween(beforeTime, afterTime));
     
           flag = time.isBetween(beforeTime, afterTime);
         }
