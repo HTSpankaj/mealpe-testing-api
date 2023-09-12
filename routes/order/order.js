@@ -1058,3 +1058,5 @@ module.exports = router;
 function generateOTP() {
   return Math.floor(1000 + Math.random() * 9000);
 }
+
+console.log(`Time: ${new Date().toTimeString()}`);
