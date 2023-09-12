@@ -1,7 +1,6 @@
 var express = require("express");
 const { saveOrderToPetpooja,updateOrderStatus} = require("../petpooja/pushMenu");
-const moment = require("moment-timezone");
-moment().tz("Asia/Kolkata").format();
+const moment = require("../../services/momentService").momentIndianTimeZone;
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
 
@@ -32,12 +31,13 @@ router.post("/createOrder", async (req, res) => {
         .select("*")
 
 
-      saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId).then((saveOrderToPetpoojaResponse) => {
+      saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId).then(async (saveOrderToPetpoojaResponse) => {
         console.log('.then block ran: ', saveOrderToPetpoojaResponse.data);
+        const getOrderDetailsAfterTrigger = await supabaseInstance.from("Order").select("*").eq("orderId", data.orderId).maybeSingle(); 
         res.status(200).json({
           success: true,
           data: {
-            data: data,
+            data: getOrderDetailsAfterTrigger?.data || data,
             orderitemData: orderData,
             pickupTime: orderScheduleData.data,
             saveOrderToPetpooja: saveOrderToPetpoojaResponse.data
@@ -1023,12 +1023,11 @@ router.get("/realtimeOrder/:outletId", function (req, res) {
     }
   )
   .subscribe()
-
-  request.on('close', () => {
-    console.log(`${outletId} Connection closed`);
-    supabaseInstance.removeChannel('custom-insert-channel') 
-  });
   res.write("retry: 10000\n\n");
+  //   request.on('close', () => {
+  //   console.log(`${outletId} Connection closed`);
+  //   supabaseInstance.removeChannel('custom-insert-channel') 
+  // });
 });
 
 router.post("/orderVerifyOTP", async (req, res) => {

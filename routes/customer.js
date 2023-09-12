@@ -4,8 +4,7 @@ const multer = require("multer");
 const upload = multer();
 var msg91config = require("../configs/msg91Config");
 const axios = require('axios');
-const moment = require("moment-timezone");
-moment().tz("Asia/Kolkata").format();
+const moment = require("../services/momentService").momentIndianTimeZone;
 
 var supabaseInstance = require("../services/supabaseClient").supabase;
 
