@@ -1,6 +1,7 @@
 var express = require("express");
 const { saveOrderToPetpooja,updateOrderStatus} = require("../petpooja/pushMenu");
-const moment = require("../../services/momentService").momentIndianTimeZone;
+// const moment = require("../../services/momentService").momentIndianTimeZone;
+const moment = require("moment-timezone");
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
 
@@ -12,7 +13,7 @@ router.post("/createOrder", async (req, res) => {
     const { data, error } = await supabaseInstance
       .from("Order")
       .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId, orderPriceBreakDown, orderOTP })
-      .select("*")
+      .select("*,outletId(outletName,logo,outletId)");
 
     if (data) {
       const orderId = data[0].orderId;
@@ -254,12 +255,14 @@ router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
 
 router.get("/getPendingOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const formattedTime = moment().format('HH:mm:ss');
+  const formattedTime = moment().tz("Asia/Kolkata").format('HH:mm:ss');
   const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
-  console.log("formattedTimeAdd2Hours",formattedTimeAdd2Hours)
+
+  console.log("formattedTime ==> ",formattedTime)
+  console.log("formattedTimeAdd2Hours ==> ",formattedTimeAdd2Hours)
 
   try {
-    let currentDate = moment().format('YYYY-MM-DD');
+    let currentDate = moment().tz("Asia/Kolkata").format('YYYY-MM-DD');
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
     .eq("order_schedule_date", currentDate)
     .lte("order_schedule_time", formattedTimeAdd2Hours)
@@ -879,7 +882,7 @@ router.post("/totalRevenue", async (req, res) => {
 
 router.post("/adminCardDashboard", async (req, res) => { 
   const { outlet_id,target_date,analyticalType} = req.body;
-  let currentTime = moment().format('HH:mm:ss');
+  let currentTime = moment().tz("Asia/Kolkata").format('HH:mm:ss');
   const formated_time = moment(currentTime, 'HH:mm:ss').add(45, "minute").format('HH:mm:ss'); 
   try {
     const { data, error } = await supabaseInstance.rpc('get_customer_dashboard_count', { target_date,outlet_id,analyticaltype: analyticalType,currenttime:currentTime,formated_time}).maybeSingle();

@@ -4,7 +4,8 @@ const multer = require("multer");
 const upload = multer();
 var msg91config = require("../configs/msg91Config");
 const axios = require('axios');
-const moment = require("../services/momentService").momentIndianTimeZone;
+// const moment = require("../services/momentService").momentIndianTimeZone;
+const moment = require("moment-timezone");
 
 var supabaseInstance = require("../services/supabaseClient").supabase;
 
@@ -135,7 +136,7 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
   try {
     const { data, error } = await supabaseInstance.from("Menu_Item").select("*, item_categoryid(*, parent_category_id(*)), FavoriteMenuItem!left(*)").eq("outletId", outletId).eq("FavoriteMenuItem.customerAuthUID", customerAuthUID);
     if (data) {
-      const outdetData = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).eq("Timing.dayId.day", moment().format("dddd")).maybeSingle();
+      const outdetData = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd")).maybeSingle();
 
       let outletdetails = {};
 
@@ -147,7 +148,7 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
 
         let flag = false;
         if (outletdetails?.Timing?.openTime && outletdetails?.Timing?.closeTime) {
-          const time = moment();
+          const time = moment().tz("Asia/Kolkata");
           const beforeTime = moment(outletdetails?.Timing?.openTime, 'hh:mm:ss');
           const afterTime = moment(outletdetails?.Timing?.closeTime, 'hh:mm:ss');
     
@@ -184,11 +185,11 @@ router.get("/homeData", async (req, res) => {
   const { categoryId, campusId } = req.query;
   try {
     const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId,isActive, isTimeExtended, Timing!left(*, dayId(*))")
-    .eq("Timing.dayId.day", moment().format("dddd"))
+    .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
     .eq("campusId",campusId).eq("isPublished",true).eq("isActive",true).limit(5);
 
     let PopularCafeteriasResponse = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId,isActive, isTimeExtended, Timing!left(*, dayId(*))")
-    .eq("Timing.dayId.day", moment().format("dddd"))
+    .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
     .eq("campusId",campusId).eq("isPublished",true).eq("isActive",true).limit(5);
 
     if (cafeteriasForYouDataResponse.data && PopularCafeteriasResponse.data) {
@@ -196,7 +197,7 @@ router.get("/homeData", async (req, res) => {
       let cafeteriasForYouData = cafeteriasForYouDataResponse.data.map(m => ({...m, Timing: m?.Timing?.find(f => f.dayId?.day)})).map(m => {
         let flag = false;
         if (m?.Timing?.openTime && m?.Timing?.closeTime) {
-          const time = moment();
+          const time = moment().tz("Asia/Kolkata");
           const beforeTime = moment(m?.Timing?.openTime, 'hh:mm:ss');
           const afterTime = moment(m?.Timing?.closeTime, 'hh:mm:ss');
     
@@ -214,7 +215,7 @@ router.get("/homeData", async (req, res) => {
       let PopularCafeterias = PopularCafeteriasResponse.data.map(m => ({...m, Timing: m?.Timing?.find(f => f.dayId?.day)})).map(m => {
         let flag = false;
         if (m?.Timing?.openTime && m?.Timing?.closeTime) {
-          const time = moment();
+          const time = moment().tz("Asia/Kolkata");
           const beforeTime = moment(m?.Timing?.openTime, 'hh:mm:ss');
           const afterTime = moment(m?.Timing?.closeTime, 'hh:mm:ss');
     
@@ -253,7 +254,7 @@ router.get("/getOutletList/:campusId", async (req, res) => {
   const itemsPerPage = parseInt(perPage) || 10;
   try {
     let query = supabaseInstance
-      .rpc('get_outlet_list', { category_id: categoryId ? categoryId : null,campus_id:campusId, week_day: moment().format('dddd') }, {count: "exact"})
+      .rpc('get_outlet_list', { category_id: categoryId ? categoryId : null,campus_id:campusId, week_day: moment().tz("Asia/Kolkata").format('dddd') }, {count: "exact"})
       .eq("is_published",true)
       .eq("is_active",true)
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
@@ -269,7 +270,7 @@ router.get("/getOutletList/:campusId", async (req, res) => {
       let outletData = data.map(m => {
         let flag = false;
         if (m?.open_time && m?.close_time) {
-          const time = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
+          const time = moment().tz("Asia/Kolkata");
           const beforeTime = moment(m?.open_time, 'hh:mm:ss');
           const afterTime = moment(m?.close_time, 'hh:mm:ss');
     
@@ -414,6 +415,33 @@ router.post("/updateCustomer/:customerAuthUID", async (req, res) => {
   }
 });
 
+router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
+  const {orderId} =req.params;
+  res.writeHead(200, {
+    Connection: "keep-alive",
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+  });
+
+  supabaseInstance.channel('customer-insert-channel')
+  .on(
+    'postgres_changes',
+    { event: 'UPDATE', schema: 'public', table: 'Order', filter: `orderId=eq.${orderId}` },
+    (payload) => {
+      console.log("payload==>",payload)
+      res.write(
+        "data:" +
+          JSON.stringify({payload})
+      );      
+    }
+  )
+  .subscribe()
+  res.write("retry: 10000\n\n");
+  //   request.on('close', () => {
+  //   console.log(`${outletId} Connection closed`);
+  //   supabaseInstance.removeChannel('custom-insert-channel') 
+  // });
+});
 
 const MSG91_AUTH_KEY = msg91config.config.auth_key;
 const MSG91_OTP_ENDPOINT = 'https://control.msg91.com/api/v5/otp';
