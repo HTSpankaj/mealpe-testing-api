@@ -256,8 +256,9 @@ router.get("/getPendingOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
   const formattedTime = moment().format('HH:mm:ss');
   const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
-  console.log("formattedTimeAdd2Hours",formattedTimeAdd2Hours)
-
+  console.log("formattedTime",formattedTime);
+  console.log("formattedTimeAdd2Hours",formattedTimeAdd2Hours);
+  
   try {
     let currentDate = moment().format('YYYY-MM-DD');
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
@@ -1055,3 +1056,5 @@ module.exports = router;
 function generateOTP() {
   return Math.floor(1000 + Math.random() * 9000);
 }
+
+console.log(`Time: ${new Date().toTimeString()}`);
