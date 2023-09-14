@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
+var {outletSelectString} = require("../../services/supabaseCommonValues").value;
 const multer = require("multer");
 const upload = multer();
 const axios = require('axios');
@@ -156,7 +157,7 @@ router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) =
       const publickUrlresponse = await supabaseInstance.storage.from('fssai-license').getPublicUrl(data?.path);
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const outletData = await supabaseInstance.from("Outlet").update({ FSSAI_License:`${publicUrl}?${new Date().getTime()}`}).eq("outletId", outletId).select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)").maybeSingle();
+        const outletData = await supabaseInstance.from("Outlet").update({ FSSAI_License:`${publicUrl}?${new Date().getTime()}`}).eq("outletId", outletId).select(outletSelectString).maybeSingle();
         res.status(200).json({
           success: true,
           data: outletData.data,
@@ -463,7 +464,7 @@ router.post("/updatePetPooja/:outletId", async (req, res) => {
     const {data, error} = await supabaseInstance
         .from("Outlet")
         .update(postbody)
-        .select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)")
+        .select(outletSelectString)
         .eq("outletId",outletId)
 
     if (data) {
@@ -498,7 +499,7 @@ router.post("/upsertLogoImage",upload.single('file'), async (req, res) => {
       const publickUrlresponse = await supabaseInstance.storage.from('logo-images').getPublicUrl(data?.path);
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const outletData = await supabaseInstance.from("Outlet").update({ logo:`${publicUrl}?${new Date().getTime()}`}).eq("outletId", outletId).select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)").maybeSingle();
+        const outletData = await supabaseInstance.from("Outlet").update({ logo:`${publicUrl}?${new Date().getTime()}`}).eq("outletId", outletId).select(outletSelectString).maybeSingle();
 
         if(outletData?.isPrimaryOutlet === true){
           await supabaseInstance.from("Outlet").update({ logo:`${publicUrl}?${new Date().getTime()}`}).eq("primaryOutletId", outletData.primaryOutletId).select("*").maybeSingle();
@@ -535,7 +536,7 @@ router.post("/upsertHeaderImage",upload.single('file'), async (req, res) => {
       const publickUrlresponse = await supabaseInstance.storage.from('header-images').getPublicUrl(data?.path);
       if (publickUrlresponse?.data?.publicUrl) {
         const publicUrl = publickUrlresponse?.data?.publicUrl;
-        const outletData = await supabaseInstance.from("Outlet").update({ headerImage:`${publicUrl}?${new Date().getTime()}`}).eq("outletId", outletId).select("*, bankDetailsId(*), outletAdminId(*), Tax!left(*),Timing!left(*),Restaurant_category!left(*)").maybeSingle();
+        const outletData = await supabaseInstance.from("Outlet").update({ headerImage:`${publicUrl}?${new Date().getTime()}`}).eq("outletId", outletId).select(outletSelectString).maybeSingle();
         res.status(200).json({
           success: true,
           data: outletData.data,

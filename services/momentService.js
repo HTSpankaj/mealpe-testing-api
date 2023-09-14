@@ -1,13 +1,6 @@
 const moment = require("moment-timezone");
 const momentIndianTimeZone = (a,b) => {
-    let _moment = moment();
-    if(a && b) {
-        console.log("====> a , b");
-        _moment = moment(a, b);
-    } else if(a) {
-        console.log("====> a");
-        _moment = moment(a);
-    }
+    let _moment = (a && b) ? moment(a,b) : a ? moment(a) : moment()
     return _moment.tz("Asia/Kolkata")
 };
 

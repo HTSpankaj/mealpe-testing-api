@@ -7,12 +7,12 @@ var supabaseInstance = require("../../services/supabaseClient").supabase;
 
 
 router.post("/createOrder", async (req, res) => {
-  const { customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId, items, pickupTime, orderPriceBreakDown } = req.body;
+  const { customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId, items, pickupTime, orderPriceBreakDown,isScheduleNow } = req.body;
   try {
     const orderOTP = generateOTP();
     const { data, error } = await supabaseInstance
       .from("Order")
-      .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId, orderPriceBreakDown, orderOTP })
+      .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId, orderPriceBreakDown, orderOTP,isScheduleNow })
       .select("*,outletId(outletName,logo,outletId)");
 
     if (data) {
@@ -537,7 +537,7 @@ router.get("/getReadyOrders/:outletId", async (req, res) => {
 
 router.get("/getHistoryOrders/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const { orderSequenceId, startDate, endDate,page, perPage  } = req.query;
+  const { orderSequenceId, startDate, endDate,page, perPage,orderType  } = req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
 
@@ -548,7 +548,16 @@ router.get("/getHistoryOrders/:outletId", async (req, res) => {
     .order("order_schedule_time",{ascending:false})
     .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
 
-  
+    
+    if (orderType === "dinein") {
+      query = query.eq("is_dine_in", true)
+    } else if (orderType === "pickup") {
+        query = query.eq("is_pick_up", true)
+    } else if (orderType === "delivery") {
+      query = query.eq("is_delivery", true)
+    }
+
+
     if (orderSequenceId) {
       query = query.ilike("order_sequence_id", `%${orderSequenceId}%`);
     }
@@ -629,7 +638,7 @@ router.get("/getHistoryOrders/:outletId", async (req, res) => {
 
 router.get("/getCancelledOrders/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const { page, perPage,startDate,endDate,orderSequenceId } = req.query; // Extract query parameters
+  const { page, perPage,startDate,endDate,orderSequenceId, orderType } = req.query; // Extract query parameters
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
@@ -639,6 +648,16 @@ router.get("/getCancelledOrders/:outletId", async (req, res) => {
     .order("order_schedule_date",{ascending:false})
     .order("order_schedule_time",{ascending:false})
     .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+
+      
+    if (orderType === "dinein") {
+      query = query.eq("is_dine_in", true)
+    } else if (orderType === "pickup") {
+        query = query.eq("is_pick_up", true)
+    } else if (orderType === "delivery") {
+      query = query.eq("is_delivery", true)
+    }
+
 
     if (orderSequenceId) {
       query = query.ilike("order_sequence_id", `%${orderSequenceId}%`);
@@ -1006,7 +1025,7 @@ router.get("/topThreeMenuItem/:outletId", async (req, res) => {
   }
 });
 
-router.get("/realtimeOrder/:outletId", function (req, res) {
+router.get("/realtimePendingOrder/:outletId", function (req, res) {
   const {outletId} =req.params;
   res.writeHead(200, {
     Connection: "keep-alive",
@@ -1058,5 +1077,3 @@ module.exports = router;
 function generateOTP() {
   return Math.floor(1000 + Math.random() * 9000);
 }
-
-console.log(`Time: ${new Date().toTimeString()}`);
