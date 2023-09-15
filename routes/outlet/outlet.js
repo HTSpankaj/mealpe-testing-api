@@ -241,7 +241,7 @@ router.get("/getOutletListByRestaurantId/:outletId", async (req, res) => {
   try {
     let query = supabaseInstance
       .from("Outlet")
-      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
+      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*),Timing(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outletName", { ascending: true })
       .eq("outletId", outletId)

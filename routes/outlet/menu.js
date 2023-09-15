@@ -451,4 +451,26 @@ router.delete("/deleteCategory/:categoryid", async (req, res) => {
   }
 });
 
+router.post("/deleteMenuItem/:itemid", async (req, res) => {
+  const { itemid } = req.params;
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Menu_Item")
+      .update({isDelete:true})
+      .select("*")
+      .eq("itemid",itemid)
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        message:"Menu Item Updated"
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
 module.exports = router;

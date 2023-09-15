@@ -1033,7 +1033,7 @@ router.get("/realtimePendingOrder/:outletId", function (req, res) {
     "Cache-Control": "no-cache",
   });
 
-  supabaseInstance.channel('custom-insert-channel')
+  supabaseInstance.channel(`custom-insert-channel-${outletId}`)
   .on(
     'postgres_changes',
     { event: 'INSERT', schema: 'public', table: 'Order', filter: `outletId=eq.${outletId}` },
@@ -1048,7 +1048,7 @@ router.get("/realtimePendingOrder/:outletId", function (req, res) {
   res.write("retry: 10000\n\n");
   //   request.on('close', () => {
   //   console.log(`${outletId} Connection closed`);
-  //   supabaseInstance.removeChannel('custom-insert-channel') 
+  //   supabaseInstance.removeChannel(`custom-insert-channel-${outletId}`) 
   // });
 });
 

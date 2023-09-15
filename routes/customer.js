@@ -134,7 +134,7 @@ router.post("/userlogin", async (req, res) => {
 router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
   const { outletId,customerAuthUID } =req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Menu_Item").select("*, item_categoryid(*, parent_category_id(*)), FavoriteMenuItem!left(*)").eq("outletId", outletId).eq("FavoriteMenuItem.customerAuthUID", customerAuthUID);
+    const { data, error } = await supabaseInstance.from("Menu_Item").select("*, item_categoryid(*, parent_category_id(*)), FavoriteMenuItem!left(*)").eq("isDelete",false).eq("outletId", outletId).eq("FavoriteMenuItem.customerAuthUID", customerAuthUID);
     if (data) {
       const outdetData = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd")).maybeSingle();
 
@@ -423,7 +423,7 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
     "Cache-Control": "no-cache",
   });
 
-  supabaseInstance.channel('customer-insert-channel')
+  supabaseInstance.channel(`customer-insert-channel-${orderId}`)
   .on(
     'postgres_changes',
     { event: 'UPDATE', schema: 'public', table: 'Order', filter: `orderId=eq.${orderId}` },
@@ -439,8 +439,33 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
   res.write("retry: 10000\n\n");
   //   request.on('close', () => {
   //   console.log(`${outletId} Connection closed`);
-  //   supabaseInstance.removeChannel('custom-insert-channel') 
+  //   supabaseInstance.removeChannel(`customer-insert-channel-${orderId}`) 
   // });
+});
+
+router.get("/getLiveCustomerOrders/:customerAuthUID", async (req, res) => {
+  const { customerAuthUID } = req.params;
+  try {
+
+    const { data, error } = await supabaseInstance
+    .from("Order")
+    .select("*,outletId(outletName,logo)")
+    .not("outletId", "is", null)
+    .eq("orderStatusId",4)
+    .eq("customerAuthUID",customerAuthUID)
+
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
 });
 
 const MSG91_AUTH_KEY = msg91config.config.auth_key;
