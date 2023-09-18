@@ -1,5 +1,5 @@
 const config = {
-    auth_key: "402630Twb4yUBZ8e64c7bcacP1",
+    auth_key: "402858AGD4HFBwoV65042ca9P1",
     senderId:""
 };
 

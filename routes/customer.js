@@ -65,9 +65,10 @@ router.post("/signUp", async (req, res) => {
 
 
 router.post("/sendOTP", async (req, res) => {
-  const { email } = req.body;
+  const { mobile} = req.body;
   try {
-    sendEmail(email).then((responseData) => {
+   
+    sendOTP(mobile).then((responseData) => {
       console.log('.then block ran: ', responseData);
       res.status(200).json({
         success: true,
@@ -349,8 +350,11 @@ router.get("/getCustomer/:outletId", async (req, res) => {
       // .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("created_at",{ascending:false})
 
+    let sortQuery = supabaseInstance
+      .rpc('get_distinct_customer_name', { outlet_id: outletId },{count:"exact"})
+
       if(sort){
-        query =query.order("customername",{ascending:sort == 'true' ? true : false})
+        query =sortQuery.order("customername",{ascending:sort == 'true' ? true : false})
       }
   
       if(searchText){
@@ -468,6 +472,33 @@ router.get("/getLiveCustomerOrders/:customerAuthUID", async (req, res) => {
   }
 });
 
+router.post("/userGooglelogin", async (req, res) => {
+    const { token } = req.body;
+try {
+  if (!token) {
+    throw new Error("Token is missing in the request.");
+  }
+
+  const { data, error } = await supabaseInstance.auth.signInWithIdToken({
+    provider: 'google',
+    token: token,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (data) {
+    res.status(200).json({ success: true, data: data });
+  } else {
+    throw new Error("Authentication failed.");
+  }
+} catch (error) {
+  console.error("Authentication error:", error);
+  res.status(500).json({ success: false, error: error.message });
+}
+});
+
 const MSG91_AUTH_KEY = msg91config.config.auth_key;
 const MSG91_OTP_ENDPOINT = 'https://control.msg91.com/api/v5/otp';
 
@@ -497,11 +528,11 @@ const MSG91_OTP_VERIFY_ENDPOINT = 'https://api.msg91.com/api/v5/otp/verify';
 
 async function verifyOTP(mobile, otp) {
   try {
-    // const response = await axios.post(MSG91_OTP_VERIFY_ENDPOINT, {
-    //   authkey: MSG91_AUTH_KEY,
-    //   mobile: mobile ,
-    //   otp: 123456,
-    // });
+    const response = await axios.post(MSG91_OTP_VERIFY_ENDPOINT, {
+      authkey: MSG91_AUTH_KEY,
+      mobile: mobile ,
+      otp: otp,
+    });
 
     // const responseData = response.data;
     // console.log("response.data",response.data)
@@ -544,10 +575,20 @@ async function sendEmail( email) {
       data: {
         recipients: [
           {
-            to: [{ email: email }],
+            to: [{email: email}],
           },
         ],
-      },
+        from: {name: 'MSG91', email: 'mealpe2023@gmail.com'},
+       reply_to: [{email: 'mealpe2023@gmail.com'}],
+        template_id: 'YOUR_UNIQUE_TEMPLATE_NAME'
+      }
+      //   recipients: [
+      //     {
+      //       to: [{ email:email }],
+      //     },
+      //   ],
+      //   from: {name: 'Mealpe', email: 'mealpe2023@gmail.com'},
+      // },
     });
 
     const responseData = response.data;

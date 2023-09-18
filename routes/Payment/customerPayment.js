@@ -14,7 +14,7 @@ router.get('/', (req, res, next) => {
 
 router.post('/initiate-payment', async (req, res, next) => {
 
-    const txnid = 'EBZTestTxn0001';
+    const txnid = 'EBZTestTxn0005';
     const amount = '2.1';
     const productinfo = 'sample productinfo';
     const firstname = 'Pankaj';
@@ -22,9 +22,9 @@ router.post('/initiate-payment', async (req, res, next) => {
     const email = 'pankaj@gmail.com';
     const surl = 'http://localhost:8000/payment/customer/success-payment';
     const furl = 'http://localhost:8000/payment/customer/failure-payment';
-    
-    const _generateHash = generateHash(txnid, amount, productinfo, this.name, email, "", "", "", "", "", "", "", "", "", "");
-    // console.log("_generateHash => ", _generateHash);
+
+    const _generateHash = generateHash(txnid, amount, productinfo, firstname, email, "", "", "", "", "", "", "", "", "", "");
+    console.log("_generateHash => ", _generateHash);
 
     const encodedParams = new URLSearchParams();
     encodedParams.set('key', easebuzzConfig.key);
@@ -50,18 +50,18 @@ router.post('/initiate-payment', async (req, res, next) => {
     encodedParams.set('state', '');
     encodedParams.set('country', '');
     encodedParams.set('zipcode', '');
-    encodedParams.set('show_payment_mode', '');
-    encodedParams.set('split_payments', '');
-    encodedParams.set('request_flow', '');
-    encodedParams.set('sub_merchant_id', '');
-    encodedParams.set('payment category', '');
-    encodedParams.set('account_no', '');
+    // encodedParams.set('show_payment_mode', '');
+    // encodedParams.set('split_payments', '');
+    // encodedParams.set('request_flow', '');
+    // encodedParams.set('sub_merchant_id', '');
+    // encodedParams.set('payment category', '');
+    // encodedParams.set('account_no', '');
 
-    console.log(encodedParams);
+    // console.log(encodedParams);
 
     const options = {
         method: 'POST',
-        url: 'https://testpay.easebuzz.in/payment/initiateLink',
+        url: `${easebuzzConfig.easebuzzBaseUrl}/payment/initiateLink`,
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             Accept: 'application/json'
@@ -69,20 +69,26 @@ router.post('/initiate-payment', async (req, res, next) => {
         data: encodedParams,
     };
 
+    
+    console.log("initiateLink URL => ", `${easebuzzConfig.easebuzzBaseUrl}/payment/initiateLink`);
     try {
         const { data } = await axios.request(options);
-        console.log(data);
-        res.send({success: true, data})
+        if (data.status) {
+            console.log("data => ", data);
+            res.send({ success: true, data })
+        } else {
+            throw data;
+        }
     } catch (error) {
-        console.error(error);
-        res.send({success: false, error})
+        console.error("error => ", error);
+        res.send({ success: false, error })
     }
 })
 
 router.post('/success-payment', (req, res, next) => {
     const postBody = req.body;
-    const query    = req.query;
-    const params   = req.params;
+    const query = req.query;
+    const params = req.params;
 
     console.log("s-postBody => ", postBody);
     console.log("s-query =>    ", query);
@@ -93,8 +99,8 @@ router.post('/success-payment', (req, res, next) => {
 
 router.post('/failure-payment', (req, res, next) => {
     const postBody = req.body;
-    const query    = req.query;
-    const params   = req.params;
+    const query = req.query;
+    const params = req.params;
 
     console.log("f-postBody => ", postBody);
     console.log("f-query =>    ", query);
@@ -105,12 +111,15 @@ router.post('/failure-payment', (req, res, next) => {
 
 module.exports = router;
 
-function generateHash(txnid, amount, productinfo, name, email, udf1, udf2, udf3, udf4, udf5, udf6, udf7, udf8, udf9, udf10) {
-    var hashstring = easebuzzConfig.key + "|" + txnid + "|" + amount + "|" + productinfo + "|" + name + "|" + email +
-      "|" + udf1 + "|" + udf2 + "|" + udf3 + "|" + udf4 + "|" + udf5 + "|" + udf6 + "|" + udf7 + "|" + udf8 + "|" + udf9 + "|" + udf10;
-    hashstring += "|" + easebuzzConfig.salt;
+const generateHash = (txnid, amount, productinfo, name, email, udf1, udf2, udf3, udf4, udf5, udf6, udf7, udf8, udf9, udf10)  => {
+    // key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5|udf6|udf7|udf8|udf9|udf10|salt
 
-    // console.log("hashstring => ", hashstring);
+    var hashstring = easebuzzConfig.key + "|" + txnid + "|" + amount + "|" + productinfo + "|" + name + "|" + email +
+    "|" + udf1 + "|" + udf2 + "|" + udf3 + "|" + udf4 + "|" + udf5 + "|" + udf6 + "|" + udf7 + "|" + udf8 + "|" + udf9 + "|" + udf10 + "|" + easebuzzConfig.salt
     
-    return SHA512(hashstring);
-  }
+    // (amount*100).toFixed(2)
+
+    console.log("hashstring => ", hashstring);
+
+    return SHA512(hashstring).toString();
+}
