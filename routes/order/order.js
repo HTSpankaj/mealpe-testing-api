@@ -1058,6 +1058,8 @@ router.post("/orderVerifyOTP", async (req, res) => {
      const {data,error} = await supabaseInstance.from("Order").select("*").eq("orderOTP",otp).eq("orderId",orderId).maybeSingle();
 
      if (data) {
+      const readyOrderStatus =await supabaseInstance.from("Order").update({orderStatusId:10}).select("*").eq("orderId",orderId).maybeSingle();
+      console.log("readyOrderStatus",readyOrderStatus)
       res.status(200).json({
         success: true,
         message:"OTP Verfiy"

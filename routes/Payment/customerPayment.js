@@ -87,7 +87,7 @@ router.post('/initiate-payment', async (req, res, next) => {
                     res.status(200).json({success: false, response: error})
                 }) 
             }else{
-                throw error
+                throw transactionResponse.error
             }
         } catch (error) {
             console.error("error => ", error);  
