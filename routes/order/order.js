@@ -1027,29 +1027,39 @@ router.get("/topThreeMenuItem/:outletId", async (req, res) => {
 
 router.get("/realtimePendingOrder/:outletId", function (req, res) {
   const {outletId} =req.params;
-  res.writeHead(200, {
-    Connection: "keep-alive",
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
+
+  res.statusCode = 200;
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("connection", "keep-alive");
+  res.setHeader("Content-Type", "text/event-stream"); 
+
+  supabaseInstance.channel(`custom-insert-channel-${outletId}`).on('postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'Order', filter: `outletId=eq.${outletId}` },
+    async (payload) => {
+      setTimeout(async () => {
+        let orderData = await supabaseInstance.rpc("get_orders_for_outlet",{outlet_uuid: outletId}).eq("order_id",payload.new.orderId).select("*").maybeSingle();
+        res.write('event: neworder\n');  //* new order Event
+        res.write(`data: ${JSON.stringify(orderData?.data || null)}`);
+        res.write("\n\n");
+      }, 5000);
+    }
+  ).subscribe((status) => {
+    console.log("subscribe status for outletId => ", outletId);
   });
 
-  supabaseInstance.channel(`custom-insert-channel-${outletId}`)
-  .on(
-    'postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'Order', filter: `outletId=eq.${outletId}` },
-    (payload) => {
-      res.write(
-        "data:" +
-          JSON.stringify({payload})
-      );      
-    }
-  )
-  .subscribe()
-  res.write("retry: 10000\n\n");
-  //   request.on('close', () => {
-  //   console.log(`${outletId} Connection closed`);
-  //   supabaseInstance.removeChannel(`custom-insert-channel-${outletId}`) 
-  // });
+    res.write("retry: 10000\n\n");
+    req.on('close', () => {
+      supabaseInstance.channel(`custom-insert-channel-${outletId}`).unsubscribe()
+      // supabaseInstance.removeChannel(`custom-insert-channel-${outletId}`)
+      .then(res => {
+        console.log(".then => ", res);
+      }).catch((err) => {
+        console.log(".catch => ", err);
+      }).finally(() => {
+        console.log(`${outletId} Connection closed`);
+      });
+    });
 });
 
 router.post("/orderVerifyOTP", async (req, res) => {
@@ -1079,3 +1089,8 @@ module.exports = router;
 function generateOTP() {
   return Math.floor(1000 + Math.random() * 9000);
 }
+
+
+// supabaseInstance.rpc("get_orders_for_outlet",{outlet_uuid: '08d06cbe-27d1-4f4b-87e8-38e341622625'}).eq("order_id",'438345fb-7b64-4315-9dc8-0ddbb83cf6fe').select("*").maybeSingle().then(res => {
+//   console.log("res => ", res);
+// })

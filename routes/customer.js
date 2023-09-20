@@ -421,30 +421,36 @@ router.post("/updateCustomer/:customerAuthUID", async (req, res) => {
 
 router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
   const {orderId} =req.params;
-  res.writeHead(200, {
-    Connection: "keep-alive",
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-  });
+  res.statusCode = 200;
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("connection", "keep-alive");
+  res.setHeader("Content-Type", "text/event-stream"); 
 
   supabaseInstance.channel(`customer-insert-channel-${orderId}`)
   .on(
     'postgres_changes',
     { event: 'UPDATE', schema: 'public', table: 'Order', filter: `orderId=eq.${orderId}` },
     (payload) => {
-      console.log("payload==>",payload)
-      res.write(
-        "data:" +
-          JSON.stringify({payload})
-      );      
+      res.write('event: updateorder\n');  //* Update order Event
+      res.write(`data: ${JSON.stringify(payload?.new || null)}`);
+      res.write("\n\n");    
     }
-  )
-  .subscribe()
+  ).subscribe((status) => {
+    console.log("subscribe status for orderId => ", orderId);
+  })
+
   res.write("retry: 10000\n\n");
-  //   request.on('close', () => {
-  //   console.log(`${outletId} Connection closed`);
-  //   supabaseInstance.removeChannel(`customer-insert-channel-${orderId}`) 
-  // });
+    req.on('close', () => {
+      supabaseInstance.channel(`customer-insert-channel-${orderId}`).unsubscribe()
+      .then(res => {
+        console.log(".then => ", res);
+      }).catch((err) => {
+        console.log(".catch => ", err);
+      }).finally(() => {
+        console.log(`${orderId} Connection closed`);
+      });
+    });
 });
 
 router.get("/getLiveCustomerOrders/:customerAuthUID", async (req, res) => {
