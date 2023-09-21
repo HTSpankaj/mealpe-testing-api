@@ -174,43 +174,32 @@ router.post("/upsertFssaiLicensePhoto",upload.single('file'), async (req, res) =
 })
 
 router.get("/getPrimaryOutletList", async (req, res) => {
-  const { page, perPage, searchText } = req.query;
+  const { page, perPage,searchText,searchCity,sortBy } = req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
+     let query = supabaseInstance
+      .from("Outlet")
+      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
+      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
+      // .order("outletName", { ascending: true })
+      .eq("isPrimaryOutlet",true)
 
-    if(searchText){
-      const { data, error, count } = await supabaseInstance
-      .from("Outlet")
-      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
-      // .ilike(`outletName,${searchText}`)
-      // .or(`address.ilike.${searchText},outletName.ilike.${searchText}`)
-      .or(`address.ilike.%${searchText}%,outletName.ilike.%${searchText}%`)
-      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-      .order("outletName", { ascending: true })
-      .eq("isPrimaryOutlet",true)
-      if (data) {
-        const totalPages = Math.ceil(count / itemsPerPage);
-        res.status(200).json({
-          success: true,
-          data,
-          meta: {
-            page: pageNumber,
-            perPage: itemsPerPage,
-            totalPages,
-            totalCount: count,
-          },
-        });
-      }else{
-        throw error
+      if(searchText){
+        query = query.or(`address.ilike.%${searchText}%,outletName.ilike.%${searchText}%`);
       }
-    }else{
-      const { data, error, count } = await supabaseInstance
-      .from("Outlet")
-      .select("*, restaurantId(*), campusId(*),outletAdminId(*), bankDetailsId (*),cityId(*)), Tax!left(taxid, taxname, tax)", { count: "exact" })
-      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-      .order("outletName", { ascending: true })
-      .eq("isPrimaryOutlet",true)
+
+      if (searchCity) {
+        query = query.eq("cityId",searchCity);
+       }
+  
+       if (sortBy === "name") {
+        query = query.order("outletName", { ascending: true });
+       }else if(sortBy === "date"){
+        query = query.order("created_at", { ascending: false });
+       }
+
+      const { data, error, count } = await query;
 
       if (data) {
         const totalPages = Math.ceil(count / itemsPerPage);
@@ -227,7 +216,6 @@ router.get("/getPrimaryOutletList", async (req, res) => {
       }else{
         throw error
       }
-    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

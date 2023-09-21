@@ -7,12 +7,12 @@ var supabaseInstance = require("../../services/supabaseClient").supabase;
 
 
 router.post("/createOrder", async (req, res) => {
-  const { customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId, items, pickupTime, orderPriceBreakDown,isScheduleNow,txnid } = req.body;
+  const { customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId, items, pickupTime, orderPriceBreakDown,isScheduleNow,txnid,basePrice } = req.body;
   try {
     const orderOTP = generateOTP();
     const { data, error } = await supabaseInstance
       .from("Order")
-      .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId, orderPriceBreakDown, orderOTP,isScheduleNow,txnid })
+      .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId, orderPriceBreakDown, orderOTP,isScheduleNow,txnid ,basePrice})
       .select("*,outletId(outletName,logo,outletId)");
 
     if (data) {

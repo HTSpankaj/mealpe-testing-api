@@ -16,21 +16,24 @@ router.get('/', (req, res, next) => {
 
 router.post('/initiate-payment', async (req, res, next) => {
 
-    const {amount,productinfo,firstname,phone,email,customerAuthUID,outletId} =req.body;
+    const { amount, productinfo, firstname, phone, email, customerAuthUID, outletId } = req.body;
 
     const surl = `${req.protocol}://${req.get('host')}/payment/customer/success-payment`;
     const furl = `${req.protocol}://${req.get('host')}/payment/customer/failure-payment`;
 
-    if( amount && productinfo && firstname && phone && email && customerAuthUID && outletId){
+    if (amount && productinfo && firstname && phone && email && customerAuthUID && outletId) {
 
         try {
             let encodedParams = new URLSearchParams();
-            const transactionResponse = await supabaseInstance.from("Transaction").insert({amount,productinfo,firstname,phone,email,customerAuthUID,outletId}).select("*").maybeSingle();
-            
-            if(transactionResponse?.data){
-                console.log("transactionResponse=>",transactionResponse);
+            const transactionResponse = await supabaseInstance.from("Transaction").insert({ amount, productinfo, firstname, phone, email, customerAuthUID, outletId }).select("*").maybeSingle();
 
-                const _generateHash = generateHash(transactionResponse?.data?.txnid, amount, productinfo, firstname, email, "", "", "", "", "", "", "", "", "", "");
+            if (transactionResponse?.data) {
+                console.log("transactionResponse=>", transactionResponse);
+
+
+                var hashstring = easebuzzConfig.key + "|" + transactionResponse?.data?.txnid + "|" + amount + "|" + productinfo + "|" + firstname + "|" + email + "|||||||||||" + easebuzzConfig.salt
+
+                const _generateHash = generateHash(hashstring);
                 // console.log("_generateHash => ", _generateHash);
 
                 encodedParams.set('key', easebuzzConfig.key);
@@ -64,7 +67,7 @@ router.post('/initiate-payment', async (req, res, next) => {
                 // encodedParams.set('account_no', '');
 
                 // console.log(encodedParams);
-                
+
                 const options = {
                     method: 'POST',
                     url: `${easebuzzConfig.easebuzzBaseUrl}/payment/initiateLink`,
@@ -76,24 +79,24 @@ router.post('/initiate-payment', async (req, res, next) => {
                 };
 
                 axios.request(options).then(async (initiateLinkResponse) => {
-                    const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({initiateLink_post_body: encodedParamsToObject(encodedParams), initiateLink_response: initiateLinkResponse.data}).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
-                    console.log("transactionUpdateResponse in then =>",transactionUpdateResponse);
+                    const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body: encodedParamsToObject(encodedParams), initiateLink_response: initiateLinkResponse.data }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
+                    console.log("transactionUpdateResponse in then =>", transactionUpdateResponse);
 
-                    res.status(200).json({success: true, response:initiateLinkResponse?.data})
+                    res.status(200).json({ success: true, response: initiateLinkResponse?.data })
                 }).catch(async (error) => {
                     console.error(error);
-                    const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({initiateLink_post_body: encodedParamsToObject(encodedParams), initiateLink_error: error}).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
-                    console.log("transactionUpdateResponse in error=>",transactionUpdateResponse)
-                    res.status(200).json({success: false, response: error})
-                }) 
-            }else{
+                    const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body: encodedParamsToObject(encodedParams), initiateLink_error: error }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
+                    console.log("transactionUpdateResponse in error=>", transactionUpdateResponse)
+                    res.status(200).json({ success: false, response: error })
+                })
+            } else {
                 throw transactionResponse.error
             }
         } catch (error) {
-            console.error("error => ", error);  
+            console.error("error => ", error);
             res.status(500).json({ success: false, error: error });
         }
-    } else{
+    } else {
         res.status(500).json({ success: false, error: "Invalid Post Body" });
     }
 })
@@ -122,18 +125,62 @@ router.post('/failure-payment', (req, res, next) => {
     res.send({ success: true, message: "Response from payment/customerPayment.js" });
 })
 
+router.post('/request-refund', async (req, res, next) => {
+
+    const { amount, refund_amount, phone, email,orderId } = req.body;
+
+
+    if (amount && refund_amount && phone && email,orderId) {
+
+        try {
+            const orderResponse = await supabaseInstance.from("Order").select("*,customerAuthUID(*),outletId(*)").eq("orderId", orderId).maybeSingle();
+    
+            if (orderResponse?.data) {
+                console.log("orderResponse=>", orderResponse);
+
+                var hashstring = easebuzzConfig.key + "|" + orderResponse?.data?.txnid + "|" + amount + "|" + refund_amount + "|" + email + "|" + phone + "|||||||||||" + easebuzzConfig.salt
+
+                const _generateHash = generateHash(hashstring);
+                 console.log("_generateHash => ", _generateHash);
+                // const options = {
+                //     method: 'POST',
+                //     url: `${easebuzzConfig.easebuzzBaseUrl}/transaction/v1/refund`,
+                //     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                //     data: {
+                //         key: easebuzzConfig.key,
+                //         txnid: orderResponse.data.txnid,
+                //         refund_amount: refund_amount,
+                //         phone: phone,
+                //         email: email,
+                //         amount: amount,
+                //         hash: _generateHash
+                //     }
+                // };
+
+                // axios.request(options).then(async (response) => {
+                //     console.log("refund Response in then =>", response);
+                //     res.status(200).json({ success: true, response: response?.data })
+                // }).catch(async (error) => {
+                //     console.error(error);
+                //     console.log("resfund Response in error=>", response)
+                //     res.status(200).json({ success: false, response: error })
+                // })
+            } else {
+                throw orderResponse.error
+            }
+        } catch (error) {
+            console.error("error => ", error);
+            res.status(500).json({ success: false, error: error });
+        }
+    } else {
+        res.status(500).json({ success: false, error: "Invalid Post Body" });
+    }
+})
+
+
 module.exports = router;
 
-const generateHash = (txnid, amount, productinfo, name, email, udf1, udf2, udf3, udf4, udf5, udf6, udf7, udf8, udf9, udf10)  => {
-    // key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5|udf6|udf7|udf8|udf9|udf10|salt
-
-    var hashstring = easebuzzConfig.key + "|" + txnid + "|" + amount + "|" + productinfo + "|" + name + "|" + email +
-    "|" + udf1 + "|" + udf2 + "|" + udf3 + "|" + udf4 + "|" + udf5 + "|" + udf6 + "|" + udf7 + "|" + udf8 + "|" + udf9 + "|" + udf10 + "|" + easebuzzConfig.salt
-    
-    // (amount*100).toFixed(2)
-
-    console.log("hashstring => ", hashstring);
-
+const generateHash = (hashstring) => {
     return SHA512(hashstring).toString();
 }
 
@@ -146,5 +193,5 @@ function encodedParamsToObject(encodedParams) {
         const element = ent.next();
         obj[element.value[0]] = element.value[1];
     }
-    return {...obj};
+    return { ...obj };
 }
