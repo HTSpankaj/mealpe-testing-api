@@ -109,6 +109,7 @@ async function sendEmail(email_to, email_cc, email_bcc, emailVariables, template
 }
 
 async function sendMobileSMS(mobile, template_id) {
+    //* mobile: [{ mobiles: mobile, VAR1: 'VALUE1', VAR2: 'VALUE2' }]
     try {
         const options = {
             method: 'POST',
@@ -120,7 +121,7 @@ async function sendMobileSMS(mobile, template_id) {
             },
             data: {
                 template_id: template_id,
-                short_url: '1 (On) or 0 (Off)',
+                short_url: '0',
                 // recipients: [{ mobiles: mobile, VAR1: 'VALUE1', VAR2: 'VALUE2' }]
                 recipients: mobile
             }

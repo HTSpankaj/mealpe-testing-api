@@ -2,7 +2,7 @@ var express = require("express");
 const { saveOrderToPetpooja,updateOrderStatus} = require("../petpooja/pushMenu");
 // const moment = require("../../services/momentService").momentIndianTimeZone;
 const moment = require("moment-timezone");
-const { sendMobileSMS } = require("../../services/msf91Service");
+const { sendMobileSMS,sendEmail } = require("../../services/msf91Service");
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
 var msg91config = require("../../configs/msg91Config");
@@ -39,9 +39,18 @@ router.post("/createOrder", async (req, res) => {
         // const getOrderDetailsAfterTrigger = await supabaseInstance.from("Order").select("*").eq("orderId", data.orderId).maybeSingle();
         console.log({customerauthuid:customerAuthUID,targate_date: pickupTime.orderDate});
         
-        // const sendMobileSMSResponse = await sendMobileSMS(data[0].mobile, msg91config.config.order_confirmation_template_id);
-        const sendMobileSMSResponse = await sendMobileSMS(919139226484, msg91config.config.order_confirmation_template_id);
+        // // const sendMobileSMSResponse = await sendMobileSMS(data[0].mobile, msg91config.config.order_confirmation_template_id);
+        const sendMobileSMSResponse = await sendMobileSMS([{ mobiles: data[0]?.customerAuthUID?.mobile, name: data[0]?.customerAuthUID?.customerName, orderid: orderId }], msg91config.config.order_confirmation_template_id);
         console.log("sendMobileSMSResponse => ", sendMobileSMSResponse);
+        
+        // const _email_to = [{name: 'Customer', email: data[0].customerAuthUID.email}];
+        // const _email_cc =  []
+        // const _email_bcc =  []
+        // const _template_id =msg91config.config.email_otp_template_id
+
+
+        // const sendEmailResponse = await sendEmail(_email_to, _email_cc, _email_bcc, {}, _template_id);
+        // console.log("sendEmailResponse => ", sendEmailResponse);
         
         const getOrderDetailsAfterTrigger = await supabaseInstance.rpc('get_live_customer_orders', {customerauthuid:customerAuthUID,targate_date: pickupTime.orderDate}).eq("orderid", orderId).maybeSingle();
 
@@ -734,8 +743,11 @@ router.post("/acceptOrder/:orderId", async (req, res) => {
 router.post("/rejectOrder/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: -2 }).select("*").eq("orderId", orderId).maybeSingle();
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: -2 }).select("*,customerAuthUID(*)").eq("orderId", orderId).maybeSingle();
     if (data) {
+      const sendMobileSMSResponse = await sendMobileSMS([{ mobiles: data?.customerAuthUID?.mobile, name: data?.customerAuthUID?.customerName, orderid: orderId }], msg91config.config.order_cancellation_template_id);
+      console.log("sendMobileSMSResponse => ", sendMobileSMSResponse);
+
       updateOrderStatus(orderId,"-2").then((updateOrderStatusToPetpoojaResponse) => {
         console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
         res.status(200).json({
@@ -815,8 +827,11 @@ router.post("/foodReadyOrder/:orderId", async (req, res) => {
 router.post("/deliveredOrder/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 10 }).select("*").eq("orderId", orderId).maybeSingle();
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 10 }).select("*,customerAuthUID(*)").eq("orderId", orderId).maybeSingle();
     if (data) {
+      const sendMobileSMSResponse = await sendMobileSMS([{ mobiles: data?.customerAuthUID?.mobile, name: data?.customerAuthUID?.customerName, orderid: orderId }], msg91config.config.order_delivered_template_id);
+      console.log("sendMobileSMSResponse => ", sendMobileSMSResponse);
+    
       updateOrderStatus(orderId,"10").then((updateOrderStatusToPetpoojaResponse) => {
         console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
         res.status(200).json({
