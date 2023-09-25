@@ -3,7 +3,7 @@ const config = {
     senderId:"",
 
     //* templates
-    otp_template_id: 'otp_template_id',
+    otp_template_id: '650ab13bd6fc0535ea202243',
 
     //* API
     send_mobile_otp_api: 'https://control.msg91.com/api/v5/otp',

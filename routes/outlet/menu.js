@@ -63,7 +63,7 @@ router.get("/category/:outletId", async (req, res) => {
     if (data) {
       res.status(200).json({
         success: true,
-        data: data.map(m => ({...m, Menu_Item_count: m?.Menu_Item?.length || 0})),
+        data: data.map(m => ({...m,Menu_Item:null, Menu_Item_count: m?.Menu_Item?.length || 0})),
       });
     } else {
       throw error

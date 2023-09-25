@@ -5,7 +5,7 @@ async function sendMobileOtp(mobile, template_id) {
     try {
         const options = {
             method: 'POST',
-            url: `${msg91config.config.send_mobile_otp_api}?template_id=${template_id}&mobile=${mobile}`,
+            url: `${msg91config.config.send_mobile_otp_api}?template_id=${template_id}&otp_length=6&mobile=${mobile}`,
             headers: {
                 accept: 'application/json',
                 'content-type': 'application/json',
@@ -39,8 +39,11 @@ async function verifyMobileOtp(mobile, otp) {
             headers: { accept: 'application/json', authkey: msg91config.config.auth_key }
         };
 
+        console.log(options);
+
         const response = await axios.default.request(options)
         const responseData = response.data;
+        
         console.log("response.data", response.data)
         if (responseData.type === 'success') {
             console.log('OTP verification successful');
