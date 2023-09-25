@@ -537,7 +537,7 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
     'postgres_changes',
     { event: 'UPDATE', schema: 'public', table: 'Order', filter: `orderId=eq.${orderId}` },
     (payload) => {
-      res.write('event: updateorder\n');  //* Update order Event
+      res.write('event: updateorder\n');  //* Updagte order Event
       res.write(`data: ${JSON.stringify(payload?.new || null)}`);
       res.write("\n\n");    
     }
