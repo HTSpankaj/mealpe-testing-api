@@ -39,34 +39,21 @@ async function verifyMobileOtp(mobile, otp) {
             headers: { accept: 'application/json', authkey: msg91config.config.auth_key }
         };
 
-        console.log(options);
+        // console.log(options);
 
         const response = await axios.default.request(options)
         const responseData = response.data;
         
-        console.log("response.data", response.data)
+        console.log("responseData", responseData)
         if (responseData.type === 'success') {
             console.log('OTP verification successful');
-            return responseData;
+            return {api_success: true, ...responseData};
         } else {
             console.error('OTP verification failed:', responseData.message);
-            return response.data;
+            return {api_success: false, ...responseData};
         }
-
-
-        // if (otp === 123456) {
-        //   console.log('OTP verification successful');
-        //   return {
-        //     success: true,
-        //     message: 'OTP verification successful'
-
-        //   };
-        // } else {
-        //   console.error('OTP verification failed:');
-        //   return null;
-        // }
     } catch (error) {
-        console.error('Error verifying OTP:', error.message);
+        console.error('Error verifying OTP:', error);
         return null;
     }
 }

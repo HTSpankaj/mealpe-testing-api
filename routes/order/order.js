@@ -34,15 +34,21 @@ router.post("/createOrder", async (req, res) => {
 
       saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId).then(async (saveOrderToPetpoojaResponse) => {
         console.log('.then block ran: ', saveOrderToPetpoojaResponse.data);
-        const getOrderDetailsAfterTrigger = await supabaseInstance.from("Order").select("*").eq("orderId", data.orderId).maybeSingle(); 
+        // const getOrderDetailsAfterTrigger = await supabaseInstance.from("Order").select("*").eq("orderId", data.orderId).maybeSingle();
+        console.log({customerauthuid:customerAuthUID,targate_date: pickupTime.orderDate});
+        const getOrderDetailsAfterTrigger = await supabaseInstance.rpc('get_live_customer_orders', {customerauthuid:customerAuthUID,targate_date: pickupTime.orderDate}).maybeSingle();
+
+        console.log("getOrderDetailsAfterTrigger", getOrderDetailsAfterTrigger);
+        
         res.status(200).json({
           success: true,
-          data: {
-            data: getOrderDetailsAfterTrigger?.data || data,
-            orderitemData: orderData,
-            pickupTime: orderScheduleData.data,
-            saveOrderToPetpooja: saveOrderToPetpoojaResponse.data
-          }
+          // data: {
+          //   data: getOrderDetailsAfterTrigger?.data || data,
+          //   orderitemData: orderData,
+          //   pickupTime: orderScheduleData.data,
+          //   saveOrderToPetpooja: saveOrderToPetpoojaResponse.data
+          // }
+          data: getOrderDetailsAfterTrigger.data || {}
         });
       }).catch(err => {
         console.log('.catch block ran: ', err);

@@ -94,13 +94,17 @@ router.post("/verifyMobileOTP", async (req, res) => {
   try {
       verifyMobileOtp(mobile, otp).then((responseData) => {
         console.log('.then block ran: ', responseData);
-        res.status(200).json({
-          success: true,
-          data: responseData,
-        });
+        if (responseData?.api_success) {
+          res.status(200).json({
+            success: true,
+            data: responseData,
+          });
+        } else {
+          throw responseData;
+        }
       }).catch(err => {
         console.log('.catch block ran: ', err);
-        throw err;
+        res.status(500).json({ success: false, error: err });
       });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -114,6 +118,16 @@ router.post("/sendEmailOTP", async (req, res) => {
   try {
     token = generateOTP();
     console.log("token",token)
+
+    //* email_to ex. => [{name: 'Recipient1 NAME', email: 'Recipient1 email'}]
+    //* email_cc ex. => [{name: 'Recipient2 NAME', email: 'Recipient2 email'}]
+    //* email_bcc ex. => [{name: 'Recipient3 NAME', email: 'Recipient3 email'}]
+    //* emailVariables ex. => {name: 'Name 1'}
+    //* template_id (string)
+
+    const email_to = [{name: 'Customer', email: email_to}]
+
+
     sendEmail(email_to,email_cc, email_bcc, emailVariables, template_id).then((responseData) => {
       const hash = cryptoJs.AES.encrypt(token.toString(), "MealPE-OTP").toString();
        console.log('.then block ran: ', responseData);
