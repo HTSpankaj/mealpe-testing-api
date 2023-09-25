@@ -6,6 +6,8 @@ var msg91config = require("../configs/msg91Config");
 const axios = require('axios');
 // const moment = require("../services/momentService").momentIndianTimeZone;
 const moment = require("moment-timezone");
+const { sendMobileOtp, verifyMobileOtp, sendEmail ,sendMobileSMS, generateOTP} = require("../services/msf91Service");
+var cryptoJs = require("crypto-js");
 
 var supabaseInstance = require("../services/supabaseClient").supabase;
 
@@ -64,43 +66,127 @@ router.post("/signUp", async (req, res) => {
 // });
 
 
-router.post("/sendOTP", async (req, res) => {
+router.post("/sendMobileOTP", async (req, res) => {
+  //* if mobile => required[mobile];
+
   const { mobile} = req.body;
   try {
-   
-    sendOTP(mobile).then((responseData) => {
-      console.log('.then block ran: ', responseData);
-      res.status(200).json({
-        success: true,
-        data: responseData,
-      });
-    }).catch(err => {
-      console.log('.catch block ran: ', err);
-      throw err;
-    });
+     sendMobileOtp(mobile, msg91config.config.otp_template_id).then((responseData) => {
+       console.log('.then block ran: ', responseData);
+       res.status(200).json({
+         success: true,
+         data: responseData,
+       });
+     }).catch(err => {
+       console.log('.catch block ran: ', err);
+       throw err;
+     });
   } catch (error) {
     console.log(error)
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-router.post("/verifyOTP", async (req, res) => {
-  const { mobile, otp } = req.body;
+router.post("/verifyMobileOTP", async (req, res) => {
+  //* if mobile => required[mobile, otp];
+  //* if email  => required[email, token];
+  const { mobile, otp, email, token } = req.body;
   try {
-    verifyOTP(mobile, 123456).then((responseData) => {
-      console.log('.then block ran: ', responseData);
-      res.status(200).json({
-        success: true,
-        data: responseData,
+      verifyMobileOtp(mobile, otp).then((responseData) => {
+        console.log('.then block ran: ', responseData);
+        res.status(200).json({
+          success: true,
+          data: responseData,
+        });
+      }).catch(err => {
+        console.log('.catch block ran: ', err);
+        throw err;
       });
-    }).catch(err => {
-      console.log('.catch block ran: ', err);
-      throw err;
-    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+router.post("/sendEmailOTP", async (req, res) => {
+  //* if email => required[email];
+
+  const { email_to,email_cc, email_bcc, emailVariables,template_id} = req.body;
+  try {
+    token = generateOTP();
+    console.log("token",token)
+    sendEmail(email_to,email_cc, email_bcc, emailVariables, template_id).then((responseData) => {
+      const hash = cryptoJs.AES.encrypt(token.toString(), "MealPE-OTP").toString();
+       console.log('.then block ran: ', responseData);
+       res.status(200).json({
+         success: true,
+         data: responseData,
+         token:hash
+       });
+     }).catch(err => {
+       console.log('.catch block ran: ', err);
+       throw err;
+     });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post("/verifyEmailOTP", async (req, res) => {
+  const { otp, token } = req.body;
+  try {
+      const tokenData = cryptoJs.AES.decrypt(token, "MealPE-OTP").toString(cryptoJs.enc.Utf8);
+      if (tokenData === otp) {
+          res.status(200).json({
+              success: true,
+              message: "OTP Verify", 
+          });
+      }else{
+          throw error;
+      } 
+  } catch (error) {
+      res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.post("/sendMobileSMS", async (req, res) => {
+
+  const { mobile,template_id} = req.body;
+  try {
+    sendMobileSMS(mobile, template_id).then((responseData) => {
+       console.log('.then block ran: ', responseData);
+       res.status(200).json({
+         success: true,
+         data: responseData,
+       });
+     }).catch(err => {
+       console.log('.catch block ran: ', err);
+       throw err;
+     });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// router.post("/verifyEmailOTP", async (req, res) => {
+//   //* if email  => required[email, token];
+//   const { otp, token } = req.body;
+//   try {
+//       verifyMobileOtp( otp,token).then((responseData) => {
+//         console.log('.then block ran: ', responseData);
+//         res.status(200).json({
+//           success: true,
+//           data: responseData,
+//         });
+//       }).catch(err => {
+//         console.log('.catch block ran: ', err);
+//         throw err;
+//       });
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// });
 
 router.post("/userlogin", async (req, res) => {
   const { mobile, email } = req.body;
@@ -454,15 +540,16 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
 });
 
 router.get("/getLiveCustomerOrders/:customerAuthUID", async (req, res) => {
-  const { customerAuthUID } = req.params;
+  const { customerAuthUID} = req.params;
   try {
+    let currentDate = moment().tz("Asia/Kolkata").format('YYYY-MM-DD');
 
-    const { data, error } = await supabaseInstance
-    .from("Order")
-    .select("*,outletId(outletName,logo)")
-    .not("outletId", "is", null)
-    .eq("orderStatusId",4)
-    .eq("customerAuthUID",customerAuthUID)
+    let query = supabaseInstance
+    .rpc('get_live_customer_orders', {customerauthuid:customerAuthUID,targate_date: currentDate})
+    .gte("orderstatusid",0)
+    .lt("orderstatusid",10)
+
+    const { data, error } = await query;
 
     if (data) {
       res.status(200).json({
@@ -505,114 +592,6 @@ try {
 }
 });
 
-const MSG91_AUTH_KEY = msg91config.config.auth_key;
-const MSG91_OTP_ENDPOINT = 'https://control.msg91.com/api/v5/otp';
-
-async function sendOTP(mobile) {
-  try {
-    const response = await axios.post(MSG91_OTP_ENDPOINT, {
-      authkey: MSG91_AUTH_KEY,
-      mobile: mobile,
-    });
-
-    const responseData = response.data;
-    if (responseData.type === 'success') {
-      console.log('OTP sent successfully');
-      console.log(responseData);
-      return responseData;
-    } else {
-      console.error('Failed to send OTP:', responseData.message);
-      return null;
-    }
-  } catch (error) {
-    console.error('Error sending OTP:', error.message);
-    return null;
-  }
-}
-
-const MSG91_OTP_VERIFY_ENDPOINT = 'https://api.msg91.com/api/v5/otp/verify';
-
-async function verifyOTP(mobile, otp) {
-  try {
-    const response = await axios.post(MSG91_OTP_VERIFY_ENDPOINT, {
-      authkey: MSG91_AUTH_KEY,
-      mobile: mobile ,
-      otp: otp,
-    });
-
-    // const responseData = response.data;
-    // console.log("response.data",response.data)
-    // if (responseData.type === 'success') {
-    //   console.log('OTP verification successful');
-    //   return responseData;
-    // } else {
-    //   console.error('OTP verification failed:', responseData.message);
-    //   return null;
-    // }
-
-
-    if (otp === 123456) {
-      console.log('OTP verification successful');
-      return {
-        success: true,
-        message: 'OTP verification successful'
-
-      };
-    } else {
-      console.error('OTP verification failed:');
-      return null;
-    }
-  } catch (error) {
-    console.error('Error verifying OTP:', error.message);
-    return null;
-  }
-}
-
-const MSG91_EMAIL_ENDPOINT ="https://control.msg91.com/api/v5/email/send"
-
-async function sendEmail( email) {
-  try {
-    const response = await axios.post(MSG91_EMAIL_ENDPOINT, {
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        authkey: MSG91_AUTH_KEY,
-      },
-      data: {
-        recipients: [
-          {
-            to: [{email: email}],
-          },
-        ],
-        from: {name: 'MSG91', email: 'mealpe2023@gmail.com'},
-       reply_to: [{email: 'mealpe2023@gmail.com'}],
-        template_id: 'YOUR_UNIQUE_TEMPLATE_NAME'
-      }
-      //   recipients: [
-      //     {
-      //       to: [{ email:email }],
-      //     },
-      //   ],
-      //   from: {name: 'Mealpe', email: 'mealpe2023@gmail.com'},
-      // },
-    });
-
-    const responseData = response.data;
-    if (responseData.type === 'success') {
-      console.log('Email sent successfully');
-      console.log(responseData);
-      return responseData;
-    } else {
-      console.error('Failed to send email:', responseData.message);
-      return null;
-    }
-  } catch (error) {
-    console.error('Error sending email:', error.message);
-    return null;
-  }
-}
-
-
 module.exports = router;
 
 // console.log(
@@ -634,6 +613,3 @@ module.exports = router;
 //     }
 //   })
 // )
- 
-
-// console.log(moment().format('dddd'));

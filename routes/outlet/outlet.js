@@ -48,7 +48,7 @@ router.post("/createOutlet", async (req, res) => {
       const outletId = data.user.id;
 
 
-      const bankDetails = await supabaseInstance.from("BankDetails").insert({ accountNumber: bankDetailsId?.accountNumber || null, BankName: bankDetailsId?.BankName || null, IFSCCode: bankDetailsId?.IFSCCode || null }).select().maybeSingle();
+      const bankDetails = await supabaseInstance.from("BankDetails").insert({ accountNumber: bankDetailsId?.accountNumber || null, BankName: bankDetailsId?.BankName || null, IFSCCode: bankDetailsId?.IFSCCode || null, bankId: bankDetailsId?.bankId || null }).select().maybeSingle();
       const _bankDetailsId = bankDetails.data.bankDetailsId;
 
       const outletDetails = await supabaseInstance.from("Outlet_Admin").insert({ name: outletAdminId?.name || null, mobile: outletAdminId?.mobile || null, email: outletAdminId?.email || null, address: outletAdminId?.address || null, pancard: outletAdminId?.pancard || null }).select().maybeSingle();
@@ -540,6 +540,23 @@ router.post("/upsertHeaderImage",upload.single('file'), async (req, res) => {
   }
 })
 
+router.get("/getOutletData/:outletId", async (req, res) => {
+  const { outletId } = req.params;
+  try {
+    const { data, error } = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", outletId).maybeSingle();
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 //!!!  Delete After 2 Days [07-09-2023]
 router.get("/getOutletList/:campusId", async (req, res) => {
   const {campusId} = req.params;
@@ -599,5 +616,7 @@ router.get("/getOutletList/:campusId", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+
 
 module.exports = router;

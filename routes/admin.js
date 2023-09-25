@@ -233,14 +233,11 @@ router.get("/getOutletAdminList", async (req, res) => {
   const itemsPerPage = parseInt(perPage) || 10;
 
   try {
-    let query = supabaseInstance
-      .from("Outlet_Admin")
-      .select("*,Outlet(*)", { count: "exact" })
-      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-      // .order("outletAdminId", { ascending: true });
+   
+    let query = supabaseInstance.rpc("get_outlet_admin_list",{},{count:"exact"}).range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
 
       if(searchText){
-        query = query.or(`name.ilike.%${searchText}%,outletName.ilike.%${searchText}%`);
+        query = query.or(`name.ilike.%${searchText}%,outletname.ilike.%${searchText}%`);
       }
 
       const { data, error, count } = await query;

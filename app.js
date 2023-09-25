@@ -26,6 +26,7 @@ var ratingRouter = require("./routes/rating/rating");
 var messageRouter = require("./routes/message");
 var paymentRouter = require("./routes/Payment/index");
 var serverRouter = require("./routes/server");
+var surepassRouter = require("./routes/surepass");
 
 
 var app = express();
@@ -61,6 +62,7 @@ app.use('/rating/rating', ratingRouter);
 app.use('/message', messageRouter);
 app.use('/payment', paymentRouter);
 app.use('/server', serverRouter);
+app.use('/surepass', surepassRouter);
 
 
 
