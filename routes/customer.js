@@ -114,10 +114,9 @@ router.post("/verifyMobileOTP", async (req, res) => {
 router.post("/sendEmailOTP", async (req, res) => {
   //* if email => required[email];
 
-  const { email_to,email_cc, email_bcc, emailVariables,template_id} = req.body;
+  const { email_to,email_cc, email_bcc} = req.body;
   try {
-    token = generateOTP();
-    console.log("token",token)
+    const token_otp = generateOTP();
 
     //* email_to ex. => [{name: 'Recipient1 NAME', email: 'Recipient1 email'}]
     //* email_cc ex. => [{name: 'Recipient2 NAME', email: 'Recipient2 email'}]
@@ -125,23 +124,29 @@ router.post("/sendEmailOTP", async (req, res) => {
     //* emailVariables ex. => {name: 'Name 1'}
     //* template_id (string)
 
-    const email_to = [{name: 'Customer', email: email_to}]
+    const _email_to = [{name: 'Customer', email: email_to}];
+    const _email_cc =  []
+    const _email_bcc =  []
+    const _template_id =msg91config.config.email_otp_template_id
 
 
-    sendEmail(email_to,email_cc, email_bcc, emailVariables, template_id).then((responseData) => {
-      const hash = cryptoJs.AES.encrypt(token.toString(), "MealPE-OTP").toString();
-       console.log('.then block ran: ', responseData);
-       res.status(200).json({
-         success: true,
-         data: responseData,
-         token:hash
-       });
+    sendEmail(_email_to, _email_cc, _email_bcc, {}, _template_id).then((responseData) => {
+      const hash = cryptoJs.AES.encrypt(token_otp.toString(), "MealPE-OTP").toString();
+       if (responseData?.api_success) {
+        res.status(200).json({
+          success: true,
+          data: responseData,
+          token: hash
+        });
+      } else {
+        throw responseData;
+      }
      }).catch(err => {
-       console.log('.catch block ran: ', err);
-       throw err;
-     });
+      //  console.log('.catch block ran: ', err);
+       res.status(500).json({ success: false, error: err });
+      });
   } catch (error) {
-    console.log(error)
+    // console.log(error)
     res.status(500).json({ success: false, error: error.message });
   }
 });

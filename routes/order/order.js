@@ -2,8 +2,10 @@ var express = require("express");
 const { saveOrderToPetpooja,updateOrderStatus} = require("../petpooja/pushMenu");
 // const moment = require("../../services/momentService").momentIndianTimeZone;
 const moment = require("moment-timezone");
+const { sendMobileSMS } = require("../../services/msf91Service");
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
+var msg91config = require("../../configs/msg91Config");
 
 
 router.post("/createOrder", async (req, res) => {
@@ -13,7 +15,7 @@ router.post("/createOrder", async (req, res) => {
     const { data, error } = await supabaseInstance
       .from("Order")
       .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId, orderPriceBreakDown, orderOTP,isScheduleNow,txnid ,basePrice})
-      .select("*,outletId(outletName,logo,outletId)");
+      .select("*,outletId(outletName,logo,outletId), customerAuthUID(*)");
 
     if (data) {
       const orderId = data[0].orderId;
@@ -36,7 +38,12 @@ router.post("/createOrder", async (req, res) => {
         console.log('.then block ran: ', saveOrderToPetpoojaResponse.data);
         // const getOrderDetailsAfterTrigger = await supabaseInstance.from("Order").select("*").eq("orderId", data.orderId).maybeSingle();
         console.log({customerauthuid:customerAuthUID,targate_date: pickupTime.orderDate});
-        const getOrderDetailsAfterTrigger = await supabaseInstance.rpc('get_live_customer_orders', {customerauthuid:customerAuthUID,targate_date: pickupTime.orderDate}).maybeSingle();
+        
+        // const sendMobileSMSResponse = await sendMobileSMS(data[0].mobile, msg91config.config.order_confirmation_template_id);
+        const sendMobileSMSResponse = await sendMobileSMS(919139226484, msg91config.config.order_confirmation_template_id);
+        console.log("sendMobileSMSResponse => ", sendMobileSMSResponse);
+        
+        const getOrderDetailsAfterTrigger = await supabaseInstance.rpc('get_live_customer_orders', {customerauthuid:customerAuthUID,targate_date: pickupTime.orderDate}).eq("orderid", orderId).maybeSingle();
 
         console.log("getOrderDetailsAfterTrigger", getOrderDetailsAfterTrigger);
         
@@ -821,7 +828,7 @@ router.post("/deliveredOrder/:orderId", async (req, res) => {
         });
       }).catch(err => {
         console.log('.catch block ran: ', err);
-        throw err;
+        res.status(500).json({ success: false, error: err });
       });
     } else {
       throw error

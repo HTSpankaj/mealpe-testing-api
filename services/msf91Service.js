@@ -43,18 +43,18 @@ async function verifyMobileOtp(mobile, otp) {
 
         const response = await axios.default.request(options)
         const responseData = response.data;
-        
+
         console.log("responseData", responseData)
         if (responseData.type === 'success') {
             console.log('OTP verification successful');
-            return {api_success: true, ...responseData};
+            return { api_success: true, ...responseData };
         } else {
             console.error('OTP verification failed:', responseData.message);
-            return {api_success: false, ...responseData};
+            return { api_success: false, ...responseData };
         }
     } catch (error) {
         console.error('Error verifying OTP:', error);
-        return null;
+        return { api_success: false, ...error?.response?.data };;
     }
 }
 
@@ -75,32 +75,36 @@ async function sendEmail(email_to, email_cc, email_bcc, emailVariables, template
                 authkey: msg91config.config.auth_key
             },
             data: {
-                recipients: [{ 
+                recipients: [{
                     to: email_to,
                     cc: email_cc,
                     bcc: email_bcc,
-                    variables: emailVariables 
+                    variables: emailVariables
                 }],
-                from: { name: 'Mealpe', email: '' },
-                domain: 'The domain which you have registered with us. We sign DKIM with this domain.',
+                from: { name: "MealPE", email: msg91config.config.email_from },
+                domain: msg91config.config.email_domain,
                 template_id: template_id
             }
         };
 
+        // console.log("options => ", options);
+
         const response = await axios.default.request(options);
         const responseData = response.data;
 
+        // console.log("responseData => ", responseData);
+
         if (responseData.status === 'success') {
-            console.log('Email sent successfully');
-            console.log(responseData);
-            return responseData;
+            // console.log('Email sent successfully');
+            // console.log(responseData);
+            return { api_success: true, ...responseData };
         } else {
-            console.error('Failed to send email:', responseData.message);
-            return responseData;
+            // console.error('Failed to send email:', responseData.message);
+            return { api_success: false, ...responseData };
         }
     } catch (error) {
-        console.error('Error sending email:', error.message);
-        return null;
+        // console.error('Error sending email:', error);
+        return { api_success: false, ...error?.response?.data };
     }
 }
 
@@ -110,35 +114,35 @@ async function sendMobileSMS(mobile, template_id) {
             method: 'POST',
             url: msg91config.config.send_mobile_sms,
             headers: {
-              accept: 'application/json',
-              'content-type': 'application/json',
-              authkey: msg91config.config.auth_key
+                accept: 'application/json',
+                'content-type': 'application/json',
+                authkey: msg91config.config.auth_key
             },
             data: {
-              template_id: template_id,
-              short_url: '1 (On) or 0 (Off)',
-              recipients: [{mobiles: mobile, VAR1: 'VALUE1', VAR2: 'VALUE2'}]
+                template_id: template_id,
+                short_url: '1 (On) or 0 (Off)',
+                // recipients: [{ mobiles: mobile, VAR1: 'VALUE1', VAR2: 'VALUE2' }]
+                recipients: mobile
             }
-          };
+        };
         const response = await axios.default.request(options);
 
         const responseData = response.data;
         if (responseData.type === 'success') {
-            console.log(responseData);
-            return responseData;
+            return {api_success: true, ...responseData};
         } else {
             console.error('Failed to send OTP:', responseData.message);
-            return response.data;
+            return {api_success: false, ...response.data};
         }
     } catch (error) {
         console.error('Error sending OTP:', error.message);
-        return null;
+        return { api_success: false, ...error?.response?.data };
     }
 }
 
- function generateOTP() {
+function generateOTP() {
     return Math.floor(1000 + Math.random() * 9000);
-  }
+}
 
 module.exports = {
     sendMobileOtp,
