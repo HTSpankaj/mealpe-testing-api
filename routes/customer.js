@@ -35,7 +35,7 @@ router.post("/signUp", async (req, res) => {
           data: customerResponse.data
         });
       } else {
-        throw error;
+        throw customerResponse.error;
       }
     } else {
       throw error;
@@ -69,9 +69,9 @@ router.post("/signUp", async (req, res) => {
 router.post("/sendMobileOTP", async (req, res) => {
   //* if mobile => required[mobile];
 
-  const { mobile} = req.body;
+  const { mobile,name} = req.body;
   try {
-     sendMobileOtp(mobile, msg91config.config.otp_template_id).then((responseData) => {
+     sendMobileOtp(mobile, msg91config.config.otp_template_id,name).then((responseData) => {
        console.log('.then block ran: ', responseData);
        res.status(200).json({
          success: true,
@@ -287,14 +287,14 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
   }
 })
 
-router.get("/homeData", async (req, res) => {
+router.get("/homeData", async (req, res) => { 
   const { categoryId, campusId } = req.query;
   try {
-    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId,isActive, isTimeExtended, Timing!left(*, dayId(*))")
+    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*))")
     .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
     .eq("campusId",campusId).eq("isPublished",true).eq("isActive",true).limit(5);
 
-    let PopularCafeteriasResponse = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId,isActive, isTimeExtended, Timing!left(*, dayId(*))")
+    let PopularCafeteriasResponse = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*))")
     .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
     .eq("campusId",campusId).eq("isPublished",true).eq("isActive",true).limit(5);
 
@@ -596,14 +596,20 @@ try {
     token: token,
   });
 
-  if (error) {
-    throw error;
-  }
-
   if (data) {
-    res.status(200).json({ success: true, data: data });
+    const customerData = await supabaseInstance.from("Customer").select('*').eq("customerAuthUID", data.user.id).maybeSingle();
+    if (customerData.data) {
+      res.status(200).json({ success: true, data: customerData.data });
+    } else {
+      const customerResponse = await supabaseInstance.from("Customer").insert({ email: data.user.email, mobile: data?.user?.phone ? +data.user.phone : null, customerName: data.user?.user_metadata?.full_name, customerAuthUID: data.user.id }).select("*").maybeSingle();
+      if (customerResponse.data) {
+        res.status(200).json({ success: true, data: customerResponse.data });
+      } else {
+        res.status(500).json({ success: false, error: customerResponse.error });
+      }
+    }
   } else {
-    throw new Error("Authentication failed.");
+    throw error;
   }
 } catch (error) {
   console.error("Authentication error:", error);
