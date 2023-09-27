@@ -617,6 +617,25 @@ try {
 }
 });
 
+
+router.post("/updateMobile", async (req, res) => {
+  const { mobile, customerAuthUID } = req.body;
+  try {
+    const customerResponse = await supabaseInstance.from("Customer").update({ mobile }).eq("customerAuthUID", customerAuthUID).select("*").maybeSingle();
+    if (customerResponse.data) {
+      res.status(200).json({
+        success: true,
+        message: "Mobile added Successfully.",
+        data: customerResponse.data
+      });
+    } else {
+      throw customerResponse.error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error?.message || error });
+  }
+});
+
 module.exports = router;
 
 // console.log(
