@@ -620,8 +620,12 @@ try {
 
 router.post("/updateMobile", async (req, res) => {
   const { mobile, customerAuthUID } = req.body;
+
+  console.log({ mobile, customerAuthUID });
+
   try {
     const customerResponse = await supabaseInstance.from("Customer").update({ mobile }).eq("customerAuthUID", customerAuthUID).select("*").maybeSingle();
+    console.log("customerResponse => ", customerResponse);
     if (customerResponse.data) {
       res.status(200).json({
         success: true,
