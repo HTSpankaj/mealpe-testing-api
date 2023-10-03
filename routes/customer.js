@@ -238,7 +238,7 @@ router.post("/userlogin", async (req, res) => {
       }
       throw err;
     } else {
-      throw err;
+      throw userData.error;
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
