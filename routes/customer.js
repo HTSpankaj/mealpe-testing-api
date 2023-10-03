@@ -250,21 +250,23 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
   try {
     const { data, error } = await supabaseInstance.from("Menu_Item").select("*, item_categoryid(*, parent_category_id(*)), FavoriteMenuItem!left(*)").eq("isDelete", false).eq("outletId", outletId).eq("FavoriteMenuItem.customerAuthUID", customerAuthUID);
     if (data) {
-      const outdetData = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd")).maybeSingle();
+      const outdetData = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).maybeSingle();
+      // .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
+      const timingQuery = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd")).maybeSingle();
 
       let outletdetails = {};
 
       if (outdetData?.data) {
         outletdetails = {
-          ...outdetData.data,
-          Timing: outdetData.data?.Timing?.find(f => f.dayId?.day)
+           ...outdetData.data,
+          Today: timingQuery.data?.Timing?.find(f => f.dayId?.day)
         }
 
         let flag = false;
-        if (outletdetails?.Timing?.openTime && outletdetails?.Timing?.closeTime) {
+        if (outletdetails?.Today?.openTime && outletdetails?.Today?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(outletdetails?.Timing?.openTime, 'hh:mm:ss');
-          const afterTime = moment(outletdetails?.Timing?.closeTime, 'hh:mm:ss');
+          const beforeTime = moment(outletdetails?.Today?.openTime, 'hh:mm:ss');
+          const afterTime = moment(outletdetails?.Today?.closeTime, 'hh:mm:ss');
 
           flag = time.isBetween(beforeTime, afterTime);
         }
@@ -298,11 +300,11 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
 router.get("/homeData", async (req, res) => {
   const { categoryId, campusId } = req.query;
   try {
-    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*))")
+    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*))")
       .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
       .eq("campusId", campusId).eq("isPublished", true).eq("isActive", true).limit(5);
 
-    let PopularCafeteriasResponse = await supabaseInstance.from("Outlet").select("outletName,address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*))")
+    let PopularCafeteriasResponse = await supabaseInstance.from("Outlet").select("outletName, isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*))")
       .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
       .eq("campusId", campusId).eq("isPublished", true).eq("isActive", true).limit(5);
 

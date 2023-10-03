@@ -32,7 +32,8 @@ router.post("/createOutlet", async (req, res) => {
     isDineIn,
     isPickUp,
     isGSTShow,
-    logo
+    logo,
+    FSSAI_number
   } = req.body;
   try {
     const { data, error } = await supabaseInstance.auth.signUp(
@@ -73,7 +74,8 @@ router.post("/createOutlet", async (req, res) => {
         isGSTShow,
         isDelivery,    
         isDineIn,
-        isPickUp
+        isPickUp,
+        FSSAI_number
       }
       if (openTime) {
         postObject.openTime = openTime;
@@ -92,6 +94,10 @@ router.post("/createOutlet", async (req, res) => {
       }
       if (logo) {
         postObject.logo = logo;
+      }
+
+      if (FSSAI_number) {
+        postObject.FSSAI_number = FSSAI_number;
       }
 
       if (!isPrimaryOutlet) {
