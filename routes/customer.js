@@ -303,21 +303,25 @@ router.get("/homeData", async (req, res) => {
   const { categoryId, campusId } = req.query;
   try {
     const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*))")
-      .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
+      // .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
       .eq("campusId", campusId).eq("isPublished", true).eq("isActive", true).limit(5);
 
     let PopularCafeteriasResponse = await supabaseInstance.from("Outlet").select("outletName, isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*))")
-      .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
+      // .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
       .eq("campusId", campusId).eq("isPublished", true).eq("isActive", true).limit(5);
 
     if (cafeteriasForYouDataResponse.data && PopularCafeteriasResponse.data) {
 
-      let cafeteriasForYouData = cafeteriasForYouDataResponse.data.map(m => ({ ...m, Timing: m?.Timing?.find(f => f.dayId?.day) })).map(m => {
+      let cafeteriasForYouData = cafeteriasForYouDataResponse.data.map(m => ({ ...m, Timing:{
+        Today:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").format("dddd")),
+        Tomorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
+        Overmorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"))
+      }})).map(m => {
         let flag = false;
-        if (m?.Timing?.openTime && m?.Timing?.closeTime) {
+        if (m?.Timing?.Today?.openTime && m?.Timing?.Today?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(m?.Timing?.openTime, 'hh:mm:ss');
-          const afterTime = moment(m?.Timing?.closeTime, 'hh:mm:ss');
+          const beforeTime = moment(m?.Timing?.Today?.openTime, 'hh:mm:ss');
+          const afterTime = moment(m?.Timing?.Today?.closeTime, 'hh:mm:ss');
 
           flag = time.isBetween(beforeTime, afterTime);
         }
@@ -330,12 +334,16 @@ router.get("/homeData", async (req, res) => {
           isOutletOpen: flag
         }
       })
-      let PopularCafeterias = PopularCafeteriasResponse.data.map(m => ({ ...m, Timing: m?.Timing?.find(f => f.dayId?.day) })).map(m => {
+      let PopularCafeterias = PopularCafeteriasResponse.data.map(m => ({ ...m, Timing:{
+        Today:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").format("dddd")),
+        Tomorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
+        Overmorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"))
+      } })).map(m => {
         let flag = false;
-        if (m?.Timing?.openTime && m?.Timing?.closeTime) {
+        if (m?.Timing?.Today?.openTime && m?.Timing?.Today?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(m?.Timing?.openTime, 'hh:mm:ss');
-          const afterTime = moment(m?.Timing?.closeTime, 'hh:mm:ss');
+          const beforeTime = moment(m?.Timing?.Today?.openTime, 'hh:mm:ss');
+          const afterTime = moment(m?.Timing?.Today?.closeTime, 'hh:mm:ss');
 
           flag = time.isBetween(beforeTime, afterTime);
         }
