@@ -615,9 +615,12 @@ router.post("/userGooglelogin", async (req, res) => {
       provider: 'google',
       token: token,
     });
+    console.log("data==>",data)
+    console.log("error==>",error)
 
-    if (data) {
+    if (data?.user?.id) {
       const customerData = await supabaseInstance.from("Customer").select('*').eq("customerAuthUID", data.user.id).maybeSingle();
+      console.log("customerData=>",customerData)
       if (customerData.data) {
         res.status(200).json({ success: true, data: customerData.data });
       } else {
