@@ -251,22 +251,24 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
     const { data, error } = await supabaseInstance.from("Menu_Item").select("*, item_categoryid(*, parent_category_id(*)), FavoriteMenuItem!left(*)").eq("isDelete", false).eq("outletId", outletId).eq("FavoriteMenuItem.customerAuthUID", customerAuthUID);
     if (data) {
       const outdetData = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).maybeSingle();
-      // .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
-      const timingQuery = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd")).maybeSingle();
 
       let outletdetails = {};
 
       if (outdetData?.data) {
         outletdetails = {
            ...outdetData.data,
-          Today: timingQuery.data?.Timing?.find(f => f.dayId?.day)
+          Timing:{
+          Today: outdetData.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").format("dddd")),
+          Tomorrow  : outdetData.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
+          Overmorrow   : outdetData.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(2, 'days').format("dddd")),
+          }  
         }
 
         let flag = false;
-        if (outletdetails?.Today?.openTime && outletdetails?.Today?.closeTime) {
+        if (outletdetails?.Timing?.Today?.openTime && outletdetails?.Timing?.Today?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(outletdetails?.Today?.openTime, 'hh:mm:ss');
-          const afterTime = moment(outletdetails?.Today?.closeTime, 'hh:mm:ss');
+          const beforeTime = moment(outletdetails?.Timing?.Today?.openTime, 'hh:mm:ss');
+          const afterTime = moment(outletdetails?.Timing?.Today?.closeTime, 'hh:mm:ss');
 
           flag = time.isBetween(beforeTime, afterTime);
         }
