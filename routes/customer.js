@@ -302,11 +302,11 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
 router.get("/homeData", async (req, res) => {
   const { categoryId, campusId } = req.query;
   try {
-    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*))")
+    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*,dayId(*)),Review!left(customerAuthUID,star)")
       // .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
       .eq("campusId", campusId).eq("isPublished", true).eq("isActive", true).limit(5);
 
-    let PopularCafeteriasResponse = await supabaseInstance.from("Outlet").select("outletName, isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*))")
+    let PopularCafeteriasResponse = await supabaseInstance.from("Outlet").select("outletName, isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*)),Review!left(customerAuthUID,star)")
       // .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
       .eq("campusId", campusId).eq("isPublished", true).eq("isActive", true).limit(5);
 
@@ -316,6 +316,9 @@ router.get("/homeData", async (req, res) => {
         Today:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").format("dddd")),
         Tomorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
         Overmorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"))
+      },Review:{
+        total_Customer:m?.Review?.length || 0,
+        avrage_Rating:(m?.Review.reduce((a,c)=> a + c.star,0) / m?.Review?.length)?.toFixed(1)
       }})).map(m => {
         let flag = false;
         if (m?.Timing?.Today?.openTime && m?.Timing?.Today?.closeTime) {
@@ -338,6 +341,9 @@ router.get("/homeData", async (req, res) => {
         Today:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").format("dddd")),
         Tomorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
         Overmorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"))
+      },Review:{
+        total_Customer:m?.Review?.length || 0,
+        avrage_Rating:(m?.Review.reduce((a,c)=> a + c.star,0) / m?.Review?.length)?.toFixed(1)
       } })).map(m => {
         let flag = false;
         if (m?.Timing?.Today?.openTime && m?.Timing?.Today?.closeTime) {
