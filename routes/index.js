@@ -22,13 +22,15 @@ router.get("/realtimeDemo", function (req, res) {
   res.setHeader("Content-Type", "text/event-stream");
 
   setInterval(() => {
-    // res.write('event: message\n');  //* message Event
-    // res.write(`data: ${JSON.stringify({date: new Date().toLocaleString()} || null)}`);
-    // res.write("\n\n");
+    res.write(`data: ${JSON.stringify({ updateorder: 'Hello from server!1' })}\n\n`);  
+  }, 2000);
+  setInterval(() => {
+    res.write(`updateorder: ${JSON.stringify({ message: 'Hello from server!2' })}\n\n`);
+  }, 4000);
+  setInterval(() => {
+    res.write(`data: ${JSON.stringify({ message: 'Hello from server!3' })}\n\n`);
+  }, 6000);
 
-    res.write(`data: ${JSON.stringify({ message: 'Hello from server!' })}\n\n`);
-
-  }, 5000);
 
   // res.write("retry: 10000\n\n");
 });
