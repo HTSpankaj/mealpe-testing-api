@@ -11,13 +11,14 @@ var cryptoJs = require("crypto-js");
 
 var supabaseInstance = require("../services/supabaseClient").supabase;
 const otplessConfig = require("../configs/otplessConfig");
+var { customerSlectString } = require("../services/supabaseCommonValues").value
 
 router.get("/", function (req, res, next) {
   res.send({ success: true, message: "respond send from customer.js" });
 });
 
 router.post("/signUp", async (req, res) => {
-  const { email, mobile, name } = req.body;
+  const { email, mobile, name, campusId } = req.body;
 
   try {
     const { data, error } = await supabaseInstance.auth.admin.createUser({
@@ -28,7 +29,7 @@ router.post("/signUp", async (req, res) => {
 
     if (data?.user) {
       const customerAuthUID = data.user.id;
-      const customerResponse = await supabaseInstance.from("Customer").insert({ email, mobile, customerName: name, customerAuthUID }).select("*").maybeSingle();
+      const customerResponse = await supabaseInstance.from("Customer").insert({ email, mobile, customerName: name, customerAuthUID, campusId }).select("*").maybeSingle();
       if (customerResponse.data) {
         res.status(200).json({
           success: true,
@@ -96,7 +97,7 @@ router.post("/verifyMobileOTP", async (req, res) => {
     if (mobile === 919999999999 || mobile === 9999999999) {
       res.status(200).json({
         success: true,
-        data: {message: "Bypass user"},
+        data: { message: "Bypass user" },
       });
     } else {
       verifyMobileOtp(mobile, otp).then((responseData) => {
@@ -220,9 +221,9 @@ router.post("/userlogin", async (req, res) => {
   try {
     let loginQuery;
     if (mobile) {
-      loginQuery = supabaseInstance.from("Customer").select("*").eq("mobile", mobile);
+      loginQuery = supabaseInstance.from("Customer").select(customerSlectString).eq("mobile", mobile);
     } else if (email) {
-      loginQuery = supabaseInstance.from("Customer").select("*").eq("email", email);
+      loginQuery = supabaseInstance.from("Customer").select(customerSlectString).eq("email", email);
     }
 
     const userData = await loginQuery.maybeSingle();
@@ -256,12 +257,12 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
 
       if (outdetData?.data) {
         outletdetails = {
-           ...outdetData.data,
-          Timing:{
-          Today: outdetData.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").format("dddd")),
-          Tomorrow  : outdetData.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
-          Overmorrow   : outdetData.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(2, 'days').format("dddd")),
-          }  
+          ...outdetData.data,
+          Timing: {
+            Today: outdetData.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").format("dddd")),
+            Tomorrow: outdetData.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
+            Overmorrow: outdetData.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(2, 'days').format("dddd")),
+          }
         }
 
         let flag = false;
@@ -299,58 +300,110 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
   }
 })
 
+// router.get("/homeData", async (req, res) => {
+//   const { categoryId, campusId } = req.query;
+//   try {
+//     const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*,dayId(*)),Review!left(customerAuthUID,star)")
+//       // .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
+//       .eq("campusId", campusId).eq("isPublished", true).eq("isActive", true).limit(5);
+
+//     let PopularCafeteriasResponse = await supabaseInstance.from("Outlet").select("outletName, isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*)),Review!left(customerAuthUID,star)")
+//       // .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
+//       .eq("campusId", campusId).eq("isPublished", true).eq("isActive", true).limit(5);
+
+//     if (cafeteriasForYouDataResponse.data && PopularCafeteriasResponse.data) {
+
+//       let cafeteriasForYouData = cafeteriasForYouDataResponse.data.map(m => ({
+//         ...m, Timing: {
+//           Today: m?.Timing?.find(f => f?.dayId?.day === moment().tz("Asia/Kolkata").format("dddd")),
+//           Tomorrow: m?.Timing?.find(f => f?.dayId?.day === moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
+//           Overmorrow: m?.Timing?.find(f => f?.dayId?.day === moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"))
+//         }, Review: {
+//           total_Customer: m?.Review?.length || 0,
+//           avrage_Rating: (m?.Review.reduce((a, c) => a + c.star, 0) / m?.Review?.length)?.toFixed(1)
+//         }
+//       })).map(m => {
+//         let flag = false;
+//         if (m?.Timing?.Today?.openTime && m?.Timing?.Today?.closeTime) {
+//           const time = moment().tz("Asia/Kolkata");
+//           const beforeTime = moment(m?.Timing?.Today?.openTime, 'hh:mm:ss');
+//           const afterTime = moment(m?.Timing?.Today?.closeTime, 'hh:mm:ss');
+
+//           flag = time.isBetween(beforeTime, afterTime);
+//         }
+
+//         if (!flag && m.isTimeExtended) {
+//           flag = true;
+//         }
+//         return {
+//           ...m,
+//           isOutletOpen: flag
+//         }
+//       })
+//       let PopularCafeterias = PopularCafeteriasResponse.data.map(m => ({
+//         ...m, Timing: {
+//           Today: m?.Timing?.find(f => f?.dayId?.day === moment().tz("Asia/Kolkata").format("dddd")),
+//           Tomorrow: m?.Timing?.find(f => f?.dayId?.day === moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
+//           Overmorrow: m?.Timing?.find(f => f?.dayId?.day === moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"))
+//         }, Review: {
+//           total_Customer: m?.Review?.length || 0,
+//           avrage_Rating: (m?.Review.reduce((a, c) => a + c.star, 0) / m?.Review?.length)?.toFixed(1)
+//         }
+//       })).map(m => {
+//         let flag = false;
+//         if (m?.Timing?.Today?.openTime && m?.Timing?.Today?.closeTime) {
+//           const time = moment().tz("Asia/Kolkata");
+//           const beforeTime = moment(m?.Timing?.Today?.openTime, 'hh:mm:ss');
+//           const afterTime = moment(m?.Timing?.Today?.closeTime, 'hh:mm:ss');
+
+//           flag = time.isBetween(beforeTime, afterTime);
+//         }
+//         if (!flag && m.isTimeExtended) {
+//           flag = true;
+//         }
+//         return {
+//           ...m,
+//           isOutletOpen: flag
+//         }
+//       })
+
+//       res.status(200).json({
+//         success: true,
+//         message: "Data fetch succesfully",
+//         data: {
+//           cafeteriasForYouData,
+//           PopularCafeterias
+//         }
+//       });
+//     } else {
+//       throw PopularCafeterias.error || cafeteriasForYouDataResponse.error;
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ success: false, error: error });
+//   }
+// })
+
 router.get("/homeData", async (req, res) => {
-  const { categoryId, campusId } = req.query;
+  const { campusId } = req.query;
   try {
-    const cafeteriasForYouDataResponse = await supabaseInstance.from("Outlet").select("outletName,isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*,dayId(*)),Review!left(customerAuthUID,star)")
-      // .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
-      .eq("campusId", campusId).eq("isPublished", true).eq("isActive", true).limit(5);
 
-    let PopularCafeteriasResponse = await supabaseInstance.from("Outlet").select("outletName, isPublished, address,logo,headerImage,outletId,isActive,isDineIn,isPickUp,isDelivery,packaging_charge, isTimeExtended, Timing!left(*, dayId(*)),Review!left(customerAuthUID,star)")
-      // .eq("Timing.dayId.day", moment().tz("Asia/Kolkata").format("dddd"))
-      .eq("campusId", campusId).eq("isPublished", true).eq("isActive", true).limit(5);
+    let today = moment().tz("Asia/Kolkata").format("dddd");
+    let tomorrow = moment().tz("Asia/Kolkata").add(1, 'days').format("dddd");
+    let overmorrow = moment().tz("Asia/Kolkata").add(2, 'days').format("dddd");
+    let query = supabaseInstance.rpc('get_customer_home_data', { campus_id:campusId, today,tomorrow,overmorrow}).limit(5);
 
-    if (cafeteriasForYouDataResponse.data && PopularCafeteriasResponse.data) {
+    const get_customer_home_dataResponse = await query;
 
-      let cafeteriasForYouData = cafeteriasForYouDataResponse.data.map(m => ({ ...m, Timing:{
-        Today:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").format("dddd")),
-        Tomorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
-        Overmorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"))
-      },Review:{
-        total_Customer:m?.Review?.length || 0,
-        avrage_Rating:(m?.Review.reduce((a,c)=> a + c.star,0) / m?.Review?.length)?.toFixed(1)
-      }})).map(m => {
+    if (get_customer_home_dataResponse.data) {
+      const home_data = get_customer_home_dataResponse?.data?.map(m => {
         let flag = false;
-        if (m?.Timing?.Today?.openTime && m?.Timing?.Today?.closeTime) {
+        const today_time = m?.time_day?.find(f => f.Day === today);
+        if (today_time?.openTime && today_time?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(m?.Timing?.Today?.openTime, 'hh:mm:ss');
-          const afterTime = moment(m?.Timing?.Today?.closeTime, 'hh:mm:ss');
-
-          flag = time.isBetween(beforeTime, afterTime);
-        }
-
-        if (!flag && m.isTimeExtended) {
-          flag = true;
-        }
-        return {
-          ...m,
-          isOutletOpen: flag
-        }
-      })
-      let PopularCafeterias = PopularCafeteriasResponse.data.map(m => ({ ...m, Timing:{
-        Today:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").format("dddd")),
-        Tomorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
-        Overmorrow:m?.Timing?.find(f => f?.dayId?.day=== moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"))
-      },Review:{
-        total_Customer:m?.Review?.length || 0,
-        avrage_Rating:(m?.Review.reduce((a,c)=> a + c.star,0) / m?.Review?.length)?.toFixed(1)
-      } })).map(m => {
-        let flag = false;
-        if (m?.Timing?.Today?.openTime && m?.Timing?.Today?.closeTime) {
-          const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(m?.Timing?.Today?.openTime, 'hh:mm:ss');
-          const afterTime = moment(m?.Timing?.Today?.closeTime, 'hh:mm:ss');
-
+          const beforeTime = moment(today_time?.openTime, 'hh:mm:ss');
+          const afterTime = moment(today_time?.closeTime, 'hh:mm:ss');
+  
           flag = time.isBetween(beforeTime, afterTime);
         }
         if (!flag && m.isTimeExtended) {
@@ -360,24 +413,21 @@ router.get("/homeData", async (req, res) => {
           ...m,
           isOutletOpen: flag
         }
-      })
-
+      })  
       res.status(200).json({
         success: true,
-        message: "Data fetch succesfully",
         data: {
-          cafeteriasForYouData,
-          PopularCafeterias
+          cafeteriasForYouData:home_data,
+          PopularCafeterias:home_data
         }
       });
     } else {
-      throw PopularCafeterias.error || cafeteriasForYouDataResponse.error;
+      throw get_customer_home_dataResponse.error;
     }
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, error: error });
+    res.status(500).json({ success: false, error: error.message });
   }
-})
+});
 
 router.get("/getOutletList/:campusId", async (req, res) => {
   const { campusId } = req.params;
@@ -528,12 +578,12 @@ router.get("/getCustomer/:outletId", async (req, res) => {
 
 router.post("/updateCustomer/:customerAuthUID", async (req, res) => {
   const { customerAuthUID } = req.params;
-  const { customerName, email, mobile, dob, genderId } = req.body;
+  const { customerName, email, mobile, dob, genderId, campusId } = req.body;
   try {
     const { data, error } = await supabaseInstance
       .from("Customer")
-      .update({ customerName, email, mobile, dob, genderId })
-      .select("*")
+      .update({ customerName, email, mobile, dob, genderId, campusId })
+      .select(customerSlectString)
       .eq("customerAuthUID", customerAuthUID)
 
     if (data) {
@@ -621,16 +671,16 @@ router.post("/userGooglelogin", async (req, res) => {
       provider: 'google',
       token: token,
     });
-    console.log("data==>",data)
-    console.log("error==>",error)
+    console.log("data==>", data)
+    console.log("error==>", error)
 
     if (data?.user?.id) {
-      const customerData = await supabaseInstance.from("Customer").select('*').eq("customerAuthUID", data.user.id).maybeSingle();
-      console.log("customerData=>",customerData)
+      const customerData = await supabaseInstance.from("Customer").select(customerSlectString).eq("customerAuthUID", data.user.id).maybeSingle();
+      console.log("customerData=>", customerData)
       if (customerData.data) {
         res.status(200).json({ success: true, data: customerData.data });
       } else {
-        const customerResponse = await supabaseInstance.from("Customer").insert({ email: data.user.email, mobile: data?.user?.phone ? +data.user.phone : null, customerName: data.user?.user_metadata?.full_name, customerAuthUID: data.user.id }).select("*").maybeSingle();
+        const customerResponse = await supabaseInstance.from("Customer").insert({ email: data.user.email, mobile: data?.user?.phone ? +data.user.phone : null, customerName: data.user?.user_metadata?.full_name, customerAuthUID: data.user.id }).select(customerSlectString).maybeSingle();
         if (customerResponse.data) {
           res.status(200).json({ success: true, data: customerResponse.data });
         } else {
@@ -646,14 +696,13 @@ router.post("/userGooglelogin", async (req, res) => {
   }
 });
 
-
 router.post("/updateMobile", async (req, res) => {
   const { mobile, customerAuthUID } = req.body;
 
   console.log({ mobile, customerAuthUID });
 
   try {
-    const customerResponse = await supabaseInstance.from("Customer").update({ mobile }).eq("customerAuthUID", customerAuthUID).select("*").maybeSingle();
+    const customerResponse = await supabaseInstance.from("Customer").update({ mobile }).eq("customerAuthUID", customerAuthUID).select(customerSlectString).maybeSingle();
     // console.log("customerResponse => ", customerResponse);
     if (customerResponse.data) {
       res.status(200).json({
@@ -677,41 +726,41 @@ router.post("/otplessUser", async (req, res) => {
     }
     const options = {
       method: 'POST',
-      url:otplessConfig.config.client_url ,
+      url: otplessConfig.config.client_url,
       headers: {
-        'clientId':otplessConfig.config.clint_Id,
-        'clientSecret':otplessConfig.config.client_secret_key,
-        'content-Type':'application/json'
+        'clientId': otplessConfig.config.clint_Id,
+        'clientSecret': otplessConfig.config.client_secret_key,
+        'content-Type': 'application/json'
       },
       data: {
-         'token':token
+        'token': token
       },
-  };
-  const {data,error} = await axios.default.request(options);
-  console.log("data==>",data);
+    };
+    const { data, error } = await axios.default.request(options);
+    console.log("data==>", data);
     if (data) {
       const customerData = await supabaseInstance.from("Customer").select('*').eq("mobile", data.mobile.number).maybeSingle();
       if (customerData.data) {
-        console.log("customerData=>",customerData);
+        console.log("customerData=>", customerData);
         res.status(200).json({ success: true, data: customerData.data });
       } else {
-        const {userData,error} = await supabaseInstance.auth.admin.createUser({
-          email:data?.email?.email,
+        const { userData, error } = await supabaseInstance.auth.admin.createUser({
+          email: data?.email?.email,
           phone: data?.mobile?.number,
           phone_confirm: true
         })
-        console.log("User Data=>",userData)
-        if(userData?.user){
-          const customerResponse = await supabaseInstance.from("Customer").insert({ email: data?.email?.email, mobile: data?.mobile?.number, customerName: data?.mobile?.name,customerAuthUID:userData.user.id }).select("*").maybeSingle();
+        console.log("User Data=>", userData)
+        if (userData?.user) {
+          const customerResponse = await supabaseInstance.from("Customer").insert({ email: data?.email?.email, mobile: data?.mobile?.number, customerName: data?.mobile?.name, customerAuthUID: userData.user.id }).select("*").maybeSingle();
           if (customerResponse.data) {
-            console.log("customerResponse=>",customerResponse)
+            console.log("customerResponse=>", customerResponse)
             res.status(200).json({ success: true, data: customerResponse.data });
           } else {
             res.status(500).json({ success: false, error: customerResponse.error });
           }
-        }else{
+        } else {
           throw error
-        } 
+        }
       }
     } else {
       throw error;
@@ -724,23 +773,3 @@ router.post("/otplessUser", async (req, res) => {
 
 
 module.exports = router;
-
-// console.log(
-//   arr.map(m => ({...m, Timing: m?.Timing?.find(f => f.dayId?.day)}))
-//   .map(m => {
-//     let flag = false;
-
-//     if (m?.Timing?.openTime && m?.Timing?.closeTime) {
-//       const time = moment(moment().format('hh:mm:ss'), 'hh:mm:ss');
-//       const beforeTime = moment(m?.Timing?.openTime, 'hh:mm:ss');
-//       const afterTime = moment(m?.Timing?.closeTime, 'hh:mm:ss');
-
-//       flag = time.isBetween(beforeTime, afterTime);
-//     }
-
-//     return {
-//       ...m,
-//       isOutletOpen: flag
-//     }
-//   })
-// )
