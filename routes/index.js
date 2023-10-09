@@ -10,7 +10,7 @@ router.get('/', function(req, res, next) {
 
 
 router.get("/getTitle", function (req, res) {
-  res.send("Title from server = " + new Date().toLocaleString());
+  res.send({data: "Title from server = " + new Date().toLocaleString()});
 })
 
 router.get("/realtimeDemo", function (req, res) {
