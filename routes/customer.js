@@ -411,9 +411,15 @@ router.get("/homeData", async (req, res) => {
         }
         return {
           ...m,
-          isOutletOpen: flag
+          isOutletOpen: flag,
+          Timing: {
+            Today: m?.time_day?.find(f => f.Day === today),
+            Tomorrow: m?.time_day?.find(f => f.Day === tomorrow),
+            Overmorrow: m?.time_day?.find(f => f.Day === overmorrow),
+          }
         }
       })  
+
       res.status(200).json({
         success: true,
         data: {
@@ -613,9 +619,7 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'Order', filter: `orderId=eq.${orderId}` },
       (payload) => {
-        res.write('event: updateorder\n');  //* Updagte order Event
-        res.write(`data: ${JSON.stringify(payload?.new || null)}`);
-        res.write("\n\n");
+        res.write(`data: ${JSON.stringify({updateorder: payload?.new || null})}\n\n`);
       }
     ).subscribe((status) => {
       console.log("subscribe status for orderId => ", orderId);

@@ -374,6 +374,11 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
     } else {
       delete outletData.convenienceFee;
     }
+    if (req?.body?.FSSAI_number) {
+      outletData.FSSAI_number = req?.body?.FSSAI_number;
+    } else {
+      delete outletData.FSSAI_number;
+    }
 
     const { data, error } = await supabaseInstance
       .from("Outlet")

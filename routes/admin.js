@@ -107,7 +107,8 @@ router.post("/adminLogin", async (req, res) => {
       const { data, error } = await supabaseInstance
         .from("Super_Admin_Users")
         .select("*")
-        .match({ adminId: adminId });
+        .eq("adminId",adminId)
+        .maybeSingle();
 
       res.send({
         success: true,
