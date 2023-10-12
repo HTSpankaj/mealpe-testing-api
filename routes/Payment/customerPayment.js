@@ -77,15 +77,16 @@ router.post('/initiate-payment', async (req, res, next) => {
                     },
                     data: encodedParams,
                 };
-
+                
+                const encodedParamsbj = encodedParams?.toString()?.split("&")?.map(m => m?.split("="))?.reduce((a, v) => ({ ...a, [v[0]]: decodeURIComponent(v[1])}), {}) ;
                 axios.request(options).then(async (initiateLinkResponse) => {
-                    const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body: encodedParamsToObject(encodedParams), initiateLink_response: initiateLinkResponse.data }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
+                    const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body: encodedParamsbj, initiateLink_response: initiateLinkResponse.data }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
                     console.log("transactionUpdateResponse in then =>", transactionUpdateResponse);
 
                     res.status(200).json({ success: true, response: initiateLinkResponse?.data })
                 }).catch(async (error) => {
                     console.error(error);
-                    const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body: encodedParamsToObject(encodedParams), initiateLink_error: error }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
+                    const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body:encodedParamsbj, initiateLink_error: error }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
                     console.log("transactionUpdateResponse in error=>", transactionUpdateResponse)
                     res.status(200).json({ success: false, response: error })
                 })

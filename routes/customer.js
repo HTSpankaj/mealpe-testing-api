@@ -403,6 +403,9 @@ router.get("/homeData", async (req, res) => {
           const time = moment().tz("Asia/Kolkata");
           const beforeTime = moment(today_time?.openTime, 'hh:mm:ss');
           const afterTime = moment(today_time?.closeTime, 'hh:mm:ss');
+          console.log("time==>",time);
+          console.log("beforeTime==>",beforeTime);
+          console.log("afterTime==>",afterTime);
   
           flag = time.isBetween(beforeTime, afterTime);
         }
@@ -441,12 +444,18 @@ router.get("/getOutletList/:campusId", async (req, res) => {
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
   try {
+
+    let today = moment().tz("Asia/Kolkata").format("dddd");
+    let tomorrow = moment().tz("Asia/Kolkata").add(1, 'days').format("dddd");
+    let overmorrow = moment().tz("Asia/Kolkata").add(2, 'days').format("dddd");
+    console.log("today,tomorrow,overmorrow",today,tomorrow,overmorrow)
     let query = supabaseInstance
-      .rpc('get_outlet_list', { category_id: categoryId ? categoryId : null, campus_id: campusId, week_day: moment().tz("Asia/Kolkata").format('dddd') }, { count: "exact" })
+      .rpc('get_outlet_list', { category_id: categoryId ? categoryId : null, campus_id: campusId,today,tomorrow,overmorrow}, { count: "exact" })
       .eq("is_published", true)
       .eq("is_active", true)
       .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
       .order("outlet_name", { ascending: true })
+
     if (searchText) {
       query = query.or(`address.ilike.%${searchText}%,outlet_name.ilike.%${searchText}%`);
     }
@@ -457,11 +466,14 @@ router.get("/getOutletList/:campusId", async (req, res) => {
       // let outletData = data.map(m => ({...m, Timing: m?.Timing?.find(f => f.dayId?.day)})).map(m => {
       let outletData = data.map(m => {
         let flag = false;
-        if (m?.open_time && m?.close_time) {
+        const today_time = m?.time_day?.find(f => f.Day === today);
+        if (today_time?.openTime && today_time?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(m?.open_time, 'hh:mm:ss');
-          const afterTime = moment(m?.close_time, 'hh:mm:ss');
-
+          const beforeTime = moment(today_time?.openTime, 'hh:mm:ss');
+          const afterTime = moment(today_time?.closeTime, 'hh:mm:ss');
+          console.log("time==>",time);
+          console.log("beforeTime==>",beforeTime);
+          console.log("afterTime==>",afterTime);
           flag = time.isBetween(beforeTime, afterTime);
         }
 
@@ -470,7 +482,12 @@ router.get("/getOutletList/:campusId", async (req, res) => {
         }
         return {
           ...m,
-          isOutletOpen: flag
+          isOutletOpen: flag,
+          Timing: {
+            Today: m?.time_day?.find(f => f.Day === today),
+            Tomorrow: m?.time_day?.find(f => f.Day === tomorrow),
+            Overmorrow: m?.time_day?.find(f => f.Day === overmorrow),
+          }
         }
       })
 

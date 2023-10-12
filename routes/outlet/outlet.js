@@ -374,6 +374,13 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
     } else {
       delete outletData.convenienceFee;
     }
+    
+    if (req?.body?.packaging_charge) {
+      outletData.packaging_charge = req?.body?.packaging_charge;
+    } else {
+      delete outletData.packaging_charge;
+    }
+
     if (req?.body?.FSSAI_number) {
       outletData.FSSAI_number = req?.body?.FSSAI_number;
     } else {
