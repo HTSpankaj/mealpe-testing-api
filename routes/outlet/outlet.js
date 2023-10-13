@@ -163,16 +163,31 @@ router.post("/createOutlet", async (req, res) => {
 
 router.post("/upsertFssaiLicensePhoto", upload.single('file'), async (req, res) => {
   const { outletId } = req.body;
-  console.log("outletId--->", outletId)
+  // console.log("outletId--->", outletId)
+  
   try {
-    const { data, error } = await supabaseInstance
+
+   let query =  supabaseInstance
       .storage
       .from('fssai-license')
-      .upload(outletId + ".webp", req.file.buffer, {
+
+    if (req?.file?.mimetype.includes('image')) {
+      query = query.upload(outletId + ".webp", req.file.buffer, {
         cacheControl: '3600',
         upsert: true,
         contentType: 'image/webp'
       })
+    } else if (req?.file?.mimetype === 'application/pdf') {
+      query = query.upload(outletId + ".pdf", req.file.buffer, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: 'application/pdf'
+      })
+    } else {
+      throw req?.file?.mimetype?.error
+    }
+
+    const { data, error } = await query;
 
     if (data?.path) {
       const publickUrlresponse = await supabaseInstance.storage.from('fssai-license').getPublicUrl(data?.path);
@@ -637,3 +652,12 @@ router.get("/getOutletData/:outletId", async (req, res) => {
 
 
 module.exports = router;
+
+
+// const { data, error } = await supabase
+// .storage
+// .from('avatars')
+// .upload('public/avatar1.png', avatarFile, {
+//   cacheControl: '3600',
+//   upsert: false
+// })
