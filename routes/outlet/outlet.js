@@ -34,7 +34,9 @@ router.post("/createOutlet", async (req, res) => {
     isGSTShow,
     logo,
     FSSAI_number,
-    convenienceFee
+    convenienceFee,
+    commissionFee,
+    bankLabel
   } = req.body;
   try {
     const { data, error } = await supabaseInstance.auth.signUp(
@@ -99,6 +101,14 @@ router.post("/createOutlet", async (req, res) => {
       
       if (convenienceFee) {
         postObject.convenienceFee = convenienceFee;
+      }
+
+      if (commissionFee) {
+        postObject.commissionFee = commissionFee;
+      }
+
+      if (bankLabel) {
+        postObject.bankLabel = bankLabel;
       }
 
       if (!isPrimaryOutlet) {
@@ -389,6 +399,12 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
     } else {
       delete outletData.convenienceFee;
     }
+
+    if (req?.body?.commissionFee) {
+      outletData.commissionFee = req?.body?.commissionFee;
+    } else {
+      delete outletData.commissionFee;
+    }
     
     if (req?.body?.packaging_charge) {
       outletData.packaging_charge = req?.body?.packaging_charge;
@@ -401,6 +417,13 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
     } else {
       delete outletData.FSSAI_number;
     }
+
+    if (req?.body?.bankLabel) {
+      outletData.bankLabel = req?.body?.bankLabel;
+    } else {
+      delete outletData.bankLabel;
+    }
+
 
     const { data, error } = await supabaseInstance
       .from("Outlet")
