@@ -636,6 +636,54 @@ router.get("/getOutletData/:outletId", async (req, res) => {
   }
 });
 
+// router.post("/pushData/:outletId", async (req, res) => {
+
+//   const { ...outletdata } = req.body;
+//   try {
+  
+//     for (let data of outletdata?.item) {
+//       delete data.itemid
+//       console.log("data===>",data)
+//       menuItemData = await supabaseInstance
+//         .from("Menu_Item")
+//         insert({...data})
+//         .select("*")
+//     }
+
+//     for (let data of outletdata?.subCategory) {
+//       delete data.categoryId;
+//       delete data.Menu_Item;
+//       delete data.Menu_Item_count;
+//       subCategoryData = await supabaseInstance
+//         .from("Menu_Categories")
+//         insert({...data})
+//         .select("*")
+//     }
+
+//     for (let data of outletdata?.category) {
+//       delete data.parent_category_id;
+//       delete data.Menu_Categories;
+//       delete data.Menu_Item_count;
+//       categoryData = await supabaseInstance
+//         .from("Menu_Parent_Categories")
+//         insert({...data})
+//         .select("*")
+//     }
+
+//     // if (taxData) {
+//     //   res.status(200).json({
+//     //     success: true,
+//     //     data:data
+//     //   });
+//     // } else {
+//     //   throw error;
+//     // }
+
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// })
+
 
 // router.post("/resetOutletPassword/:outletId", async (req, res) => {
 //   const { outletId } = req.params;

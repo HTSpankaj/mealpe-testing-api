@@ -268,8 +268,8 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
         let flag = false;
         if (outletdetails?.Timing?.Today?.openTime && outletdetails?.Timing?.Today?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss').tz("Asia/Kolkata");
-          const afterTime = moment(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss').tz("Asia/Kolkata");
+          const beforeTime = moment.tz(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
+          const afterTime = moment.tz(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
           flag = time.isBetween(beforeTime, afterTime);
         }
@@ -401,8 +401,8 @@ router.get("/homeData", async (req, res) => {
         const today_time = m?.time_day?.find(f => f.Day === today);
         if (today_time?.openTime && today_time?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(today_time?.openTime, 'HH:mm:ss', 'Asia/Kolkata').tz("Asia/Kolkata");
-          const afterTime = moment(today_time?.closeTime, 'HH:mm:ss', 'Asia/Kolkata').tz("Asia/Kolkata");
+          const beforeTime = moment.tz(today_time?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
+          const afterTime = moment.tz(today_time?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
           console.log("time Asia  ==>",time);
           console.log("beforeTime Asia  ==>",beforeTime);
           console.log("afterTime Asia  ==>",afterTime);
@@ -438,10 +438,7 @@ router.get("/homeData", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 
-  const ob = moment("10:00:00", 'HH:mm:ss');
-  console.log("ob ===========> ", ob);
-
-  console.log("1 ==> ", moment.tz("10:00:00", 'HH:mm:ss', "America/Anchorage"));
+  // console.log("1 ==> ", moment.tz("10:00:00", 'HH:mm:ss', "Asia/Kolkata"));
 });
 
 router.get("/getOutletList/:campusId", async (req, res) => {
@@ -475,8 +472,8 @@ router.get("/getOutletList/:campusId", async (req, res) => {
         const today_time = m?.time_day?.find(f => f.Day === today);
         if (today_time?.openTime && today_time?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(today_time?.openTime, 'HH:mm:ss').tz("Asia/Kolkata");
-          const afterTime = moment(today_time?.closeTime, 'HH:mm:ss').tz("Asia/Kolkata");
+          const beforeTime = moment.tz(today_time?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
+          const afterTime = moment.tz(today_time?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
           console.log("time==>",time);
           console.log("beforeTime==>",beforeTime);
           console.log("afterTime==>",afterTime);
@@ -798,9 +795,54 @@ router.post("/otplessUser", async (req, res) => {
   }
 });
 
+router.post("/userApplelogin", async (req, res) => {
+  const { token } = req.body;
+  try {
+    if (!token) {
+      throw new Error("Token is missing in the request.");
+    }
+
+    const { data, error } = await supabaseInstance.auth.signInWithIdToken({
+      provider: 'apple',
+      token: token,
+    });
+    console.log("data=>",data)
+
+
+    if (data?.user?.id) {
+      const customerData = await supabaseInstance.from("Customer").select(customerSlectString).eq("customerAuthUID", data.user.id).maybeSingle();
+      console.log("customerData=>", customerData)
+      if (customerData.data) {
+        res.status(200).json({ success: true, data: customerData.data });
+      } else {
+        const customerResponse = await supabaseInstance.from("Customer").insert({ email: data.user.email, mobile: data?.user?.phone ? +data.user.phone : null, customerName: data.user?.user_metadata?.full_name, customerAuthUID: data.user.id }).select(customerSlectString).maybeSingle();
+        if (customerResponse.data) {
+          res.status(200).json({ success: true, data: customerResponse.data });
+        } else {
+          res.status(500).json({ success: false, error: customerResponse.error });
+        }
+      }
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    console.error("Authentication error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 
 module.exports = router;
 
-// console.log(moment("02:00", 'HH:mm:ss', 'America/Chicago').tz('Asia/Kolkata'));
-// console.log(new Date(moment("10:00:00", 'HH:mm:ss', 'America/Chicago').tz('Asia/Kolkata')).toLocaleString());
-// console.log(moment("10:00:00", 'HH:mm:ss', 'America/Chicago').toString());
+
+// const applepubliKeyURL ='https://appleid.apple.com/auth/keys';
+    
+// axios.get(applepubliKeyURL).then((response) => {
+//   const applePublicKeys = response.data.keys;
+//   console.log("applePublicKeys=>",applePublicKeys);
+//   const decodeToken = jwt.verify('hfsdgcdvdhs',applePublicKeys[0]);
+//   console.log("decodeToken=>",decodeToken)
+
+// })
+
+
