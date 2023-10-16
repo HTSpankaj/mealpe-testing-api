@@ -268,8 +268,8 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
         let flag = false;
         if (outletdetails?.Timing?.Today?.openTime && outletdetails?.Timing?.Today?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(outletdetails?.Timing?.Today?.openTime, 'hh:mm:ss').tz("Asia/Kolkata");
-          const afterTime = moment(outletdetails?.Timing?.Today?.closeTime, 'hh:mm:ss').tz("Asia/Kolkata");
+          const beforeTime = moment(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss').tz("Asia/Kolkata");
+          const afterTime = moment(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss').tz("Asia/Kolkata");
 
           flag = time.isBetween(beforeTime, afterTime);
         }
@@ -326,8 +326,8 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
 //         let flag = false;
 //         if (m?.Timing?.Today?.openTime && m?.Timing?.Today?.closeTime) {
 //           const time = moment().tz("Asia/Kolkata");
-//           const beforeTime = moment(m?.Timing?.Today?.openTime, 'hh:mm:ss');
-//           const afterTime = moment(m?.Timing?.Today?.closeTime, 'hh:mm:ss');
+//           const beforeTime = moment(m?.Timing?.Today?.openTime, 'HH:mm:ss');
+//           const afterTime = moment(m?.Timing?.Today?.closeTime, 'HH:mm:ss');
 
 //           flag = time.isBetween(beforeTime, afterTime);
 //         }
@@ -353,8 +353,8 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
 //         let flag = false;
 //         if (m?.Timing?.Today?.openTime && m?.Timing?.Today?.closeTime) {
 //           const time = moment().tz("Asia/Kolkata");
-//           const beforeTime = moment(m?.Timing?.Today?.openTime, 'hh:mm:ss');
-//           const afterTime = moment(m?.Timing?.Today?.closeTime, 'hh:mm:ss');
+//           const beforeTime = moment(m?.Timing?.Today?.openTime, 'HH:mm:ss');
+//           const afterTime = moment(m?.Timing?.Today?.closeTime, 'HH:mm:ss');
 
 //           flag = time.isBetween(beforeTime, afterTime);
 //         }
@@ -401,11 +401,11 @@ router.get("/homeData", async (req, res) => {
         const today_time = m?.time_day?.find(f => f.Day === today);
         if (today_time?.openTime && today_time?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(today_time?.openTime, 'hh:mm:ss').tz("Asia/Kolkata");
-          const afterTime = moment(today_time?.closeTime, 'hh:mm:ss').tz("Asia/Kolkata");
-          console.log("time==>",time);
-          console.log("beforeTime==>",beforeTime);
-          console.log("afterTime==>",afterTime);
+          const beforeTime = moment(today_time?.openTime, 'HH:mm:ss').tz("Asia/Kolkata");
+          const afterTime = moment(today_time?.closeTime, 'HH:mm:ss').tz("Asia/Kolkata");
+          console.log("time HH:mm:ss==>",time);
+          console.log("beforeTime HH:mm:ss==>",beforeTime);
+          console.log("afterTime HH:mm:ss==>",afterTime);
   
           flag = time.isBetween(beforeTime, afterTime);
         }
@@ -469,8 +469,8 @@ router.get("/getOutletList/:campusId", async (req, res) => {
         const today_time = m?.time_day?.find(f => f.Day === today);
         if (today_time?.openTime && today_time?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(today_time?.openTime, 'hh:mm:ss').tz("Asia/Kolkata");
-          const afterTime = moment(today_time?.closeTime, 'hh:mm:ss').tz("Asia/Kolkata");
+          const beforeTime = moment(today_time?.openTime, 'HH:mm:ss').tz("Asia/Kolkata");
+          const afterTime = moment(today_time?.closeTime, 'HH:mm:ss').tz("Asia/Kolkata");
           console.log("time==>",time);
           console.log("beforeTime==>",beforeTime);
           console.log("afterTime==>",afterTime);
