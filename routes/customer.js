@@ -403,9 +403,10 @@ router.get("/homeData", async (req, res) => {
           const time = moment().tz("Asia/Kolkata");
           const beforeTime = moment(today_time?.openTime, 'HH:mm:ss', 'Asia/Kolkata').tz("Asia/Kolkata");
           const afterTime = moment(today_time?.closeTime, 'HH:mm:ss', 'Asia/Kolkata').tz("Asia/Kolkata");
-          console.log("time Asia  ==>",time.toString());
+          console.log("time Asia  ==>",time);
           console.log("beforeTime Asia  ==>",beforeTime);
           console.log("afterTime Asia  ==>",afterTime);
+          console.log('\n');
   
           flag = time.isBetween(beforeTime, afterTime);
         }
@@ -436,6 +437,11 @@ router.get("/homeData", async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
+
+  const ob = moment("10:00:00", 'HH:mm:ss');
+  console.log("ob ===========> ", ob);
+
+  console.log("1 ==> ", moment.tz("10:00:00", 'HH:mm:ss', "America/Anchorage"));
 });
 
 router.get("/getOutletList/:campusId", async (req, res) => {
@@ -797,3 +803,4 @@ module.exports = router;
 
 // console.log(moment("02:00", 'HH:mm:ss', 'America/Chicago').tz('Asia/Kolkata'));
 // console.log(new Date(moment("10:00:00", 'HH:mm:ss', 'America/Chicago').tz('Asia/Kolkata')).toLocaleString());
+// console.log(moment("10:00:00", 'HH:mm:ss', 'America/Chicago').toString());
