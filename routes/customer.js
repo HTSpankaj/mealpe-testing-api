@@ -441,7 +441,7 @@ router.get("/homeData", async (req, res) => {
   const ob = moment("10:00:00", 'HH:mm:ss');
   console.log("ob ===========> ", ob);
 
-  console.log("1 ==> ", moment.tz("10:00:00", 'HH:mm:ss', "America/Anchorage"));
+  console.log("2 ==> ", moment.tz("10:00:00", 'HH:mm:ss', "Asia/Kolkata"));
 });
 
 router.get("/getOutletList/:campusId", async (req, res) => {
