@@ -401,11 +401,11 @@ router.get("/homeData", async (req, res) => {
         const today_time = m?.time_day?.find(f => f.Day === today);
         if (today_time?.openTime && today_time?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
-          const beforeTime = moment(today_time?.openTime, 'HH:mm:ss', 'America/Chicago').tz("Asia/Kolkata");
-          const afterTime = moment(today_time?.closeTime, 'HH:mm:ss', 'America/Chicago').tz("Asia/Kolkata");
-          console.log("time HH:mm:ss==>",time.toString());
-          console.log("beforeTime HH:mm:ss==>",beforeTime);
-          console.log("afterTime HH:mm:ss==>",afterTime);
+          const beforeTime = moment(today_time?.openTime, 'HH:mm:ss', 'Asia/Kolkata').tz("Asia/Kolkata");
+          const afterTime = moment(today_time?.closeTime, 'HH:mm:ss', 'Asia/Kolkata').tz("Asia/Kolkata");
+          console.log("time Asia  ==>",time.toString());
+          console.log("beforeTime Asia  ==>",beforeTime);
+          console.log("afterTime Asia  ==>",afterTime);
   
           flag = time.isBetween(beforeTime, afterTime);
         }
@@ -796,4 +796,4 @@ router.post("/otplessUser", async (req, res) => {
 module.exports = router;
 
 // console.log(moment("02:00", 'HH:mm:ss', 'America/Chicago').tz('Asia/Kolkata'));
-// console.log(new Date(moment("02:00:00", 'HH:mm:ss', 'America/Chicago').tz('Asia/Kolkata')).toLocaleString());
+// console.log(new Date(moment("10:00:00", 'HH:mm:ss', 'America/Chicago').tz('Asia/Kolkata')).toLocaleString());
