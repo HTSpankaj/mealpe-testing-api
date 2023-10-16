@@ -438,16 +438,12 @@ router.get("/homeData", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 
-<<<<<<< HEAD
-  // console.log("1 ==> ", moment.tz("10:00:00", 'HH:mm:ss', "Asia/Kolkata"));
-=======
   const ob = moment("10:00:00", 'HH:mm:ss');
   console.log("ob ===========> ", ob);
 
   console.log("2 ==> ", moment.tz("10:00:00", 'HH:mm:ss', "Asia/Kolkata"));
   console.log("3 ==> ", moment.tz("20:00:00", 'HH:mm:ss', "Asia/Kolkata"));
   console.log("3 ==> ", moment.tz("01:00:00", 'HH:mm:ss', "Asia/Kolkata"));
->>>>>>> b702c5b802546b6a22fe8d3b01cad4a65c1501bc
 });
 
 router.get("/getOutletList/:campusId", async (req, res) => {
