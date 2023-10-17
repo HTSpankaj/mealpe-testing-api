@@ -636,53 +636,66 @@ router.get("/getOutletData/:outletId", async (req, res) => {
   }
 });
 
-// router.post("/pushData/:outletId", async (req, res) => {
+router.post("/pushMenuData/:outletId", async (req, res) => {
+const {outletId} = req.params
+  const { ...outletData } = req.body;
+  try {
 
-//   const { ...outletdata } = req.body;
-//   try {
-  
-//     for (let data of outletdata?.item) {
-//       delete data.itemid
-//       console.log("data===>",data)
-//       menuItemData = await supabaseInstance
-//         .from("Menu_Item")
-//         insert({...data})
-//         .select("*")
-//     }
+    for (let data of outletData?.category) {
+      delete data.parent_category_id;
+      delete data.Menu_Categories;
+      delete data.Menu_Item_count;
+      categoryData = await supabaseInstance
+        .from("Menu_Parent_Categories")
+        .insert({parentCategoryName:data.parentCategoryName,outletId,status:data.status,parent_category_image_url:data.parent_category_image_url,isFromPrimaryOutletId:true})
+        .select("*")
+    }
 
-//     for (let data of outletdata?.subCategory) {
-//       delete data.categoryId;
-//       delete data.Menu_Item;
-//       delete data.Menu_Item_count;
-//       subCategoryData = await supabaseInstance
-//         .from("Menu_Categories")
-//         insert({...data})
-//         .select("*")
-//     }
+    if(outletData?.category[0]?.parent_category_id === outletData?.subCategory[0]?.parent_category_id){
+      parent_category_id = categoryData.data[0].parent_category_id;
+    }else{
+      parent_category_id = null
+    }
+    
+    for (let data of outletData?.subCategory) {
+      delete data.categoryId;
+      delete data.Menu_Item;
+      delete data.Menu_Item_count;
+      subCategoryData = await supabaseInstance
+        .from("Menu_Categories")
+        .insert({categoryname:data.categoryname,outletId,category_image_url:data.category_image_url,status:data.status,isFromPrimaryOutletId:true,parent_category_id:parent_category_id})
+        .select("*");
+    }
+ 
+    if(outletData?.subCategory[0]?.categoryid === outletData?.item[0]?.item_categoryid){
+      item_categoryid =subCategoryData.data[0].categoryid;
+    }else{
+      item_categoryid = null
+    }
 
-//     for (let data of outletdata?.category) {
-//       delete data.parent_category_id;
-//       delete data.Menu_Categories;
-//       delete data.Menu_Item_count;
-//       categoryData = await supabaseInstance
-//         .from("Menu_Parent_Categories")
-//         insert({...data})
-//         .select("*")
-//     }
+    for (let data of outletData?.item) {
+      menuItemData = await supabaseInstance
+        .from("Menu_Item")
+        .insert({itemname:data.itemname,attributeid:data.attributeid,price:data.price,itemdescription:data.itemdescription,itemdescription:data.itemdescription,minimumpreparationtime:data.minimumpreparationtime,kcal:data.kcal,servinginfo:data.servinginfo,outletId,dietary_restriction_id:data.dietary_restriction_id,spice_level_id:data.spice_level_id,status:data.status,isDelete:data.isDelete,isFromPrimaryOutletId:true,item_categoryid:item_categoryid})
+        .select("*")
+    }
 
-//     // if (taxData) {
-//     //   res.status(200).json({
-//     //     success: true,
-//     //     data:data
-//     //   });
-//     // } else {
-//     //   throw error;
-//     // }
-
-//   } catch (error) {
-//     res.status(500).json({ success: false, error: error.message });
-//   }
-// })
+    if (menuItemData || categoryData || subCategoryData) {
+      res.status(200).json({
+        success: true,
+        data:{
+          menuItemData:menuItemData?.data,
+          categoryData:categoryData?.data,
+          subCategoryData:subCategoryData?.data
+        }
+      });
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+})
 
 
 // router.post("/resetOutletPassword/:outletId", async (req, res) => {

@@ -816,7 +816,16 @@ router.post("/userApplelogin", async (req, res) => {
       if (customerData.data) {
         res.status(200).json({ success: true, data: customerData.data });
       } else {
-        const customerResponse = await supabaseInstance.from("Customer").insert({ email: data.user.email, mobile: data?.user?.phone ? +data.user.phone : null, customerName: data.user?.user_metadata?.full_name, customerAuthUID: data.user.id }).select(customerSlectString).maybeSingle();
+        var emailStr = data.user.email;
+        var name = data.user?.user_metadata?.full_name || null;
+        
+        if (name) {
+          var nameMatch = emailStr.match(/^([^@]*)@/);
+          name = nameMatch ? nameMatch[1] : null;
+          name = name.replace(/[^A-Za-z]/g, ' ');
+        }
+
+        const customerResponse = await supabaseInstance.from("Customer").insert({ email: emailStr, mobile: data?.user?.phone ? +data.user.phone : null, customerName: name, customerAuthUID: data.user.id }).select(customerSlectString).maybeSingle();
         if (customerResponse.data) {
           res.status(200).json({ success: true, data: customerResponse.data });
         } else {
