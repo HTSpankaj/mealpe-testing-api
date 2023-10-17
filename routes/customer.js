@@ -841,6 +841,28 @@ router.post("/userApplelogin", async (req, res) => {
   }
 });
 
+router.post("/userDeletion", async (req, res) => {
+  const { customerAuthUID } = req.body;
+
+  console.log({ customerAuthUID });
+
+  try {
+    const authDeleteResponse = await supabaseInstance.auth.admin.deleteUser(customerAuthUID, false);
+
+    if (authDeleteResponse.data) {
+      await supabaseInstance.from("Customer").update({isDelete: true}).eq("customerAuthUID", customerAuthUID).maybeSingle();
+      res.status(200).json({
+        success: true,
+        message: "User delete successfully.",
+      });
+    } else {
+      throw customerResponse.error;
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error?.message || error });
+  }
+})
+
 
 module.exports = router;
 
