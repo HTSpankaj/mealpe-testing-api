@@ -221,7 +221,7 @@ router.post("/userlogin", async (req, res) => {
   try {
     let loginQuery;
     if (mobile) {
-      loginQuery = supabaseInstance.from("Customer").select(customerSlectString).eq("mobile", mobile);
+      loginQuery = supabaseInstance.from("Customer").select(customerSlectString).eq("mobile", mobile).eq("isDelete", false);
     } else if (email) {
       loginQuery = supabaseInstance.from("Customer").select(customerSlectString).eq("email", email);
     }

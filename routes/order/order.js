@@ -9,7 +9,7 @@ var msg91config = require("../../configs/msg91Config");
 
 
 router.post("/createOrder", async (req, res) => {
-  const { customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId, items, pickupTime, orderPriceBreakDown,isScheduleNow,txnid,basePrice } = req.body;
+  const { customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId, items, pickupTime, orderPriceBreakDown,isScheduleNow,txnid,basePrice,isDelivery,address } = req.body;
   try {
     const orderOTP = generateOTP();
     const { data, error } = await supabaseInstance
@@ -32,6 +32,13 @@ router.post("/createOrder", async (req, res) => {
         .from("Order_Schedule")
         .insert({ orderId: orderId, scheduleDate: pickupTime.orderDate, scheduleTime: pickupTime.time })
         .select("*")
+
+        if(isDelivery === true){
+        const deliveryResponse = await supabaseInstance
+        .from("DeliveryAddress")
+        .insert({ orderId: orderId,outletId,customerAuthUID,address:address})
+        .select("*")
+        }
 
 
       saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId).then(async (saveOrderToPetpoojaResponse) => {
