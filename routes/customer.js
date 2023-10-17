@@ -438,12 +438,7 @@ router.get("/homeData", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 
-  const ob = moment("10:00:00", 'HH:mm:ss');
-  console.log("ob ===========> ", ob);
-
-  console.log("2 ==> ", moment.tz("10:00:00", 'HH:mm:ss', "Asia/Kolkata"));
-  console.log("3 ==> ", moment.tz("20:00:00", 'HH:mm:ss', "Asia/Kolkata"));
-  console.log("3 ==> ", moment.tz("01:00:00", 'HH:mm:ss', "Asia/Kolkata"));
+  // console.log("1 ==> ", moment.tz("10:00:00", 'HH:mm:ss', "Asia/Kolkata"));
 });
 
 router.get("/getOutletList/:campusId", async (req, res) => {
@@ -801,7 +796,7 @@ router.post("/otplessUser", async (req, res) => {
 });
 
 router.post("/userApplelogin", async (req, res) => {
-  const { token } = req.body;
+  const { token, nonce } = req.body;
   try {
     if (!token) {
       throw new Error("Token is missing in the request.");
@@ -810,6 +805,7 @@ router.post("/userApplelogin", async (req, res) => {
     const { data, error } = await supabaseInstance.auth.signInWithIdToken({
       provider: 'apple',
       token: token,
+      nonce: nonce,
     });
     console.log("data=>",data)
 
@@ -851,6 +847,3 @@ module.exports = router;
 // })
 
 
-// console.log(moment("02:00", 'HH:mm:ss', 'America/Chicago').tz('Asia/Kolkata'));
-// console.log(new Date(moment("10:00:00", 'HH:mm:ss', 'America/Chicago').tz('Asia/Kolkata')).toLocaleString());
-// console.log(moment("10:00:00", 'HH:mm:ss', 'America/Chicago').toString());
