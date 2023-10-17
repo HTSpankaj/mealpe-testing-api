@@ -154,7 +154,7 @@ router.get("/getOrder/:orderId", async (req, res) => {
 router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
   const { customerAuthUID } = req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Order").select("*,outletId(outletName,logo,Review!left(*)),Order_Item(*),Order_Schedule(*),orderStatusId(*))").eq("customerAuthUID", customerAuthUID).eq("outletId.Review.customerAuthUID",customerAuthUID).order("created_at",{ascending:false})
+    const { data, error } = await supabaseInstance.from("Order").select("*,outletId(outletId,headerImage,outletName,logo,Review!left(*)),Order_Item(*),Order_Schedule(*),orderStatusId(*))").eq("customerAuthUID", customerAuthUID).eq("outletId.Review.customerAuthUID",customerAuthUID).order("created_at",{ascending:false})
     if (data) {
       res.status(200).json({
         success: true,
