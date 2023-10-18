@@ -36,7 +36,9 @@ router.post("/createOutlet", async (req, res) => {
     FSSAI_number,
     convenienceFee,
     commissionFee,
-    bankLabel
+    bankLabel,
+    isVeg,
+    isNonVeg
   } = req.body;
   try {
     const { data, error } = await supabaseInstance.auth.signUp(
@@ -74,7 +76,9 @@ router.post("/createOutlet", async (req, res) => {
         cityId,
         isPrimaryOutlet,
         primaryOutletId,
-        isGSTShow
+        isGSTShow,
+        isVeg,
+        isNonVeg
       }
       if (openTime) {
         postObject.openTime = openTime;
