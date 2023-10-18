@@ -14,7 +14,7 @@ router.post("/createOrder", async (req, res) => {
     const orderOTP = generateOTP();
     const { data, error } = await supabaseInstance
       .from("Order")
-      .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId, orderPriceBreakDown, orderOTP,isScheduleNow,txnid ,basePrice})
+      .insert({ customerAuthUID, outletId, isDineIn, isPickUp, totalPrice, paymentId, orderPriceBreakDown, orderOTP,isScheduleNow,txnid ,basePrice,isDelivery})
       .select("*,outletId(outletName,logo,outletId), customerAuthUID(*)");
 
     if (data) {
