@@ -20,10 +20,10 @@ router.get("/getAllOutletPayment", async (req, res) => {
     }
 });
 
-router.get("/getOutletDashboard/:outletId", async (req, res) => {
-    const {outletId} = req.params;
+router.post("/getOutletDashboard", async (req, res) => {
+    const {outletId,startDate ,endDate } = req.body;
     try {
-        const { data, error } = await supabaseInstance.rpc('get_single_outlet_order_dashboard',{outlet_id:outletId});
+        const { data, error } = await supabaseInstance.rpc('get_single_outlet_order_dashboard',{outlet_id:outletId,start_date:startDate,end_date:endDate});
 
         if (data) {
             res.status(200).json({
