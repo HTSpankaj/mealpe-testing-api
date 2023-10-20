@@ -29,6 +29,7 @@ var serverRouter = require("./routes/server");
 var surepassRouter = require("./routes/surepass");
 var contactTicketRouter = require("./routes/contactUs/contactTicket");
 var settlementRouter = require("./routes/settlement/adminSettlement");
+var restaurentSettlementRouter = require("./routes/settlement/restaurentSettlement");
 
 
 var app = express();
@@ -67,6 +68,7 @@ app.use('/server', serverRouter);
 app.use('/surepass', surepassRouter);
 app.use('/contactTicket', contactTicketRouter);
 app.use('/settlement/adminSettlement', settlementRouter);
+app.use('/settlement/restaurentSettlement', restaurentSettlementRouter);
 
 
 
