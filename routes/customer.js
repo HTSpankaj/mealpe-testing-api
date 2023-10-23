@@ -755,7 +755,7 @@ router.post("/updateMobile", async (req, res) => {
   try {
     supabaseInstance.auth.admin.updateUserById(customerAuthUID, { phone: mobile }).then(async (updateUserByIdResponse) => {
       if (updateUserByIdResponse?.data?.user) {
-        const customerResponse = await supabaseInstance.from("Customer").update({ mobile }).eq("customerAuthUID", customerAuthUID).select(customerSlectString).maybeSingle();
+        const customerResponse = await supabaseInstance.from("Customer").update({ mobile: mobile+"" }).eq("customerAuthUID", customerAuthUID).select(customerSlectString).maybeSingle();
         if (customerResponse.data) {
           res.status(200).json({
             success: true,

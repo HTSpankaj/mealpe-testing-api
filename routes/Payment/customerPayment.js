@@ -36,7 +36,7 @@ router.post('/initiate-payment', async (req, res, next) => {
             let encodedParams = new URLSearchParams();
 
             const getPriceBreakdownResponse = await getPriceBreakdown(outletId, basePrice);
-                if(getPriceBreakdownResponse && easebuzzConfig?.mealpe_bank_label) {
+                if(getPriceBreakdownResponse && getPriceBreakdownResponse.outletBankLabel) {
                     //* -> getPriceBreakdownResponse = is breakdown
                     const transactionResponse = await supabaseInstance.from("Transaction")
                     .insert({ 
@@ -147,7 +147,7 @@ router.post('/initiate-payment', async (req, res, next) => {
                         };
                                                 
                         // const encodedParamsbj = encodedParams?.toString()?.split("&")?.map(m => m?.split("="))?.reduce((a, v) => ({ ...a, [v[0]]: decodeURIComponent(v[1])}), {}) ;
-                        axios.request(options).then(async (initiateLinkResponse) => {
+                        await axios.request(options).then(async (initiateLinkResponse) => {
                             const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body: postBody, initiateLink_response: initiateLinkResponse.data }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
                             console.log("transactionUpdateResponse in then =>", transactionUpdateResponse);
         
@@ -165,7 +165,7 @@ router.post('/initiate-payment', async (req, res, next) => {
                     } else {
                         throw transactionResponse.error
                     }
-                } if(!easebuzzConfig?.mealpe_bank_label) {
+                } else if(!getPriceBreakdownResponse.outletBankLabel) {
                     res.status(500).json({ success: false, error: "Bank field not found." });
                 } else {
                     throw getPriceBreakdownResponse?.error || getPriceBreakdownResponse;
