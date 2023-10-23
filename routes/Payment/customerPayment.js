@@ -145,19 +145,22 @@ router.post('/initiate-payment', async (req, res, next) => {
                             },
                             data: postBody,
                         };
-                        
-                        
+                                                
                         // const encodedParamsbj = encodedParams?.toString()?.split("&")?.map(m => m?.split("="))?.reduce((a, v) => ({ ...a, [v[0]]: decodeURIComponent(v[1])}), {}) ;
                         axios.request(options).then(async (initiateLinkResponse) => {
                             const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body: postBody, initiateLink_response: initiateLinkResponse.data }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
                             console.log("transactionUpdateResponse in then =>", transactionUpdateResponse);
         
-                            res.status(200).json({ success: true, response: initiateLinkResponse?.data })
+                            if (transactionUpdateResponse?.data) {
+                                res.status(200).json({ success: true, response: initiateLinkResponse?.data });
+                            } else {
+                                res.status(500).json({ success: false, response: transactionUpdateResponse.error.message });
+                            }
                         }).catch(async (error) => {
                             console.error(error);
                             const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body:postBody, initiateLink_error: error }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
                             console.log("transactionUpdateResponse in error=>", transactionUpdateResponse)
-                            res.status(200).json({ success: false, response: error })
+                            res.status(500).json({ success: false, response: error });
                         })
                     } else {
                         throw transactionResponse.error
