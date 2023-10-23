@@ -36,7 +36,7 @@ router.post('/initiate-payment', async (req, res, next) => {
             let encodedParams = new URLSearchParams();
 
             const getPriceBreakdownResponse = await getPriceBreakdown(outletId, basePrice);
-                if(getPriceBreakdownResponse) {
+                if(getPriceBreakdownResponse && easebuzzConfig?.mealpe_bank_label) {
                     //* -> getPriceBreakdownResponse = is breakdown
                     const transactionResponse = await supabaseInstance.from("Transaction")
                     .insert({ 
@@ -162,6 +162,8 @@ router.post('/initiate-payment', async (req, res, next) => {
                     } else {
                         throw transactionResponse.error
                     }
+                } if(!easebuzzConfig?.mealpe_bank_label) {
+                    res.status(500).json({ success: false, error: "Bank field not found." });
                 } else {
                     throw getPriceBreakdownResponse?.error || getPriceBreakdownResponse;
                 }
