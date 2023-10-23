@@ -60,7 +60,7 @@ router.post('/initiate-payment', async (req, res, next) => {
                     if (transactionResponse?.data) {
                         console.log("transactionResponse=>", transactionResponse);
 
-                        var hashstring = easebuzzConfig.key + "|" + transactionResponse?.data?.txnid + "|" + basePrice + "|" + productinfo + "|" + firstname + "|" + email + "|||||||||||" + easebuzzConfig.salt
+                        var hashstring = easebuzzConfig.key + "|" + transactionResponse?.data?.txnid + "|" + getPriceBreakdownResponse?.totalPriceForCustomer + "|" + productinfo + "|" + firstname + "|" + email + "|||||||||||" + easebuzzConfig.salt
         
                         const _generateHash = generateHash(hashstring);
                         // console.log("_generateHash => ", _generateHash);
@@ -100,7 +100,7 @@ router.post('/initiate-payment', async (req, res, next) => {
                         let postBody ={
                             'key': easebuzzConfig.key,
                             'txnid': transactionResponse?.data?.txnid,
-                            'amount': basePrice,
+                            'amount': getPriceBreakdownResponse?.totalPriceForCustomer,
                             'productinfo': productinfo,
                             'firstname': firstname,
                             'phone': phone,
