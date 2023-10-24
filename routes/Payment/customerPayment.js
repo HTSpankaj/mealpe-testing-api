@@ -127,7 +127,7 @@ router.post('/initiate-payment', async (req, res, next) => {
                             // 'payment :ategory', '',
                             // 'account_no': '',
                         }
-                        if (getPriceBreakdownResponse?.outletBankLabel && easebuzzConfig.mealpe_bank_label) {
+                        if (getPriceBreakdownResponse?.outletBankLabel && easebuzzConfig.mealpe_bank_label && (getPriceBreakdownResponse?.mealpeVendorAmount > 0) && (getPriceBreakdownResponse?.outletVendorAmount > 0)) {
                             postBody.split_payments = {
                                 [easebuzzConfig.mealpe_bank_label] : getPriceBreakdownResponse?.mealpeVendorAmount,
                                 [getPriceBreakdownResponse.outletBankLabel]: getPriceBreakdownResponse?.outletVendorAmount
@@ -302,7 +302,7 @@ function getPriceBreakdown(outletId, basePrice) {
                     const convenienceTotalAmount = convenienceAmount + convenienceGSTAmount;
 
                     //* total amount customer pay to mealpe
-                    const totalPriceForCustomer = Math.round(basePrice + foodGST + convenienceTotalAmount);
+                    const totalPriceForCustomer = Number(Math.round(basePrice + foodGST + convenienceTotalAmount))?.toFixed(2);
 
                     const commissionAmount = (outletData?.commissionFee * basePrice) / 100;
                     const commissionGSTAmount =  (18 * commissionAmount) / 100;
