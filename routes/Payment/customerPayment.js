@@ -295,14 +295,14 @@ function getPriceBreakdown(outletId, basePrice) {
                 if (outletResponse?.data) {
                     const outletData = outletResponse?.data;
 
-                    const foodGST = (5 * basePrice) / 100;;
+                    const foodGST = (5 * basePrice) / 100;
 
                     const convenienceAmount = (outletData?.convenienceFee * basePrice) / 100;
                     const convenienceGSTAmount = (18 * convenienceAmount) / 100;
                     const convenienceTotalAmount = convenienceAmount + convenienceGSTAmount;
 
                     //* total amount customer pay to mealpe
-                    const totalPriceForCustomer = Number(Math.round(basePrice + foodGST + convenienceTotalAmount))?.toFixed(2);
+                    const totalPriceForCustomer = Number(Number(Math.round(basePrice + foodGST + convenienceTotalAmount))?.toFixed(2));
 
                     const commissionAmount = (outletData?.commissionFee * basePrice) / 100;
                     const commissionGSTAmount =  (18 * commissionAmount) / 100;
