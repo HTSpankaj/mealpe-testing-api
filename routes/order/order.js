@@ -1121,15 +1121,24 @@ router.get("/realtimeCurrentOrder/:outletId", function (req, res) {
   res.setHeader("Content-Type", "text/event-stream"); 
   
   supabaseInstance.channel(`custom-current-channel-${outletId}`).on('postgres_changes',
-    { event: 'UPDATE', schema: 'public', table: 'Order', filter: `outletId=eq.${outletId},orderStatusId=in.{1,2,3}` },
+    { event: 'UPDATE', schema: 'public', table: 'Order', filter: `outletId=eq.${outletId}` },
     async (payload) => {
       console.log("payload => ", payload);
       setTimeout(async () => {
-        let orderData = await supabaseInstance.rpc("get_orders_for_outlet",{outlet_uuid: outletId}).eq("order_id",payload.new.orderId).select("*");
-        res.write('event: order\n');  //* new order Event
-        res.write(`data: ${JSON.stringify(orderData?.data || null)}`);
-        res.write("\n\n");
-      }, 5000);
+        // let orderData = await supabaseInstance.rpc("get_orders_for_outlet",{outlet_uuid: outletId}).eq("order_id",payload.new.orderId).select("*");
+        // res.write('event: order\n');  //* new order Event
+        // res.write(`data: ${JSON.stringify(orderData?.data || null)}`);
+        // res.write("\n\n");
+
+        supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId}).in("order_status_id",[1,2,3]).order("order_schedule_date",{ascending:false}).order("order_schedule_time",{ascending:false}).then(orderResponse => {
+          if (orderResponse.data) {
+            res.write('event: order\n');  //* new order Event
+            res.write(`data: ${JSON.stringify({ data: orderResponse.data || [] })}`);
+            res.write("\n\n");
+            // res.write(`data: ${JSON.stringify({ data: orderResponse.data || [] })}\n\n`);
+          }
+        })
+      }, 1000);
     }
     ).subscribe((status) => {
       console.log(`custom-current-channel-${outletId} status => `, status);
@@ -1193,7 +1202,7 @@ router.get("/lastFiveOrders/:outletId/:customerAuthUID", async (req, res) => {
   try {
     const { data, error } = await supabaseInstance
     .from("Order")
-    .select("orderId,orderSequenceId,created_at,Order_Schedule!left(scheduleDate,scheduleTime),Order_Item(quantity,calculatedPrice,itemPrice,Menu_Item(itemname,itemdescription,item_image_url)),Review(message,star))")
+    .select("orderId,orderSequenceId,created_at,totalPrice,totalPrice,Order_Schedule!left(scheduleDate,scheduleTime),Order_Item(quantity,calculatedPrice,itemPrice,Menu_Item(itemname,itemdescription,item_image_url)),Review(message,star))")
     .eq("outletId",outletId)
     .eq("customerAuthUID",customerAuthUID)
     .order("created_at", { ascending: false })
