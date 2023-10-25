@@ -1111,6 +1111,60 @@ router.get("/realtimePendingOrder/:outletId", function (req, res) {
     });
 });
 
+router.get("/realtimeCurrentOrder/:outletId", function (req, res) {
+  const {outletId} =req.params;
+
+  res.statusCode = 200;
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("connection", "keep-alive");
+  res.setHeader("Content-Type", "text/event-stream"); 
+  
+  supabaseInstance.channel(`custom-current-channel-${outletId}`).on('postgres_changes',
+    { event: 'UPDATE', schema: 'public', table: 'Order', filter: `outletId=eq.${outletId},orderStatusId=in.{1,2,3}` },
+    async (payload) => {
+      console.log("payload => ", payload);
+      setTimeout(async () => {
+        let orderData = await supabaseInstance.rpc("get_orders_for_outlet",{outlet_uuid: outletId}).eq("order_id",payload.new.orderId).select("*");
+        res.write('event: order\n');  //* new order Event
+        res.write(`data: ${JSON.stringify(orderData?.data || null)}`);
+        res.write("\n\n");
+      }, 5000);
+    }
+    ).subscribe((status) => {
+      console.log(`custom-current-channel-${outletId} status => `, status);
+      if (status === "SUBSCRIBED") {
+        supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId}).in("order_status_id",[1,2,3]).order("order_schedule_date",{ascending:false}).order("order_schedule_time",{ascending:false}).then(orderResponse => {
+          if (orderResponse.data) {
+          res.write('event: order\n');  //* new order Event
+          res.write(`data: ${JSON.stringify({ data: orderResponse.data || [] })}`);
+          res.write("\n\n");
+          // res.write(`data: ${JSON.stringify({ data: orderResponse.data || [] })}\n\n`);
+        } else {
+          res.write('event: order\n');  //* new order Event
+          res.write(`data: ${JSON.stringify({ data: [] })}`);
+          res.write("\n\n");
+          // res.write(`data: ${JSON.stringify({ data: [] || [] })}\n\n`);
+        }
+      })
+    }
+    console.log("subscribe status for outletId => ", outletId);
+  });
+
+  res.write("retry: 10000\n\n");
+  req.on('close', () => {
+    supabaseInstance.channel(`custom-current-channel-${outletId}`).unsubscribe()
+    // supabaseInstance.removeChannel(`custom-update-kot-channel-${outletId}`)
+    .then(res => {
+      console.log(".then => ", res);
+    }).catch((err) => {
+      console.log(".catch => ", err);
+    }).finally(() => {
+      console.log(`${outletId} Connection closed`);
+    });
+  });
+});
+
 router.post("/orderVerifyOTP", async (req, res) => {
   const { otp,orderId ,outletId} = req.body;
   try {
@@ -1130,6 +1184,31 @@ router.post("/orderVerifyOTP", async (req, res) => {
   } catch (error) {
     console.log(error)
       res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/lastFiveOrders/:outletId/:customerAuthUID", async (req, res) => {
+  const {outletId,customerAuthUID} =req.params;
+
+  try {
+    const { data, error } = await supabaseInstance
+    .from("Order")
+    .select("orderId,orderSequenceId,created_at,Order_Schedule!left(scheduleDate,scheduleTime),Order_Item(quantity,calculatedPrice,itemPrice,Menu_Item(itemname,itemdescription,item_image_url)),Review(message,star))")
+    .eq("outletId",outletId)
+    .eq("customerAuthUID",customerAuthUID)
+    .order("created_at", { ascending: false })
+    .not("Order_Schedule.scheduleDate","is",null)
+    .limit(5);    
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
   }
 });
 
