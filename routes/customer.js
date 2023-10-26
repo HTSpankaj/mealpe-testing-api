@@ -752,6 +752,49 @@ router.post("/userGooglelogin", async (req, res) => {
   }
 });
 
+router.post("/iosUserGooglelogin", async (req, res) => {
+  const { email, name, photo } = req.body;
+  try {
+    if (!email) {
+      throw new Error("Email is missing in the request.");
+    }
+
+    const { data, error } = await supabaseInstance.auth.admin.createUser({
+      email: email,
+      email_confirm: true
+    })
+
+    if (data?.user?.id) {
+      const customerData = await supabaseInstance.from("Customer").select(customerSlectString).eq("isDelete", false).eq("customerAuthUID", data.user.id).maybeSingle();
+      console.log("customerData=>", customerData);
+      if (customerData.data) {
+        res.status(200).json({ success: true, data: customerData.data });
+      } else {
+        // mobile: data?.user?.phone ? +data.user.phone : null,
+        const customerResponse = await supabaseInstance.from("Customer").insert({ email: data.user.email, customerName: name || null, customerAuthUID: data.user.id }).select(customerSlectString).maybeSingle();
+        if (customerResponse.data) {
+          res.status(200).json({ success: true, data: customerResponse.data });
+        } else {
+          res.status(500).json({ success: false, error: customerResponse.error });
+        }
+      }
+    } else if(error?.message?.includes("email address has already been registered")) {
+      const customerData = await supabaseInstance.from("Customer").select(customerSlectString).eq("isDelete", false).eq("email", email).maybeSingle();
+      console.log("customerData=>", customerData)
+      if (customerData.data) {
+        res.status(200).json({ success: true, data: customerData.data });
+      } else {
+        res.status(500).json({ success: false, error: "Something went wrong." });
+      }
+    } else {
+      throw error;
+    }
+  } catch (error) {
+    console.error("Authentication error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 router.post("/updateMobile", async (req, res) => {
   const { mobile, customerAuthUID } = req.body;
   console.log({ mobile, customerAuthUID });
