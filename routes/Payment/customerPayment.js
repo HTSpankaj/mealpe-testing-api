@@ -204,6 +204,31 @@ router.post('/failure-payment', (req, res, next) => {
     res.send({ success: true, message: "Response from payment/customerPayment.js" });
 })
 
+
+router.get('/success-payment', (req, res, next) => {
+    const postBody = req.body;
+    const query = req.query;
+    const params = req.params;
+
+    console.log("s-get-postBody => ", postBody);
+    console.log("s-get-query =>    ", query);
+    console.log("s-get-params =>   ", params);
+
+    res.send({ success: true, message: "Response from payment/customerPayment.js" });
+})
+
+router.get('/failure-payment', (req, res, next) => {
+    const postBody = req.body;
+    const query = req.query;
+    const params = req.params;
+
+    console.log("f-get-postBody => ", postBody);
+    console.log("f-get-query =>    ", query);
+    console.log("f-get-params =>   ", params);
+
+    res.send({ success: true, message: "Response from payment/customerPayment.js" });
+})
+
 router.post('/request-refund', async (req, res, next) => {
 
     const { amount, refund_amount, phone, email,orderId } = req.body;
