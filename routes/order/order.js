@@ -143,7 +143,11 @@ router.get("/getAllOrder/:outletId", async (req, res) => {
 router.get("/getOrder/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const {data,error} = await supabaseInstance.from("Order").select("*,customerAuthUID(*,DeliveryAddress(address)),outletId(outletId,outletName,logo,address),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*))").eq("orderId", orderId).maybeSingle();
+    const {data,error} = await supabaseInstance
+    .from("Order")
+    .select("*,customerAuthUID(*,DeliveryAddress(address)),outletId(outletId,outletName,logo,address),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*),Transaction(txnid,convenienceTotalAmount,foodGST,basePrice)")
+    .eq("orderId", orderId)
+    .maybeSingle();
     if (data) {
       res.status(200).json({
         success: true,
@@ -161,11 +165,16 @@ router.get("/getOrder/:orderId", async (req, res) => {
 router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
   const { customerAuthUID } = req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Order").select("*,outletId(outletId,headerImage,outletName,logo,Review!left(*)),Order_Item(*),Order_Schedule(*),orderStatusId(*))").eq("customerAuthUID", customerAuthUID).eq("outletId.Review.customerAuthUID",customerAuthUID).order("created_at",{ascending:false})
+    const { data, error } = await supabaseInstance
+    .from("Order")
+    .select("*,outletId(outletId,headerImage,outletName,logo,Review!left(*)),Order_Item(*,Menu_Item(minimumpreparationtime)),Order_Schedule(*),orderStatusId(*))")
+    .eq("customerAuthUID", customerAuthUID)
+    .eq("outletId.Review.customerAuthUID",customerAuthUID)
+    .order("created_at",{ascending:false})
     if (data) {
       res.status(200).json({
         success: true,
-        data: data.map(m => ({ ...m, isReview: m?.outletId?.Review?.length > 0 })),
+        data: data.map(m => ({ ...m, isReview: m?.outletId?.Review?.length > 0,totalItems:m?.Order_Item?.length })),
       });
     } else {
       throw error

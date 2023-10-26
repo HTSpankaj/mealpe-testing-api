@@ -666,8 +666,11 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
     .on(
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'Order', filter: `orderId=eq.${orderId}` },
-      (payload) => {
-        res.write(`data: ${JSON.stringify({ updateorder: payload?.new || null })}\n\n`);
+      async (payload) => {
+        const orderData = await supabaseInstance.from("Order").select("*,Order_Item(*,Menu_Item(minimumpreparationtime))").eq("orderId",payload.new.orderId).maybeSingle()
+        console.log("orderData==>",orderData);
+
+        res.write(`data: ${JSON.stringify({ updateorder: {...orderData?.data, totalItems: orderData?.data?.Order_Item?.length || 0 }|| null })}\n\n`);
       }
     ).subscribe((status) => {
       console.log("subscribe status for orderId => ", orderId);

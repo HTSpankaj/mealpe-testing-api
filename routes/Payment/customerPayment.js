@@ -55,7 +55,8 @@ router.post('/initiate-payment', async (req, res, next) => {
                         convenienceTotalAmount:getPriceBreakdownResponse?.convenienceTotalAmount,
                         commissionAmount:getPriceBreakdownResponse?.commissionAmount,
                         commissionGSTAmount:getPriceBreakdownResponse?.commissionGSTAmount,
-                        commissionTotalAmount:getPriceBreakdownResponse?.commissionTotalAmount
+                        commissionTotalAmount:getPriceBreakdownResponse?.commissionTotalAmount,
+                        packagingCharge:getPriceBreakdownResponse?.packagingCharge
                     }).select("*").maybeSingle();
                     if (transactionResponse?.data) {
                         console.log("transactionResponse=>", transactionResponse);
@@ -294,6 +295,173 @@ router.post('/get-price-breakdown', async (req, res, next) => {
     }
 })
 
+router.post('/initiate-payment-with-order', async (req, res, next) => {
+
+    const {
+        basePrice, //*base price
+        productinfo,
+        firstname,
+        phone,
+        email,
+        customerAuthUID,
+        outletId,
+        orderObject
+    } = req.body;
+
+    const surl = `${req.protocol}://${req.get('host')}/payment/customer/success-payment`;
+    const furl = `${req.protocol}://${req.get('host')}/payment/customer/failure-payment`;
+
+    if (basePrice && productinfo && firstname && phone && email && customerAuthUID && outletId && orderObject) {
+
+        try {
+            let encodedParams = new URLSearchParams();
+
+            const getPriceBreakdownResponse = await getPriceBreakdown(outletId, basePrice);
+                if(getPriceBreakdownResponse && getPriceBreakdownResponse.outletBankLabel) {
+                    //* -> getPriceBreakdownResponse = is breakdown
+                    const transactionResponse = await supabaseInstance.from("Transaction")
+                    .insert({ 
+                        firstname,
+                        phone, 
+                        email, 
+                        customerAuthUID, 
+                        outletId,
+                        amount: getPriceBreakdownResponse?.totalPriceForCustomer,
+                        basePrice,
+                        mealpeVendorAmount:getPriceBreakdownResponse?.mealpeVendorAmount,
+                        outletVendorAmount: getPriceBreakdownResponse?.outletVendorAmount,
+                        foodGST:getPriceBreakdownResponse?.foodGST,
+                        convenienceAmount: getPriceBreakdownResponse?.convenienceAmount,
+                        convenienceGSTAmount:getPriceBreakdownResponse?.convenienceGSTAmount,
+                        convenienceTotalAmount:getPriceBreakdownResponse?.convenienceTotalAmount,
+                        commissionAmount:getPriceBreakdownResponse?.commissionAmount,
+                        commissionGSTAmount:getPriceBreakdownResponse?.commissionGSTAmount,
+                        commissionTotalAmount:getPriceBreakdownResponse?.commissionTotalAmount,
+                        packagingCharge:getPriceBreakdownResponse?.packagingCharge,
+                        orderPostBody:orderObject || null
+                    }).select("*").maybeSingle();
+                    if (transactionResponse?.data) {
+                        console.log("transactionResponse=>", transactionResponse);
+
+                        var hashstring = easebuzzConfig.key + "|" + transactionResponse?.data?.txnid + "|" + getPriceBreakdownResponse?.totalPriceForCustomer + "|" + productinfo + "|" + firstname + "|" + email + "|||||||||||" + easebuzzConfig.salt
+        
+                        const _generateHash = generateHash(hashstring);
+                        // console.log("_generateHash => ", _generateHash);
+        
+                        // encodedParams.set('key', easebuzzConfig.key);
+                        // encodedParams.set('txnid', transactionResponse?.data?.txnid);
+                        // encodedParams.set('amount', basePrice);
+                        // encodedParams.set('productinfo', productinfo);
+                        // encodedParams.set('firstname', firstname);
+                        // encodedParams.set('phone', phone);
+                        // encodedParams.set('email', email);
+                        // encodedParams.set('surl', surl);
+                        // encodedParams.set('furl', furl);
+                        // encodedParams.set('hash', _generateHash);
+                        // encodedParams.set('udf1', '');
+                        // encodedParams.set('udf2', '');
+                        // encodedParams.set('udf3', '');
+                        // encodedParams.set('udf4', '');
+                        // encodedParams.set('udf5', '');
+                        // encodedParams.set('udf6', '');
+                        // encodedParams.set('udf7', '');
+                        // encodedParams.set('address1', '');
+                        // encodedParams.set('address2', '');
+                        // encodedParams.set('city', '');
+                        // encodedParams.set('state', '');
+                        // encodedParams.set('country', '');
+                        // encodedParams.set('zipcode', '');
+                        // encodedParams.set('show_payment_mode', '');
+                        // if (getPriceBreakdownResponse?.outletBankLabel) {
+                        //     encodedParams.set('split_payments', {[easebuzzConfig.mealpe_bank_label] : getPriceBreakdownResponse?.mealpeVendorAmount, [getPriceBreakdownResponse.outletBankLabel]: getPriceBreakdownResponse?.outletVendorAmount});
+                        // }
+                        // encodedParams.set('request_flow', '');
+                        // encodedParams.set('sub_merchant_id', '');
+                        // encodedParams.set('payment category', '');
+                        // encodedParams.set('account_no', '');
+
+                        let postBody ={
+                            'key': easebuzzConfig.key,
+                            'txnid': transactionResponse?.data?.txnid,
+                            'amount': getPriceBreakdownResponse?.totalPriceForCustomer,
+                            'productinfo': productinfo,
+                            'firstname': firstname,
+                            'phone': phone,
+                            'email': email,
+                            'surl': surl,
+                            'furl': furl,
+                            'hash': _generateHash,
+                            'udf1': '',
+                            'udf2': '',
+                            'udf3': '',
+                            'udf4': '',
+                            'udf5': '',
+                            'udf6': '',
+                            'udf7': '',
+                            'address1': '',
+                            'address2': '',
+                            'city': '',
+                            'state': '',
+                            'country': '',
+                            'zipcode': '',
+                            // 'show_payment_mode': '',
+                            // 'request_flow': '',
+                            // 'sub_merchant_id': '',
+                            // 'payment :ategory', '',
+                            // 'account_no': '',
+                        }
+                        if (getPriceBreakdownResponse?.outletBankLabel && easebuzzConfig.mealpe_bank_label && (getPriceBreakdownResponse?.mealpeVendorAmount > 0) && (getPriceBreakdownResponse?.outletVendorAmount > 0)) {
+                            postBody.split_payments = {
+                                [easebuzzConfig.mealpe_bank_label] : getPriceBreakdownResponse?.mealpeVendorAmount,
+                                [getPriceBreakdownResponse.outletBankLabel]: getPriceBreakdownResponse?.outletVendorAmount
+                            }
+                        }
+        
+                        // console.log(encodedParams);
+        
+                        const options = {
+                            method: 'POST',
+                            url: `${easebuzzConfig.easebuzzBaseUrl}/payment/initiateLink`,
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                Accept: 'application/json'
+                            },
+                            data: postBody,
+                        };
+                                                
+                        // const encodedParamsbj = encodedParams?.toString()?.split("&")?.map(m => m?.split("="))?.reduce((a, v) => ({ ...a, [v[0]]: decodeURIComponent(v[1])}), {}) ;
+                        await axios.request(options).then(async (initiateLinkResponse) => {
+                            const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body: postBody, initiateLink_response: initiateLinkResponse.data }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
+                            console.log("transactionUpdateResponse in then =>", transactionUpdateResponse);
+        
+                            if (transactionUpdateResponse?.data) {
+                                res.status(200).json({ success: true, response: initiateLinkResponse?.data });
+                            } else {
+                                res.status(500).json({ success: false, response: transactionUpdateResponse.error.message });
+                            }
+                        }).catch(async (error) => {
+                            console.error(error);
+                            const transactionUpdateResponse = await supabaseInstance.from("Transaction").update({ initiateLink_post_body:postBody, initiateLink_error: error }).eq("txnid", transactionResponse?.data?.txnid).select('*').maybeSingle();
+                            console.log("transactionUpdateResponse in error=>", transactionUpdateResponse)
+                            res.status(500).json({ success: false, response: error });
+                        })
+                    } else {
+                        throw transactionResponse.error
+                    }
+                } else if(!getPriceBreakdownResponse.outletBankLabel) {
+                    res.status(500).json({ success: false, error: "Bank field not found." });
+                } else {
+                    throw getPriceBreakdownResponse?.error || getPriceBreakdownResponse;
+                }
+        } catch (error) {
+            console.error("error => ", error);
+            res.status(500).json({ success: false, error: error });
+        }
+    } else {
+        res.status(500).json({ success: false, error: "Invalid Post Body" });
+    }
+})
+
 module.exports = router;
 
 const generateHash = (hashstring) => {
@@ -322,7 +490,7 @@ function getPriceBreakdown(outletId, basePrice) {
                     const outletData = outletResponse?.data;
 
                     const foodGST = (5 * basePrice) / 100;
-
+                    const packagingCharge = outletData.packaging_charge
                     const convenienceAmount = (outletData?.convenienceFee * basePrice) / 100;
                     const convenienceGSTAmount = (18 * convenienceAmount) / 100;
                     const convenienceTotalAmount = convenienceAmount + convenienceGSTAmount;
@@ -352,6 +520,7 @@ function getPriceBreakdown(outletId, basePrice) {
                         commissionTotalAmount,
                         mealpeVendorAmount,
                         outletVendorAmount,
+                        packagingCharge,
 
                         outletBankLabel
                     })
