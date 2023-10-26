@@ -145,7 +145,7 @@ router.get("/getOrder/:orderId", async (req, res) => {
   try {
     const {data,error} = await supabaseInstance
     .from("Order")
-    .select("*,customerAuthUID(*,DeliveryAddress(address)),outletId(outletId,outletName,logo,address),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*),Transaction(txnid,convenienceTotalAmount,foodGST,basePrice)")
+    .select("*,customerAuthUID(*,DeliveryAddress(address)),outletId(outletId,outletName,logo,address),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*),Transaction(txnid,convenienceTotalAmount,foodGST,basePrice,packagingCharge)")
     .eq("orderId", orderId)
     .maybeSingle();
     if (data) {
@@ -1097,7 +1097,7 @@ router.get("/realtimePendingOrder/:outletId", function (req, res) {
     async (payload) => {
       setTimeout(async () => {
         let orderData = await supabaseInstance.rpc("get_orders_for_outlet",{outlet_uuid: outletId}).eq("order_id",payload.new.orderId).select("*").maybeSingle();
-        res.write('event: neworder\n');  //* new order Event
+        res.write('event: neworder\n');  //* new order Event 
         res.write(`data: ${JSON.stringify(orderData?.data || null)}`);
         res.write("\n\n");
       }, 5000);
