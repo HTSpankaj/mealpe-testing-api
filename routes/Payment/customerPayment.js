@@ -132,6 +132,7 @@ router.post('/initiate-payment', async (req, res, next) => {
                                 [easebuzzConfig.mealpe_bank_label] : getPriceBreakdownResponse?.mealpeVendorAmount,
                                 [getPriceBreakdownResponse.outletBankLabel]: getPriceBreakdownResponse?.outletVendorAmount
                             }
+                            postBody.split_payments = JSON.stringify(postBody.split_payments);
                         }
         
                         // console.log(encodedParams);
