@@ -145,7 +145,7 @@ router.get("/getOrder/:orderId", async (req, res) => {
   try {
     const {data,error} = await supabaseInstance
     .from("Order")
-    .select("*,customerAuthUID(*,DeliveryAddress(address)),outletId(outletId,outletName,logo,address),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*),Transaction(txnid,convenienceTotalAmount,foodGST,basePrice,packagingCharge)")
+    .select("*,customerAuthUID(*),outletId(outletId,outletName,logo,address),DeliveryAddress(address),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*),Transaction(txnid,convenienceTotalAmount,foodGST,basePrice,packagingCharge)")
     .eq("orderId", orderId)
     .maybeSingle();
     if (data) {
@@ -174,7 +174,7 @@ router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
     if (data) {
       res.status(200).json({
         success: true,
-        data: data.map(m => ({ ...m, isReview: m?.outletId?.Review?.length > 0,totalItems:m?.Order_Item?.length })),
+        data: data.map(m => ({ ...m, isReview: m?.outletId?.Review?.length > 0,totalItems:m?.Order_Item?.reduce((a,c)=>a + c.quantity ,0) })),
       });
     } else {
       throw error
@@ -302,8 +302,8 @@ router.get("/getPendingOrder/:outletId", async (req, res) => {
   try {
     let currentDate = moment().tz("Asia/Kolkata").format('YYYY-MM-DD');
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
-    .eq("order_schedule_date", currentDate)
-    .lte("order_schedule_time", formattedTimeAdd2Hours)
+    // .eq("order_schedule_date", currentDate)
+    // .lte("order_schedule_time", formattedTimeAdd2Hours)
     .eq("order_status_id",0)
     .order("order_schedule_date",{ascending:false})
     .order("order_schedule_time",{ascending:false});
