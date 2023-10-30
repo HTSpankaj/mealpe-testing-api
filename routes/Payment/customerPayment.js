@@ -489,7 +489,11 @@ function getPriceBreakdown(outletId, basePrice) {
                 if (outletResponse?.data) {
                     const outletData = outletResponse?.data;
 
-                    const foodGST = (5 * basePrice) / 100;
+                    let  foodGST = 0;
+                    if (outletResponse?.data?.GSTIN && outletResponse?.data?.GSTIN !== "") {
+                        foodGST = (5 * basePrice) / 100;
+                    }
+
                     const packagingCharge = outletData.packaging_charge
                     const convenienceAmount = (outletData?.convenienceFee * basePrice) / 100;
                     const convenienceGSTAmount = (18 * convenienceAmount) / 100;
