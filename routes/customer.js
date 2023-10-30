@@ -249,7 +249,18 @@ router.post("/userlogin", async (req, res) => {
 router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
   const { outletId, customerAuthUID } = req.params;
   try {
-    const { data, error } = await supabaseInstance.from("Menu_Item").select("*, item_categoryid(*, parent_category_id(*)), FavoriteMenuItem!left(*)").eq("isDelete", false).eq("outletId", outletId).eq("FavoriteMenuItem.customerAuthUID", customerAuthUID);
+    let queryString = "*, item_categoryid(*, parent_category_id(*))"
+
+    if (customerAuthUID != 'null')
+      queryString += ', FavoriteMenuItem!left(*)'
+    let query = supabaseInstance.from("Menu_Item").select(queryString).eq("isDelete", false).eq("outletId", outletId)
+
+    if (customerAuthUID != 'null') {
+      query = query.eq("FavoriteMenuItem.customerAuthUID", customerAuthUID);
+    }
+
+    const { data, error } = await query;
+    
     if (data) {
       const outdetData = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).maybeSingle();
 
@@ -667,10 +678,10 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'Order', filter: `orderId=eq.${orderId}` },
       async (payload) => {
-        const orderData = await supabaseInstance.from("Order").select("*,Order_Item(*,Menu_Item(minimumpreparationtime))").eq("orderId",payload.new.orderId).maybeSingle()
-        console.log("orderData==>",orderData);
+        const orderData = await supabaseInstance.from("Order").select("*,Order_Item(*,Menu_Item(minimumpreparationtime))").eq("orderId", payload.new.orderId).maybeSingle()
+        console.log("orderData==>", orderData);
 
-        res.write(`data: ${JSON.stringify({ updateorder: {...orderData?.data, totalItems: orderData?.data?.Order_Item?.length || 0 }|| null })}\n\n`);
+        res.write(`data: ${JSON.stringify({ updateorder: { ...orderData?.data, totalItems: orderData?.data?.Order_Item?.length || 0 } || null })}\n\n`);
       }
     ).subscribe((status) => {
       console.log("subscribe status for orderId => ", orderId);
@@ -778,7 +789,7 @@ router.post("/iosUserGooglelogin", async (req, res) => {
           res.status(500).json({ success: false, error: customerResponse.error });
         }
       }
-    } else if(error?.message?.includes("email address has already been registered")) {
+    } else if (error?.message?.includes("email address has already been registered")) {
       const customerData = await supabaseInstance.from("Customer").select(customerSlectString).eq("isDelete", false).eq("email", email).maybeSingle();
       console.log("customerData=>", customerData)
       if (customerData.data) {
@@ -801,7 +812,7 @@ router.post("/updateMobile", async (req, res) => {
   try {
     supabaseInstance.auth.admin.updateUserById(customerAuthUID, { phone: mobile }).then(async (updateUserByIdResponse) => {
       if (updateUserByIdResponse?.data?.user) {
-        const customerResponse = await supabaseInstance.from("Customer").update({ mobile: mobile+"" }).eq("customerAuthUID", customerAuthUID).select(customerSlectString).maybeSingle();
+        const customerResponse = await supabaseInstance.from("Customer").update({ mobile: mobile + "" }).eq("customerAuthUID", customerAuthUID).select(customerSlectString).maybeSingle();
         if (customerResponse.data) {
           res.status(200).json({
             success: true,
@@ -827,7 +838,7 @@ router.post("/updateMobile", async (req, res) => {
       }
     }).catch((updateUserByIdError) => {
       console.error("updateUserByIdError => ", updateUserByIdError);
-      
+
       res.status(500).json({
         success: false,
         message: "Something went wrong."
