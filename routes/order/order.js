@@ -1065,10 +1065,10 @@ router.get("/topFiveMenuItem", async (req, res) => {
   }
 });
 
-router.get("/topThreeMenuItem/:outletId", async (req, res) => {
-  const {outletId} =req.params;
+router.post("/topThreeMenuItem", async (req, res) => {
+  const {  analyticaltype, outletId, targetDate} =req.body;
   try {
-    const { data, error } = await supabaseInstance.rpc('get_top_three_menuitem',{outlet_id:outletId});
+    const { data, error } = await supabaseInstance.rpc('get_top_three_menuitem',{analyticaltype:analyticaltype,outlet_id:outletId,target_date:targetDate});
 
     if (data) {
       res.status(200).json({
@@ -1226,6 +1226,72 @@ router.get("/lastFiveOrders/:outletId/:customerAuthUID", async (req, res) => {
       throw error
     }
   } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.get("/adminMonthlyChurn", async (req, res) => {
+  try {
+    const { data, error } = await supabaseInstance.rpc('get_admin_churn');
+    if (data) {
+      let isFirstIteration = true;
+
+      for (let count of data) {
+        if (isFirstIteration) {
+          count.totalcustomer = 0;
+          isFirstIteration = false;
+        }
+        let userdays = (count?.totalcustomer * count?.daysinmonth) + (0.5 * count?.customercount * count?.daysinmonth);
+        let churnPerDay = count?.daysinyear / userdays;
+        let monthlyChurn = count?.daysinmonth * churnPerDay;
+        count.churnPerDay = churnPerDay;
+        count.monthlyChurn = monthlyChurn;
+      }
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.post("/peakTimeAnalyticsOutlet", async (req, res) => {
+  const { outletId,analyticalType} = req.body;
+  try {
+    const { data, error } = await supabaseInstance.rpc('peak_time_analytics_for_outlet',{analytical_type:analyticalType,outlet_id:outletId});
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
+});
+
+router.post("/customerDineinPickupDeliveryOutlet", async (req, res) => {
+  const {  analyticaltype, outletId, targetDate} = req.body;
+  try {
+    const { data, error } = await supabaseInstance.rpc('get_customer_dinein_pickup__delivery_count_outlet',{analyticaltype,outlet_id:outletId,target_date:targetDate});
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data: data,
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    console.log(error)
     res.status(500).json({ success: false, error: error });
   }
 });

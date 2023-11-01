@@ -449,7 +449,7 @@ router.get("/homeData", async (req, res) => {
 
           flag = time.isBetween(beforeTime, afterTime);
         }
-        if (!flag && m.isTimeExtended) {
+        if (!flag && m.istimeextended) {
           flag = true;
         }
         return {
