@@ -1092,7 +1092,9 @@ router.get("/realtimePendingOrder/:outletId", function (req, res) {
   res.setHeader("connection", "keep-alive");
   res.setHeader("Content-Type", "text/event-stream"); 
 
-  supabaseInstance.channel(`custom-insert-channel-${outletId}`).on('postgres_changes',
+  const channelName = `customer-update-channel-${outletId}-${Date.now()}`;
+
+  supabaseInstance.channel(channelName).on('postgres_changes',
     { event: 'INSERT', schema: 'public', table: 'Order', filter: `outletId=eq.${outletId}` },
     async (payload) => {
       setTimeout(async () => {
@@ -1108,14 +1110,14 @@ router.get("/realtimePendingOrder/:outletId", function (req, res) {
 
     res.write("retry: 10000\n\n");
     req.on('close', () => {
-      supabaseInstance.channel(`custom-insert-channel-${outletId}`).unsubscribe()
-      // supabaseInstance.removeChannel(`custom-insert-channel-${outletId}`)
+      supabaseInstance.channel(channelName).unsubscribe()
+      // supabaseInstance.removeChannel(channelName)
       .then(res => {
         console.log(".then => ", res);
       }).catch((err) => {
         console.log(".catch => ", err);
       }).finally(() => {
-        console.log(`${outletId} Connection closed`);
+        console.log(`${channelName} Connection closed`);
       });
     });
 });
@@ -1128,8 +1130,10 @@ router.get("/realtimeCurrentOrder/:outletId", function (req, res) {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("connection", "keep-alive");
   res.setHeader("Content-Type", "text/event-stream"); 
+
+  const channelName = `customer-update-channel-${outletId}-${Date.now()}`;
   
-  supabaseInstance.channel(`custom-current-channel-${outletId}`).on('postgres_changes',
+  supabaseInstance.channel(channelName).on('postgres_changes',
     { event: 'UPDATE', schema: 'public', table: 'Order', filter: `outletId=eq.${outletId}` },
     async (payload) => {
       console.log("payload => ", payload);
@@ -1171,14 +1175,13 @@ router.get("/realtimeCurrentOrder/:outletId", function (req, res) {
 
   res.write("retry: 10000\n\n");
   req.on('close', () => {
-    supabaseInstance.channel(`custom-current-channel-${outletId}`).unsubscribe()
-    // supabaseInstance.removeChannel(`custom-update-kot-channel-${outletId}`)
+    supabaseInstance.channel(channelName).unsubscribe()
     .then(res => {
       console.log(".then => ", res);
     }).catch((err) => {
       console.log(".catch => ", err);
     }).finally(() => {
-      console.log(`${outletId} Connection closed`);
+      console.log(`${channelName} Connection closed`);
     });
   });
 });

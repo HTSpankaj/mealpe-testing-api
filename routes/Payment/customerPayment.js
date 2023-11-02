@@ -6,7 +6,6 @@ var supabaseInstance = require("../../services/supabaseClient").supabase;
 
 const axios = require('axios').default;
 const { URLSearchParams } = require('url');
-const { supabase } = require("../../services/supabaseClient");
 const SHA512 = require("crypto-js").SHA512;
 
 router.get('/', (req, res, next) => {

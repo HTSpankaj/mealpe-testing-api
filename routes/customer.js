@@ -673,7 +673,9 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
   res.setHeader("connection", "keep-alive");
   res.setHeader("Content-Type", "text/event-stream");
 
-  supabaseInstance.channel(`customer-insert-channel-${orderId}`)
+  const channelName = `customer-update-channel-${orderId}-${Date.now()}`;
+
+  supabaseInstance.channel(channelName)
     .on(
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'Order', filter: `orderId=eq.${orderId}` },
@@ -689,13 +691,13 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
 
   res.write("retry: 10000\n\n");
   req.on('close', () => {
-    supabaseInstance.channel(`customer-insert-channel-${orderId}`).unsubscribe()
+    supabaseInstance.channel(channelName).unsubscribe()
       .then(res => {
         console.log(".then => ", res);
       }).catch((err) => {
         console.log(".catch => ", err);
       }).finally(() => {
-        console.log(`${orderId} Connection closed`);
+        console.log(`${channelName} Connection closed`);
       });
   });
 });
