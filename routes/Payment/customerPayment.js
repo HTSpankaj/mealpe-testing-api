@@ -648,7 +648,7 @@ function getPriceBreakdown(outletId, itemTotalPrice, isDineIn = false, isPickUp 
                     TDS = (1 * FoodBasePrice) / 100;
                     TCS = (packagingCharge + deliveryCharge) / 101;
 
-                    totalPriceForCustomer = Number((FoodBasePrice + packagingCharge + foodGST + deliveryCharge + convenienceAmount + convenienceGSTAmount)?.toFixed(2));
+                    totalPriceForCustomer = Number((FoodBasePrice + packagingCharge + foodGST + deliveryCharge + convenienceTotalAmount)?.toFixed(2));
                     mealpeVendorAmount = Number((foodGST + convenienceTotalAmount + commissionTotalAmount + TDS + TCS)?.toFixed(2));
                     outletVendorAmount = Number((totalPriceForCustomer - mealpeVendorAmount)?.toFixed(2));
 

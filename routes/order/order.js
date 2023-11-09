@@ -145,7 +145,7 @@ router.get("/getOrder/:orderId", async (req, res) => {
   try {
     const {data,error} = await supabaseInstance
     .from("Order")
-    .select("*,customerAuthUID(*),outletId(outletId,outletName,logo,address),DeliveryAddress(address),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*),Transaction(txnid,convenienceTotalAmount,foodGST,itemTotalPrice,packagingCharge)")
+    .select("*,customerAuthUID(*),outletId(outletId,outletName,logo,address),DeliveryAddress(address),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*),Transaction(txnid,convenienceTotalAmount,foodGST,itemTotalPrice,packagingCharge,isGSTApplied)")
     .eq("orderId", orderId)
     .maybeSingle();
     if (data) {

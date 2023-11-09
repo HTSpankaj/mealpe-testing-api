@@ -523,7 +523,7 @@ function saveOrderToPetpooja(request, customerAuthUID, orderId, outletId) {
           saveOrderError = _err;
         }).finally(async () => {
           let _postObject = {
-            outletId: outletId,
+            orderId: orderId,
             postBody: payload            
           }
           if (saveOrderReaponse) {
