@@ -41,7 +41,7 @@ router.post("/createOrder", async (req, res) => {
         }
 
 
-      saveOrderToPetpooja(restaurantId, customerAuthUID, orderId, outletId).then(async (saveOrderToPetpoojaResponse) => {
+      saveOrderToPetpooja(req, customerAuthUID, orderId, outletId).then(async (saveOrderToPetpoojaResponse) => {
         console.log('.then block ran: ', saveOrderToPetpoojaResponse.data);
         // const getOrderDetailsAfterTrigger = await supabaseInstance.from("Order").select("*").eq("orderId", data.orderId).maybeSingle();
         console.log({customerauthuid:customerAuthUID,targate_date: pickupTime.orderDate});
