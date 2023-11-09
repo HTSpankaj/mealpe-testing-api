@@ -393,7 +393,7 @@ router.post("/fetchMenuCard", async (req, res) => {
 
 
 //? ref => https://onlineorderingapisv210.docs.apiary.io/#/reference/0/save-order?mc=reference%2F0%2Fsave-order%2Fsave-order%2F200
-function saveOrderToPetpooja(request, customerAuthUID, orderId, outletId) {
+function saveOrderToPetpooja(request, orderId) {
   return new Promise(async (resolve, reject) => {
     try {
       const orderData = await supabaseInstance.from("Order").select("*, outletId(*), customerAuthUID(*), txnid(*), Order_Schedule!left(*), Order_Item!left(*, itemId(*)), DeliveryAddress!left(*)").eq("orderId", orderId).maybeSingle();
@@ -402,7 +402,7 @@ function saveOrderToPetpooja(request, customerAuthUID, orderId, outletId) {
       // console.log("orderData Order_Item => ", orderData.data?.Order_Item);
       // console.log("orderData outletId => ", orderData.data?.outletId);
 
-      if (orderData.data?.outletId?.petPoojaAppKey && orderData.data?.outletId?.petPoojaAppSecret && orderData.data?.outletId?.petPoojaApAccessToken && orderData.data?.outletId?.petPoojaRestId) {
+      if (orderData.data?.outletId?.isOrderHandlingFromPetpooja && orderData.data?.outletId?.petPoojaAppKey && orderData.data?.outletId?.petPoojaAppSecret && orderData.data?.outletId?.petPoojaApAccessToken && orderData.data?.outletId?.petPoojaRestId) {
         
         let payload = {
           app_key: orderData.data?.outletId?.petPoojaAppKey,
@@ -541,7 +541,7 @@ function saveOrderToPetpooja(request, customerAuthUID, orderId, outletId) {
           })
         })
       } else {
-        resolve({ success: false, error: "Petpooja config not found." })
+        resolve({ success: false, error: "Petpooja config not found." });
       }
     } catch (error) {
       console.log(error);
@@ -554,7 +554,7 @@ function saveOrderToPetpooja(request, customerAuthUID, orderId, outletId) {
 };
 
 router.post("/saveOrderToPetpoojaTest", async (req, res) => {
-  saveOrderToPetpooja(req, '096e8c1b-8969-43f7-992e-24e02596f570', 'c93a5f8c-25b8-4b3c-a203-395f639f0b06', '08d06cbe-27d1-4f4b-87e8-38e341622625').then(response => {
+  saveOrderToPetpooja(req, 'c93a5f8c-25b8-4b3c-a203-395f639f0b06').then(response => {
     res.send(response);
   }).catch(err => {
     res.send(err);

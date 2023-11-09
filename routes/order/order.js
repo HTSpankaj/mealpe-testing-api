@@ -41,7 +41,7 @@ router.post("/createOrder", async (req, res) => {
         }
 
 
-      saveOrderToPetpooja(req, customerAuthUID, orderId, outletId).then(async (saveOrderToPetpoojaResponse) => {
+      saveOrderToPetpooja(req, orderId).then(async (saveOrderToPetpoojaResponse) => {
         console.log('.then block ran: ', saveOrderToPetpoojaResponse.data);
         // const getOrderDetailsAfterTrigger = await supabaseInstance.from("Order").select("*").eq("orderId", data.orderId).maybeSingle();
         console.log({customerauthuid:customerAuthUID,targate_date: pickupTime.orderDate});
@@ -145,7 +145,7 @@ router.get("/getOrder/:orderId", async (req, res) => {
   try {
     const {data,error} = await supabaseInstance
     .from("Order")
-    .select("*,customerAuthUID(*),outletId(outletId,outletName,logo,address),DeliveryAddress(address),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*),Transaction(txnid,convenienceTotalAmount,foodGST,itemTotalPrice,packagingCharge,isGSTApplied)")
+    .select("*,customerAuthUID(*),outletId(outletId,outletName,logo,address),DeliveryAddress(address),Order_Item(*,Menu_Item(itemname,item_image_url)),Order_Schedule(*),orderStatusId(*),Transaction(txnid,convenienceTotalAmount,foodGST,itemTotalPrice,packagingCharge,deliveryCharge,isGSTApplied)")
     .eq("orderId", orderId)
     .maybeSingle();
     if (data) {
