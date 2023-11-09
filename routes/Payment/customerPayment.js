@@ -38,7 +38,7 @@ router.post('/initiate-payment', async (req, res, next) => {
             const getPriceBreakdownResponse = await getPriceBreakdown(outletId, itemTotalPrice, isDineIn, isPickUp, isDelivery);
             if (getPriceBreakdownResponse && getPriceBreakdownResponse.outletBankLabel) {
                 //* -> getPriceBreakdownResponse = is breakdown
-                console.log("getPriceBreakdownResponse==>",getPriceBreakdownResponse)
+                console.log("getPriceBreakdownResponse==>", getPriceBreakdownResponse)
 
                 const transactionResponse = await supabaseInstance.from("Transaction")
                     .insert({
@@ -60,10 +60,10 @@ router.post('/initiate-payment', async (req, res, next) => {
                         commissionTotalAmount: getPriceBreakdownResponse?.commissionTotalAmount,
                         packagingCharge: getPriceBreakdownResponse?.packagingCharge,
                         deliveryCharge: getPriceBreakdownResponse?.deliveryCharge,
-                        tdsAmount:getPriceBreakdownResponse?.TDS,
-                        tcsAmount:getPriceBreakdownResponse?.TCS,
-                        isGSTApplied:getPriceBreakdownResponse?.isGstApplied,
-                        foodBasePrice:getPriceBreakdownResponse?.FoodBasePrice
+                        tdsAmount: getPriceBreakdownResponse?.TDS,
+                        tcsAmount: getPriceBreakdownResponse?.TCS,
+                        isGSTApplied: getPriceBreakdownResponse?.isGstApplied,
+                        foodBasePrice: getPriceBreakdownResponse?.FoodBasePrice
                     }).select("*").maybeSingle();
                 if (transactionResponse?.data) {
                     console.log("transactionResponse=>", transactionResponse);
@@ -303,7 +303,7 @@ router.post('/initiate-payment-with-order', async (req, res, next) => {
             const getPriceBreakdownResponse = await getPriceBreakdown(outletId, itemTotalPrice);
             if (getPriceBreakdownResponse && getPriceBreakdownResponse.outletBankLabel) {
                 //* -> getPriceBreakdownResponse = is breakdown
-                console.log("getPriceBreakdownResponse==>",getPriceBreakdownResponse)
+                console.log("getPriceBreakdownResponse==>", getPriceBreakdownResponse)
                 const transactionResponse = await supabaseInstance.from("Transaction")
                     .insert({
                         firstname,
@@ -324,10 +324,10 @@ router.post('/initiate-payment-with-order', async (req, res, next) => {
                         commissionTotalAmount: getPriceBreakdownResponse?.commissionTotalAmount,
                         packagingCharge: getPriceBreakdownResponse?.packagingCharge,
                         deliveryCharge: getPriceBreakdownResponse?.deliveryCharge,
-                        tdsAmount:getPriceBreakdownResponse?.TDS,
-                        tcsAmount:getPriceBreakdownResponse?.TCS,
-                        isGSTApplied:getPriceBreakdownResponse?.isGstApplied,
-                        foodBasePrice:getPriceBreakdownResponse?.FoodBasePrice,
+                        tdsAmount: getPriceBreakdownResponse?.TDS,
+                        tcsAmount: getPriceBreakdownResponse?.TCS,
+                        isGSTApplied: getPriceBreakdownResponse?.isGstApplied,
+                        foodBasePrice: getPriceBreakdownResponse?.FoodBasePrice,
                         orderPostBody: orderObject || null
                     }).select("*").maybeSingle();
                 if (transactionResponse?.data) {
@@ -628,63 +628,31 @@ function getPriceBreakdown(outletId, itemTotalPrice, isDineIn = false, isPickUp 
                     }
 
                     if (outletData?.isGSTShow === true) {
-
                         isGstApplied = true;
-                        foodGST = (5 * itemTotalPrice) / 100;
+                        foodGST = Number(((5 * itemTotalPrice) / 100).toFixed(2));
                         FoodBasePrice = itemTotalPrice;
-
-                        convenienceAmount = (outletData.convenienceFee * itemTotalPrice) / 100;
-                        convenienceGSTAmount = (18 * convenienceAmount) / 100;
-                        convenienceTotalAmount = convenienceAmount + convenienceGSTAmount;
-
-                        commissionAmount = (outletData.commissionFee * (deliveryCharge + packagingCharge + itemTotalPrice)) / 100;
-                        commissionGSTAmount = (18 *(convenienceAmount + commissionAmount)) / 100;
-                        commissionTotalAmount =  commissionAmount + commissionGSTAmount;
-
-                        
-
-                        TDS = (1 * itemTotalPrice) / 100;
-                        TCS = (packagingCharge + deliveryCharge) / 101;
-
-                        
-                       
-                        totalPriceForCustomer = Number((itemTotalPrice + packagingCharge + foodGST + deliveryCharge + convenienceAmount + convenienceGSTAmount)?.toFixed(2));
-                        mealpeVendorAmount = Number((foodGST + convenienceTotalAmount  + commissionTotalAmount + TDS + TCS)?.toFixed(2));
-                        outletVendorAmount = Number((totalPriceForCustomer - mealpeVendorAmount)?.toFixed(2));
-
-                    } else if (outletData?.isGSTShow === false) {
-
-                        isGstApplied = false;
-                        FoodBasePrice = (itemTotalPrice * 100) / 105;
-                        foodGST = itemTotalPrice - FoodBasePrice;
-
-
-                        convenienceAmount = (outletData.convenienceFee * FoodBasePrice) / 100;
-                        convenienceGSTAmount = (18 * convenienceAmount) / 100;
-                        convenienceTotalAmount = convenienceAmount + convenienceGSTAmount;
-
-                        
-                        commissionAmount = (outletData.commissionFee * (deliveryCharge + packagingCharge + FoodBasePrice)) / 100;
-                        commissionGSTAmount = (18 *(convenienceAmount + commissionAmount)) / 100;
-                        commissionTotalAmount =  commissionAmount + commissionGSTAmount;
-
-                        TDS = (1 * FoodBasePrice) / 100;
-                        TCS = (packagingCharge + deliveryCharge) / 101;
-                       
-                        totalPriceForCustomer = Number((FoodBasePrice + packagingCharge + foodGST + deliveryCharge + convenienceAmount + convenienceGSTAmount)?.toFixed(2));
-                        mealpeVendorAmount = Number((foodGST + convenienceAmount  + commissionTotalAmount + TDS + TCS)?.toFixed(2));
-                        outletVendorAmount = Number((totalPriceForCustomer - mealpeVendorAmount)?.toFixed(2));
-
-
                     } else {
-                        const err = {
-                            message: "Something Went Wrong."
-                        }
-                        throw err;
+                        isGstApplied = false;
+                        FoodBasePrice = Number(((itemTotalPrice * 100) / 105).toFixed(2));
+                        foodGST = Number((itemTotalPrice - FoodBasePrice).toFixed(2));
                     }
+                    
+                    convenienceAmount = (outletData.convenienceFee * FoodBasePrice) / 100;
+                    convenienceGSTAmount = (18 * convenienceAmount) / 100;
+                    convenienceTotalAmount = Number((convenienceAmount + convenienceGSTAmount)?.toFixed(2));
+                    
+                    commissionAmount = (outletData.commissionFee * (deliveryCharge + packagingCharge + FoodBasePrice)) / 100;
+                    commissionGSTAmount = (18 * (convenienceAmount + commissionAmount)) / 100;
+                    commissionTotalAmount = Number((commissionAmount + commissionGSTAmount)?.toFixed(2));
+
+                    TDS = (1 * FoodBasePrice) / 100;
+                    TCS = (packagingCharge + deliveryCharge) / 101;
+
+                    totalPriceForCustomer = Number((FoodBasePrice + packagingCharge + foodGST + deliveryCharge + convenienceAmount + convenienceGSTAmount)?.toFixed(2));
+                    mealpeVendorAmount = Number((foodGST + convenienceTotalAmount + commissionTotalAmount + TDS + TCS)?.toFixed(2));
+                    outletVendorAmount = Number((totalPriceForCustomer - mealpeVendorAmount)?.toFixed(2));
 
                     const outletBankLabel = outletData?.bankLabel || null;
-
 
                     resolve({
                         success: true,
