@@ -38,7 +38,8 @@ router.post("/createOutlet", async (req, res) => {
     commissionFee,
     bankLabel,
     isVeg,
-    isNonVeg
+    isNonVeg,
+    deliveryCharge
   } = req.body;
   try {
     const { data, error } = await supabaseInstance.auth.signUp(
@@ -113,6 +114,10 @@ router.post("/createOutlet", async (req, res) => {
 
       if (bankLabel) {
         postObject.bankLabel = bankLabel;
+      }
+
+      if (deliveryCharge) {
+        postObject.deliveryCharge = deliveryCharge;
       }
 
       if (!isPrimaryOutlet) {
