@@ -84,5 +84,25 @@ router.post("/getOutletOrderDateWise", async (req, res) => {
     }
 });
 
+router.post("/getAdminFinance", async (req, res) => {
+    const { start_date,end_date,cities,campuses,outltes } = req.body;
+    try {
+        const { data, error } = await supabaseInstance.rpc('get_all_outlet_settlements', { start_date,end_date,cities: cities || null,campuses:campuses || null,outltes:outltes || null });
+
+        if (data) {
+            res.status(200).json({
+                success: true,
+                data: data
+            });
+        } else {
+            throw error
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ success: false, error: error });
+    }
+});
+
+
 
 module.exports = router;

@@ -137,11 +137,13 @@ router.post("/createOutlet", async (req, res) => {
         .from("Outlet_Role")
         .insert({
           role: "Order Management", outletId: outletId, access: [
-            "Restaurants",
-            "Payments",
-            "Users",
             "Dashboard",
-            "Configuration"
+            "Orders",
+            "Menu",
+            "Customer",
+            "Outlets",
+            "KOT",
+            "Settings"
           ]
         })
         .select("*")
