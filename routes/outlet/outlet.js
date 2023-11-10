@@ -530,10 +530,10 @@ router.post("/updateTaxCharge", async (req, res) => {
 
 router.post("/updatePetPooja/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const { petPoojaAppKey, petPoojaAppSecret, petPoojaApAccessToken, petPoojaRestId, publishProcessingStep, isOrderHandlingFromPetpooja } = req.body;
+  const { petPoojaAppKey, petPoojaAppSecret, petPoojaApAccessToken, petPoojaRestId, publishProcessingStep, isOrderHandlingFromPetpooja, isOrderDropInPetpooja } = req.body;
 
   try {
-    const postbody = { petPoojaAppKey, petPoojaAppSecret, petPoojaApAccessToken, petPoojaRestId, isOrderHandlingFromPetpooja };
+    const postbody = { petPoojaAppKey, petPoojaAppSecret, petPoojaApAccessToken, petPoojaRestId, isOrderHandlingFromPetpooja, isOrderDropInPetpooja };
     if (publishProcessingStep) {
       postbody.publishProcessingStep = publishProcessingStep;
     }
