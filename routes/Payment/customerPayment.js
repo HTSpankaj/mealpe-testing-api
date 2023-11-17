@@ -642,7 +642,7 @@ function getPriceBreakdown(outletId, itemTotalPrice, isDineIn = false, isPickUp 
                     convenienceTotalAmount = Number((convenienceAmount + convenienceGSTAmount)?.toFixed(2));
                     
                     commissionAmount = (outletData.commissionFee * (deliveryCharge + packagingCharge + FoodBasePrice)) / 100;
-                    commissionGSTAmount = (18 * (convenienceAmount + commissionAmount)) / 100;
+                    commissionGSTAmount = (18 *  commissionAmount) / 100;
                     commissionTotalAmount = Number((commissionAmount + commissionGSTAmount)?.toFixed(2));
 
                     TDS = (1 * FoodBasePrice) / 100;

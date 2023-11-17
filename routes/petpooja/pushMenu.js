@@ -421,7 +421,7 @@ function saveOrderToPetpooja(request, orderId) {
                 }
               },
 
-              //* partially Done
+              //* Done
               Customer: {
                 details: {
                   email: orderData.data?.customerAuthUID?.email,
