@@ -260,7 +260,7 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
     }
 
     const { data, error } = await query;
-    
+
     if (data) {
       const outdetData = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).maybeSingle();
 
@@ -989,9 +989,9 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
       { event: 'UPDATE', schema: 'public', table: 'Timing', filter: `outletId=eq.${outletId}` },
       async (payload) => {
         const outdetData = await supabaseInstance.from("Outlet")
-        .select("outletName,address,isPublished,logo,headerImage,outletId,isActive,isPickUp,isDineIn,isDelivery,convenienceFee,isTimeExtended,packaging_charge,Timing(openTime,closeTime,Days(day))")
-        .eq("outletId", payload.new.outletId).maybeSingle();
-  
+          .select("outletName,address,isPublished,logo,headerImage,outletId,isActive,isPickUp,isDineIn,isDelivery,convenienceFee,isTimeExtended,packaging_charge,Timing(openTime,closeTime,Days(day))")
+          .eq("outletId", payload.new.outletId).maybeSingle();
+
         if (outdetData?.data) {
           outletdetails = {
             ...outdetData.data,
@@ -1001,7 +1001,7 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
               Overmorrow: outdetData.data?.Timing?.find(f => f.Days?.day === moment().tz("Asia/Kolkata").add(2, 'days').format("dddd")),
             }
           }
-  
+
           let todayflag = false;
           let tomorrowflag = false;
           let Overmorrowflag = false;
@@ -1009,49 +1009,114 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             const time = moment().tz("Asia/Kolkata");
             const beforeTime = moment.tz(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
-  
+
             todayflag = time.isBetween(beforeTime, afterTime);
           }
-  
+
           if (!todayflag && outletdetails.isTimeExtended) {
             todayflag = true;
           }
-  
+
           if (outletdetails?.Timing?.Tomorrow?.openTime && outletdetails?.Timing?.Tomorrow?.closeTime) {
             const time = moment().tz("Asia/Kolkata");
             const beforeTime = moment.tz(outletdetails?.Timing?.Tomorrow?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Tomorrow?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
-  
+
             tomorrowflag = time.isBetween(beforeTime, afterTime);
           }
-  
+
           if (!tomorrowflag && outletdetails.isTimeExtended) {
             tomorrowflag = true;
           }
-  
+
           if (outletdetails?.Timing?.Overmorrow?.openTime && outletdetails?.Timing?.Overmorrow?.closeTime) {
             const time = moment().tz("Asia/Kolkata");
             const beforeTime = moment.tz(outletdetails?.Timing?.Overmorrow?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Overmorrow?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
-  
+
             Overmorrowflag = time.isBetween(beforeTime, afterTime);
           }
-  
+
           if (!Overmorrowflag && outletdetails.isTimeExtended) {
             Overmorrowflag = true;
           }
-  
+
           outletdetails.todayisOutletOpen = todayflag;
           outletdetails.tomorrowisOutletOpen = tomorrowflag;
           outletdetails.OvermorrowisOutletOpen = Overmorrowflag;
         }
-        console.log("outletdetails==>",outletdetails)
+        console.log("outletdetails==>", outletdetails)
         res.write(`data: ${JSON.stringify(outletdetails)}\n\n`);
       }
-    ).subscribe((status) => {
-      console.log("subscribe status for orderId => ", outletId);
-    })
+    ).subscribe(async (status) => {
+      console.log(`outlet-update-channel-${outletId} status => `, status);
+      if (status === "SUBSCRIBED") {
+        const outdetData = await supabaseInstance.from("Outlet")
+          .select("outletName,address,isPublished,logo,headerImage,outletId,isActive,isPickUp,isDineIn,isDelivery,convenienceFee,isTimeExtended,packaging_charge,Timing(openTime,closeTime,Days(day))")
+          .eq("outletId", outletId).maybeSingle();
+        if (outdetData?.data) {
+          outletdetails = {
+            ...outdetData.data,
+            Timing: {
+              Today: outdetData.data?.Timing?.find(f => f.Days?.day === moment().tz("Asia/Kolkata").format("dddd")),
+              Tomorrow: outdetData.data?.Timing?.find(f => f.Days?.day === moment().tz("Asia/Kolkata").add(1, 'days').format("dddd")),
+              Overmorrow: outdetData.data?.Timing?.find(f => f.Days?.day === moment().tz("Asia/Kolkata").add(2, 'days').format("dddd")),
+            }
+          }
 
+          let todayflag = false;
+          let tomorrowflag = false;
+          let Overmorrowflag = false;
+          if (outletdetails?.Timing?.Today?.openTime && outletdetails?.Timing?.Today?.closeTime) {
+            const time = moment().tz("Asia/Kolkata");
+            const beforeTime = moment.tz(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
+            const afterTime = moment.tz(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
+
+            todayflag = time.isBetween(beforeTime, afterTime);
+          }
+
+          if (!todayflag && outletdetails.isTimeExtended) {
+            todayflag = true;
+          }
+
+          if (outletdetails?.Timing?.Tomorrow?.openTime && outletdetails?.Timing?.Tomorrow?.closeTime) {
+            const time = moment().tz("Asia/Kolkata");
+            const beforeTime = moment.tz(outletdetails?.Timing?.Tomorrow?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
+            const afterTime = moment.tz(outletdetails?.Timing?.Tomorrow?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
+
+            tomorrowflag = time.isBetween(beforeTime, afterTime);
+          }
+
+          if (!tomorrowflag && outletdetails.isTimeExtended) {
+            tomorrowflag = true;
+          }
+
+          if (outletdetails?.Timing?.Overmorrow?.openTime && outletdetails?.Timing?.Overmorrow?.closeTime) {
+            const time = moment().tz("Asia/Kolkata");
+            const beforeTime = moment.tz(outletdetails?.Timing?.Overmorrow?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
+            const afterTime = moment.tz(outletdetails?.Timing?.Overmorrow?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
+
+            Overmorrowflag = time.isBetween(beforeTime, afterTime);
+          }
+
+          if (!Overmorrowflag && outletdetails.isTimeExtended) {
+            Overmorrowflag = true;
+          }
+
+          outletdetails.todayisOutletOpen = todayflag;
+          outletdetails.tomorrowisOutletOpen = tomorrowflag;
+          outletdetails.OvermorrowisOutletOpen = Overmorrowflag;
+
+          console.log("outletdetails==>", outletdetails)
+          res.write(`data: ${JSON.stringify({ data: outletdetails || [] })}`);
+          res.write("\n\n");
+        } else {
+          res.write(`data: ${JSON.stringify({ data: [] })}`);
+          res.write("\n\n");
+        }
+      }
+      console.log("subscribe status for outletId => ", outletId);
+    })
   res.write("retry: 10000\n\n");
   req.on('close', () => {
     supabaseInstance.channel(channelName).unsubscribe()

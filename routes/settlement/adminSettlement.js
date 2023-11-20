@@ -122,4 +122,24 @@ router.post("/getAdminFinanceDashboard", async (req, res) => {
     }
 });
 
+
+router.post("/getAdminFinanceOrderReport", async (req, res) => {
+    const { start_date,end_date,outletId } = req.body;
+    try {
+        const { data, error } = await supabaseInstance.rpc('get_all_outlet_order_report_level', { start_date,end_date,outlet_id:outletId });
+
+        if (data) {
+            res.status(200).json({
+                success: true,
+                data: data
+            });
+        } else {
+            throw error
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ success: false, error: error });
+    }
+});
+
 module.exports = router;
