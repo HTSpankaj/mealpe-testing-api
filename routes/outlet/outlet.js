@@ -737,6 +737,26 @@ router.post("/pushMenuData/:outletId", async (req, res) => {
 
 })
 
+router.get("/getOutletList", async (req, res) => {
+
+  try {
+    const { data, error } = await supabaseInstance
+      .from("Outlet")
+      .select("outletId,outletName,campusId(campusId,campusName),cityId(cityId,city))");
+    if (data) {
+      res.status(200).json({
+        success: true,
+        data:data
+      });
+    } else {
+      throw error
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
 
 // router.post("/resetOutletPassword/:outletId", async (req, res) => {
 //   const { outletId } = req.params;
