@@ -632,7 +632,7 @@ router.get("/getHistoryOrders/:outletId", async (req, res) => {
   }
 });
 
-router.get("/getHistoryPetPoojaOrders/:outletId", async (req, res) => {
+router.post("/getHistoryPetPoojaOrders/:outletId", async (req, res) => {
   const { outletId } = req.params;
   const {orderStatusId} = req.body;
   const { orderSequenceId, startDate, endDate,page, perPage,orderType,sortType  } = req.query;
@@ -670,7 +670,7 @@ router.get("/getHistoryPetPoojaOrders/:outletId", async (req, res) => {
     if (startDate && endDate ) {
       query = query.gte("order_schedule_date",startDate).lte("order_schedule_date",endDate);
     }
-    
+
     if (orderStatusId.length > 0) {
       query = query.in('order_status_id', orderStatusId)
     }else{
