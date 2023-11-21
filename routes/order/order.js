@@ -749,7 +749,7 @@ router.post("/acceptOrder/:orderId", async (req, res) => {
     if (data) {
 
       updateOrderStatus(orderId,"1").then((updateOrderStatusToPetpoojaResponse) => {
-        console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
+        console.log('updateOrderStatus : ', updateOrderStatusToPetpoojaResponse);
         res.status(200).json({
           success: true,
           data: {
@@ -779,7 +779,7 @@ router.post("/rejectOrder/:orderId", async (req, res) => {
       console.log("sendMobileSMSResponse => ", sendMobileSMSResponse);
 
       updateOrderStatus(orderId,"-2").then((updateOrderStatusToPetpoojaResponse) => {
-        console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
+        console.log('updateOrderStatus ran: ', updateOrderStatusToPetpoojaResponse);
         res.status(200).json({
           success: true,
           data: {
@@ -806,7 +806,7 @@ router.post("/dispatchOrder/:orderId", async (req, res) => {
     const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 4 }).select("*").eq("orderId", orderId).maybeSingle();
     if (data) {
       updateOrderStatus(orderId,"4").then((updateOrderStatusToPetpoojaResponse) => {
-        console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
+        console.log('updateOrderStatus ran: ', updateOrderStatusToPetpoojaResponse);
         res.status(200).json({
           success: true,
           data: {
@@ -833,7 +833,7 @@ router.post("/foodReadyOrder/:orderId", async (req, res) => {
     const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: 5 }).select("*").eq("orderId", orderId).maybeSingle();
     if (data) {
       updateOrderStatus(orderId,"5").then((updateOrderStatusToPetpoojaResponse) => {
-        console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
+        console.log('updateOrderStatus ran: ', updateOrderStatusToPetpoojaResponse);
         res.status(200).json({
           success: true,
           data: {
@@ -863,7 +863,7 @@ router.post("/deliveredOrder/:orderId", async (req, res) => {
       console.log("sendMobileSMSResponse => ", sendMobileSMSResponse);
     
       updateOrderStatus(orderId,"10").then((updateOrderStatusToPetpoojaResponse) => {
-        console.log('.then block ran: ', updateOrderStatusToPetpoojaResponse);
+        console.log('updateOrderStatus ran: ', updateOrderStatusToPetpoojaResponse);
         res.status(200).json({
           success: true,
           data: {

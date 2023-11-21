@@ -459,7 +459,8 @@ function saveOrderToPetpooja(request, orderId) {
 
                   description: "",
                   min_prep_time: orderData.data?.isScheduleNow ? orderData.data?.preparationTime : 0,
-                  callback_url: `${request.protocol}://${request.get('host')}/petpooja/pushMenu/petpooja-status-change/${orderId}`,
+                  // callback_url: `${request.protocol}://${request.get('host')}/petpooja/pushMenu/petpooja-status-change/${orderId}`,
+                  callback_url: `https://mealpe-testing-api.onrender.com/petpooja/pushMenu/petpooja-status-change/${orderId}`,
                   enable_delivery: 1, //*Values can be 0 or 1 where 0 means Rider from thirdparty side will come and 1 means Rider from Restaurant i.e. self delivery order.
 
                   ondc_bap: "MealPe", //*An identifier to indicate if the order is from ONDC by passing the buyer app name.
@@ -566,25 +567,30 @@ router.post("/petpooja-status-change/:orderId", async (req, res) => {
   const query = req.query;
   const params = req.params;
 
-  console.log("petpooja-status-change-[POST]-postBody => ", postBody);
-  console.log("petpooja-status-change-[POST]-query =>    ", query);
-  console.log("petpooja-status-change-[POST]-params =>   ", params);
+  // console.log("petpooja-status-change-[POST]-postBody => ", postBody);
+  // console.log("petpooja-status-change-[POST]-query =>    ", query);
+  // console.log("petpooja-status-change-[POST]-params =>   ", params);
 
-  res.send({ success: true, message: "Response from petpooja-status-change" });
+  const { orderID, status } = req.body;
+
+  if (orderID && status) {
+    try {
+      const orderResponse = await supabaseInstance.from("Order").update({orderStatusId: status}).eq("orderId", orderID).select("*").maybeSingle();
+      if (orderResponse.data) {
+        console.log("status change successfully");
+        res.send({success: true});
+      } else {
+        throw orderResponse.error;
+      }
+    } catch (error) {
+      res.send({success: false});
+      console.log("status change -> ", error);
+    }
+  } else {
+    console.log({ orderID, status });
+    res.send({success: false});
+  }
 })
-
-router.get("/petpooja-status-change/:orderId", async (req, res) => {
-  const postBody = req.body;
-  const query = req.query;
-  const params = req.params;
-
-  console.log("petpooja-status-change-[GET]-postBody => ", postBody);
-  console.log("petpooja-status-change-[GET]-query =>    ", query);
-  console.log("petpooja-status-change-[GET]-params =>   ", params);
-
-  res.send({ success: true, message: "Response from petpooja-status-change" });
-})
-
 
 function updateOrderStatus(orderId, updatedOrderStatus) {
   return new Promise(async (resolve, reject) => {
@@ -632,7 +638,7 @@ function updateOrderStatus(orderId, updatedOrderStatus) {
     }
   })
 };
-// updateOrderStatus("cf9474cc-392b-4c49-b246-a0afc1e34e47", "5").then(res => {
+// updateOrderStatus("c93a5f8c-25b8-4b3c-a203-395f639f0b06", "10").then(res => {
 //   console.log("res", res);
 // }).catch(err => {
 //   console.error(err);
