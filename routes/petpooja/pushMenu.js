@@ -459,8 +459,8 @@ function saveOrderToPetpooja(request, orderId) {
 
                   description: "",
                   min_prep_time: orderData.data?.isScheduleNow ? orderData.data?.preparationTime : 0,
-                  // callback_url: `${request.protocol}://${request.get('host')}/petpooja/pushMenu/petpooja-status-change/${orderId}`,
-                  callback_url: `https://mealpe-testing-api.onrender.com/petpooja/pushMenu/petpooja-status-change/${orderId}`,
+                  callback_url: `${request.protocol}://${request.get('host')}/petpooja/pushMenu/petpooja-status-change/${orderId}`,
+                  // callback_url: `https://mealpe-testing-api.onrender.com/petpooja/pushMenu/petpooja-status-change/${orderId}`,
                   enable_delivery: 1, //*Values can be 0 or 1 where 0 means Rider from thirdparty side will come and 1 means Rider from Restaurant i.e. self delivery order.
 
                   ondc_bap: "MealPe", //*An identifier to indicate if the order is from ONDC by passing the buyer app name.
@@ -563,19 +563,23 @@ router.post("/saveOrderToPetpoojaTest", async (req, res) => {
 })
 
 router.post("/petpooja-status-change/:orderId", async (req, res) => {
-  const postBody = req.body;
-  const query = req.query;
-  const params = req.params;
+  // const postBody = req.body;
+  // const query = req.query;
+  // const params = req.params;
 
   // console.log("petpooja-status-change-[POST]-postBody => ", postBody);
   // console.log("petpooja-status-change-[POST]-query =>    ", query);
   // console.log("petpooja-status-change-[POST]-params =>   ", params);
 
   const { orderID, status } = req.body;
+  let _status = status;
 
   if (orderID && status) {
     try {
-      const orderResponse = await supabaseInstance.from("Order").update({orderStatusId: status}).eq("orderId", orderID).select("*").maybeSingle();
+      if(_status === '-1') {
+        _status === '-2';
+      }
+      const orderResponse = await supabaseInstance.from("Order").update({orderStatusId: _status}).eq("orderId", orderID).select("*").maybeSingle();
       if (orderResponse.data) {
         console.log("status change successfully");
         res.send({success: true});
@@ -587,7 +591,7 @@ router.post("/petpooja-status-change/:orderId", async (req, res) => {
       console.log("status change -> ", error);
     }
   } else {
-    console.log({ orderID, status });
+    console.log({ orderID, _status });
     res.send({success: false});
   }
 })

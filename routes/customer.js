@@ -7,6 +7,8 @@ const axios = require('axios');
 // const moment = require("../services/momentService").momentIndianTimeZone;
 const moment = require("moment-timezone");
 const { sendMobileOtp, verifyMobileOtp, sendEmail, sendMobileSMS, generateOTP } = require("../services/msf91Service");
+const { isTimeInRange } = require("../services/dateTimeService");
+
 var cryptoJs = require("crypto-js");
 
 var supabaseInstance = require("../services/supabaseClient").supabase;
@@ -284,7 +286,7 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
           const beforeTime = moment.tz(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
           const afterTime = moment.tz(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-          todayflag = time.isBetween(beforeTime, afterTime);
+          todayflag = isTimeInRange(time,beforeTime, afterTime);
         }
 
         if (!todayflag && outletdetails.isTimeExtended) {
@@ -296,7 +298,7 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
           const beforeTime = moment.tz(outletdetails?.Timing?.Tomorrow?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
           const afterTime = moment.tz(outletdetails?.Timing?.Tomorrow?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-          tomorrowflag = time.isBetween(beforeTime, afterTime);
+          tomorrowflag = isTimeInRange(time,beforeTime, afterTime);
         }
 
         if (!tomorrowflag && outletdetails.isTimeExtended) {
@@ -308,7 +310,7 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
           const beforeTime = moment.tz(outletdetails?.Timing?.Overmorrow?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
           const afterTime = moment.tz(outletdetails?.Timing?.Overmorrow?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-          Overmorrowflag = time.isBetween(beforeTime, afterTime);
+          Overmorrowflag = isTimeInRange(time,beforeTime, afterTime);
         }
 
         if (!Overmorrowflag && outletdetails.isTimeExtended) {
@@ -447,7 +449,7 @@ router.get("/homeData", async (req, res) => {
           console.log("afterTime Asia  ==>", afterTime);
           console.log('\n');
 
-          flag = time.isBetween(beforeTime, afterTime);
+          flag = isTimeInRange(time,beforeTime, afterTime);
         }
         if (!flag && m.istimeextended) {
           flag = true;
@@ -516,7 +518,7 @@ router.get("/getOutletList/:campusId", async (req, res) => {
           console.log("time==>", time);
           console.log("beforeTime==>", beforeTime);
           console.log("afterTime==>", afterTime);
-          flag = time.isBetween(beforeTime, afterTime);
+          flag = isTimeInRange(time,beforeTime, afterTime);
         }
 
         if (!flag && m.is_time_extended) {
@@ -1010,7 +1012,7 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             const beforeTime = moment.tz(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-            todayflag = time.isBetween(beforeTime, afterTime);
+            todayflag = isTimeInRange(time,beforeTime, afterTime);
           }
 
           if (!todayflag && outletdetails.isTimeExtended) {
@@ -1022,7 +1024,7 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             const beforeTime = moment.tz(outletdetails?.Timing?.Tomorrow?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Tomorrow?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-            tomorrowflag = time.isBetween(beforeTime, afterTime);
+            tomorrowflag = isTimeInRange(time,beforeTime, afterTime);
           }
 
           if (!tomorrowflag && outletdetails.isTimeExtended) {
@@ -1034,7 +1036,7 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             const beforeTime = moment.tz(outletdetails?.Timing?.Overmorrow?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Overmorrow?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-            Overmorrowflag = time.isBetween(beforeTime, afterTime);
+            Overmorrowflag = isTimeInRange(time,beforeTime, afterTime);
           }
 
           if (!Overmorrowflag && outletdetails.isTimeExtended) {
@@ -1072,7 +1074,7 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             const beforeTime = moment.tz(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-            todayflag = time.isBetween(beforeTime, afterTime);
+            todayflag = isTimeInRange(time,beforeTime, afterTime);
           }
 
           if (!todayflag && outletdetails.isTimeExtended) {
@@ -1084,7 +1086,7 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             const beforeTime = moment.tz(outletdetails?.Timing?.Tomorrow?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Tomorrow?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-            tomorrowflag = time.isBetween(beforeTime, afterTime);
+            tomorrowflag = isTimeInRange(time,beforeTime, afterTime);
           }
 
           if (!tomorrowflag && outletdetails.isTimeExtended) {
@@ -1096,7 +1098,7 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             const beforeTime = moment.tz(outletdetails?.Timing?.Overmorrow?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Overmorrow?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-            Overmorrowflag = time.isBetween(beforeTime, afterTime);
+            Overmorrowflag = isTimeInRange(time,beforeTime, afterTime);
           }
 
           if (!Overmorrowflag && outletdetails.isTimeExtended) {

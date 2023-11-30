@@ -2,6 +2,8 @@ var express = require("express");
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
 var moment = require('moment')
+const { isTimeInRange } = require("../../services/dateTimeService");
+
 router.post("/favoriteMenuItem", async (req, res) => {
   const { customerAuthUID, outletId, itemid, restaurantId } = req.body;
   try {
@@ -66,7 +68,7 @@ router.get("/getfavoriteMenuItem/:customerAuthUID", async (req, res) => {
         const beforeTime = moment.tz(openTime, 'HH:mm:ss', 'Asia/Kolkata');
         const afterTime = moment.tz(closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-        todayflag = time.isBetween(beforeTime, afterTime);
+        todayflag = isTimeInRange(time,beforeTime, afterTime);
       }
       if (!todayflag && isTimeExtended) {
         todayflag = true;
@@ -77,7 +79,7 @@ router.get("/getfavoriteMenuItem/:customerAuthUID", async (req, res) => {
         const beforeTime = moment.tz(TomorrowopenTime, 'HH:mm:ss', 'Asia/Kolkata');
         const afterTime = moment.tz(TomorrowcloseTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-        tomorrowflag = time.isBetween(beforeTime, afterTime);
+        tomorrowflag = isTimeInRange(time,beforeTime, afterTime);
       }
       if (!tomorrowflag && isTimeExtended) {
         tomorrowflag = true;
@@ -88,7 +90,7 @@ router.get("/getfavoriteMenuItem/:customerAuthUID", async (req, res) => {
         const beforeTime = moment.tz(OvermorrowopenTime, 'HH:mm:ss', 'Asia/Kolkata');
         const afterTime = moment.tz(OvermorrowcloseTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-        overmorrowflag = time.isBetween(beforeTime, afterTime);
+        overmorrowflag = isTimeInRange(time,beforeTime, afterTime);
       }
       if (!overmorrowflag && isTimeExtended) {
         overmorrowflag = true;
