@@ -403,7 +403,7 @@ function saveOrderToPetpooja(request, orderId) {
       // console.log("orderData outletId => ", orderData.data?.outletId);
 
       if (orderData.data?.outletId?.isOrderHandlingFromPetpooja && orderData.data?.outletId?.petPoojaAppKey && orderData.data?.outletId?.petPoojaAppSecret && orderData.data?.outletId?.petPoojaApAccessToken && orderData.data?.outletId?.petPoojaRestId) {
-        
+
         let payload = {
           app_key: orderData.data?.outletId?.petPoojaAppKey,
           app_secret: orderData.data?.outletId?.petPoojaAppSecret,
@@ -465,7 +465,7 @@ function saveOrderToPetpooja(request, orderId) {
 
                   ondc_bap: "MealPe", //*An identifier to indicate if the order is from ONDC by passing the buyer app name.
                   advanced_order: "N", //* Flag which says that placed order is advance or not.Value is Boolean either Y or N.
-                  
+
                   table_no: "",
                   no_of_persons: "0",
                 }
@@ -491,7 +491,7 @@ function saveOrderToPetpooja(request, orderId) {
             id: itemData?.itemId?.itemid,
             name: itemData?.itemId?.itemname,
             description: "",
-            
+
             gst_liability: "vendor", //* Required for Ecomm platform and Optional for others.GST liability ownership. It will be there in the item object (vendor/restaurant)
             item_tax: [], //* Tax calculated at item level after discount
             item_discount: "0",
@@ -512,7 +512,7 @@ function saveOrderToPetpooja(request, orderId) {
         // const payloadData = await axios.post(petpoojaconfig.config.save_order_api, payload);
 
         let saveOrderReaponse = null;
-        let saveOrderError    = null;
+        let saveOrderError = null;
         axios.post(petpoojaconfig.config.save_order_api, payload).then((_saveOrderReaponse) => {
           if (_saveOrderReaponse.data?.success === '1') {
             saveOrderReaponse = _saveOrderReaponse.data;
@@ -525,7 +525,7 @@ function saveOrderToPetpooja(request, orderId) {
         }).finally(async () => {
           let _postObject = {
             orderId: orderId,
-            postBody: payload            
+            postBody: payload
           }
           if (saveOrderReaponse) {
             _postObject.success = saveOrderReaponse;
@@ -576,23 +576,24 @@ router.post("/petpooja-status-change/:orderId", async (req, res) => {
 
   if (orderID && status) {
     try {
-      if(_status === '-1') {
-        _status === '-2';
+      if (_status === '-1') {
+        _status = '-2';
       }
-      const orderResponse = await supabaseInstance.from("Order").update({orderStatusId: _status}).eq("orderId", orderID).select("*").maybeSingle();
+      console.log("_status => ", { orderStatusId: _status });
+      const orderResponse = await supabaseInstance.from("Order").update({ orderStatusId: _status }).eq("orderId", orderID).select("*").maybeSingle();
       if (orderResponse.data) {
         console.log("status change successfully");
-        res.send({success: true});
+        res.send({ success: true });
       } else {
         throw orderResponse.error;
       }
     } catch (error) {
-      res.send({success: false});
+      res.send({ success: false });
       console.log("status change -> ", error);
     }
   } else {
     console.log({ orderID, _status });
-    res.send({success: false});
+    res.send({ success: false });
   }
 })
 
