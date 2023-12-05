@@ -167,14 +167,14 @@ router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
   try {
     const { data, error } = await supabaseInstance
     .from("Order")
-    .select("*,outletId(outletId,headerImage,outletName,logo,Review!left(*)),Order_Item(*,Menu_Item(minimumpreparationtime)),Order_Schedule(*),orderStatusId(*))")
+    .select("*, Review!left(*),outletId(outletId,headerImage,outletName,logo),Order_Item(*,Menu_Item(minimumpreparationtime)),Order_Schedule(*),orderStatusId(*))")
     .eq("customerAuthUID", customerAuthUID)
     .eq("outletId.Review.customerAuthUID",customerAuthUID)
     .order("created_at",{ascending:false})
     if (data) {
       res.status(200).json({
         success: true,
-        data: data.map(m => ({ ...m, isReview: m?.outletId?.Review?.length > 0,totalItems:m?.Order_Item?.reduce((a,c)=>a + c.quantity ,0) })),
+        data: data.map(m => ({ ...m, isReview: Boolean(m?.Review?.length > 0), totalItems:m?.Order_Item?.reduce((a,c)=>a + c.quantity ,0) })),
       });
     } else {
       throw error
