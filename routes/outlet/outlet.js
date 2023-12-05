@@ -146,7 +146,9 @@ router.post("/createOutlet", async (req, res) => {
             "Settings"
           ]
         })
-        .select("*")
+        .select("*");
+      
+      console.log("outletRole -> ", outletRole);
 
       for (let outletItem of Restaurant_category) {
         const outletCategoryResponse = await supabaseInstance

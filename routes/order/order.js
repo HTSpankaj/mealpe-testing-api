@@ -169,7 +169,7 @@ router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
     .from("Order")
     .select("*, Review!left(*),outletId(outletId,headerImage,outletName,logo),Order_Item(*,Menu_Item(minimumpreparationtime)),Order_Schedule(*),orderStatusId(*))")
     .eq("customerAuthUID", customerAuthUID)
-    .eq("outletId.Review.customerAuthUID",customerAuthUID)
+    .eq("Review.customerAuthUID",customerAuthUID)
     .order("created_at",{ascending:false})
     if (data) {
       res.status(200).json({
