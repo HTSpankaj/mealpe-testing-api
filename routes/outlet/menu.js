@@ -6,11 +6,15 @@ const upload = multer();
 
 
 router.post("/createCategory", async (req, res) => {
-  const { outletId, status, categoryname } = req.body;
+  const { outletId, status, categoryname, parent_category_id } = req.body;
   try {
+    let postBody = { outletId, status, categoryname };
+    if (parent_category_id) {
+      postBody.parent_category_id = parent_category_id;
+    }
     const { data, error } = await supabaseInstance
       .from("Menu_Categories")
-      .insert({ outletId, status, categoryname })
+      .insert(postBody)
       .select("*")
 
     if (data) {
