@@ -16,6 +16,7 @@ var customerRouter = require("./routes/customer")
 var resturantRouter = require("./routes/restaurent")
 var outletRouter = require("./routes/outlet/outlet")
 var menuRouter = require("./routes/outlet/menu")
+var offerRouter = require("./routes/outlet/offer")
 var staffRouter = require("./routes/staff/staff")
 var roleRouter = require("./routes/staff/role")
 var commonRouter = require("./routes/common")
@@ -55,6 +56,7 @@ app.use('/outlet', outletRouter);
 app.use("/days", daysRouter);
 app.use("/category", categoryRouter);
 app.use('/outlet/menu', menuRouter);
+app.use('/outlet/offer', offerRouter);
 app.use('/staff/staff', staffRouter);
 app.use('/staff/role', roleRouter);
 app.use('/common', commonRouter);
