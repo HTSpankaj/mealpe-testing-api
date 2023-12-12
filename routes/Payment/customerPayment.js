@@ -29,8 +29,8 @@ router.post('/initiate-payment', async (req, res, next) => {
         isDelivery
     } = req.body;
 
-    const surl = `${req.protocol}://${req.get('host')}/payment/customer/success-payment`;
-    const furl = `${req.protocol}://${req.get('host')}/payment/customer/failure-payment`;
+    const surl = `https://${req.get('host')}/payment/customer/success-payment`;
+    const furl = `https://${req.get('host')}/payment/customer/failure-payment`;
 
     if (itemTotalPrice && productinfo && firstname && phone && email && customerAuthUID && outletId) {
 
@@ -292,8 +292,8 @@ router.post('/initiate-payment-with-order', async (req, res, next) => {
         orderObject
     } = req.body;
 
-    const surl = `${req.protocol}://${req.get('host')}/payment/customer/success-payment`;
-    const furl = `${req.protocol}://${req.get('host')}/payment/customer/failure-payment`;
+    const surl = `https://${req.get('host')}/payment/customer/success-payment`;
+    const furl = `https://${req.get('host')}/payment/customer/failure-payment`;
 
     if (itemTotalPrice && productinfo && firstname && phone && email && customerAuthUID && outletId && orderObject) {
 
