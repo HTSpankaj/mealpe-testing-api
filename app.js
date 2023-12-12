@@ -72,7 +72,7 @@ app.use('/contactTicket', contactTicketRouter);
 app.use('/settlement/adminSettlement', settlementRouter);
 app.use('/settlement/restaurentSettlement', restaurentSettlementRouter);
 
-console.log(`Protocol ==> ${req.protocol}://${req.get('host')}/`);
+
 
 
 // catch 404 and forward to error handler
