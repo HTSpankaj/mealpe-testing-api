@@ -7,7 +7,7 @@ const upload = multer();
 const axios = require('axios');
 var msg91config = require("../../configs/msg91Config");
 const { sendMobileSMS, sendEmail } = require("../../services/msf91Service");
-
+var {outletSelectString} = require('../../services/supabaseCommonValues').value;
 
 router.post("/createOutlet", async (req, res) => {
   const {
@@ -756,6 +756,60 @@ router.get("/getOutletList", async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+router.get("/realtimeOutletWeb/:outletId", function (req, res) {
+  const { outletId } = req.params;
+  res.statusCode = 200;
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("connection", "keep-alive");
+  res.setHeader("Content-Type", "text/event-stream");
+
+  const channelName = `outletWeb-update-channel-${outletId}-${Date.now()}`;
+
+  supabaseInstance.channel(channelName)
+  .on(
+    'postgres_changes',     { event: 'UPDATE', schema: 'public', table: 'Outlet', filter: `outletId=eq.${outletId}` },
+    async (payload) => {
+      const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", payload.new.outletId).maybeSingle();
+      res.write('event: updateOutlet\n')
+      res.write(`data: ${JSON.stringify(outletData.data)}\n\n`);
+      res.write("\n\n");
+    }
+  )
+  .on(
+    'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'Timing', filter: `outletId=eq.${outletId}` },
+    async (payload) => {
+      const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", payload.new.outletId).maybeSingle();
+      res.write('event: updateOutlet\n')
+      res.write(`data: ${JSON.stringify(outletData.data)}\n\n`);
+      res.write("\n\n");
+    }
+  )
+  .subscribe(async (status) => {
+    console.log(`outletWeb-update-channel-${outletId} status => `, status);
+    if (status === "SUBSCRIBED") {
+      const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", outletId).maybeSingle();
+      res.write('event: updateOutlet\n')
+      res.write(`data: ${JSON.stringify(outletData.data)}\n\n`);
+      res.write("\n\n");
+    }
+    console.log("subscribe status for outletId => ", outletId);
+  });
+
+  res.write("retry: 10000\n\n");
+  req.on('close', () => {
+    supabaseInstance.channel(channelName).unsubscribe()
+      .then(res => {
+        console.log(".then => ", res);
+      }).catch((err) => {
+        console.log(".catch => ", err);
+      }).finally(() => {
+        console.log(`${channelName} Connection closed`);
+      });
+  });
 });
 
 
