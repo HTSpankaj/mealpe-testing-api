@@ -788,13 +788,15 @@ router.get("/realtimeOutletWeb/:outletId", function (req, res) {
       res.write("\n\n");
     }
   )
-  .subscribe(async (status) => {
+  .subscribe(async (status, err) => {
     console.log(`outletWeb-update-channel-${outletId} status => `, status);
     if (status === "SUBSCRIBED") {
       const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", outletId).maybeSingle();
       res.write('event: updateOutlet\n')
       res.write(`data: ${JSON.stringify(outletData.data)}\n\n`);
       res.write("\n\n");
+    } else {
+      console.log("err => ", err);
     }
     console.log("subscribe status for outletId => ", outletId);
   });
