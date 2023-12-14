@@ -7,7 +7,8 @@ const upload = multer();
 const axios = require('axios');
 var msg91config = require("../../configs/msg91Config");
 const { sendMobileSMS, sendEmail } = require("../../services/msf91Service");
-var {outletSelectString} = require('../../services/supabaseCommonValues').value;
+var { outletSelectString } = require('../../services/supabaseCommonValues').value;
+const moment = require("moment-timezone");
 
 router.post("/createOutlet", async (req, res) => {
   const {
@@ -147,7 +148,7 @@ router.post("/createOutlet", async (req, res) => {
           ]
         })
         .select("*");
-      
+
       console.log("outletRole -> ", outletRole);
 
       for (let outletItem of Restaurant_category) {
@@ -377,7 +378,7 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
 
   try {
     if (bankDetailsData) {
-      const bankDetails = await supabaseInstance.from("BankDetails").update({accountNumber: bankDetailsData?.accountNumber || null, BankName: bankDetailsData?.BankName, IFSCCode: bankDetailsData?.IFSCCode,bankId:bankDetailsData?.bankId || null }).eq("bankDetailsId", bankDetailsData.bankDetailsId).select("*");
+      const bankDetails = await supabaseInstance.from("BankDetails").update({ accountNumber: bankDetailsData?.accountNumber || null, BankName: bankDetailsData?.BankName, IFSCCode: bankDetailsData?.IFSCCode, bankId: bankDetailsData?.bankId || null }).eq("bankDetailsId", bankDetailsData.bankDetailsId).select("*");
     }
 
     if (categoryDetailsData?.length > 0) {
@@ -656,7 +657,7 @@ router.post("/pushMenuData/:outletId", async (req, res) => {
   let serverCategory = [];
   let serverSubCategory = [];
   let serverItem = [];
-  
+
   try {
     if (category?.length > 0) {
       for (const categoryItem of category) {
@@ -748,7 +749,7 @@ router.get("/getOutletList", async (req, res) => {
     if (data) {
       res.status(200).json({
         success: true,
-        data:data
+        data: data
       });
     } else {
       throw error
@@ -769,37 +770,37 @@ router.get("/realtimeOutletWeb/:outletId", function (req, res) {
   const channelName = `outletWeb-update-channel-${outletId}-${Date.now()}`;
 
   supabaseInstance.channel(channelName)
-  .on(
-    'postgres_changes',     { event: 'UPDATE', schema: 'public', table: 'Outlet', filter: `outletId=eq.${outletId}` },
-    async (payload) => {
-      const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", payload.new.outletId).maybeSingle();
-      res.write('event: updateOutlet\n')
-      res.write(`data: ${JSON.stringify(outletData.data)}\n\n`);
-      res.write("\n\n");
-    }
-  )
-  .on(
-    'postgres_changes',
+    .on(
+      'postgres_changes', { event: 'UPDATE', schema: 'public', table: 'Outlet', filter: `outletId=eq.${outletId}` },
+      async (payload) => {
+        const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", payload.new.outletId).maybeSingle();
+        res.write('event: updateOutlet\n')
+        res.write(`data: ${JSON.stringify(outletData.data)}\n\n`);
+        res.write("\n\n");
+      }
+    )
+    .on(
+      'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'Timing', filter: `outletId=eq.${outletId}` },
-    async (payload) => {
-      const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", payload.new.outletId).maybeSingle();
-      res.write('event: updateOutlet\n')
-      res.write(`data: ${JSON.stringify(outletData.data)}\n\n`);
-      res.write("\n\n");
-    }
-  )
-  .subscribe(async (status, err) => {
-    console.log(`outletWeb-update-channel-${outletId} status => `, status);
-    if (status === "SUBSCRIBED") {
-      const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", outletId).maybeSingle();
-      res.write('event: updateOutlet\n')
-      res.write(`data: ${JSON.stringify(outletData.data)}\n\n`);
-      res.write("\n\n");
-    } else {
-      console.log("err => ", err);
-    }
-    console.log("subscribe status for outletId => ", outletId);
-  });
+      async (payload) => {
+        const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", payload.new.outletId).maybeSingle();
+        res.write('event: updateOutlet\n')
+        res.write(`data: ${JSON.stringify(outletData.data)}\n\n`);
+        res.write("\n\n");
+      }
+    )
+    .subscribe(async (status, err) => {
+      console.log(`outletWeb-update-channel-${outletId} status => `, status);
+      if (status === "SUBSCRIBED") {
+        const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", outletId).maybeSingle();
+        res.write('event: updateOutlet\n')
+        res.write(`data: ${JSON.stringify(outletData.data)}\n\n`);
+        res.write("\n\n");
+      } else {
+        console.log("err => ", err);
+      }
+      console.log("subscribe status for outletId => ", outletId);
+    });
 
   res.write("retry: 10000\n\n");
   req.on('close', () => {
@@ -814,7 +815,36 @@ router.get("/realtimeOutletWeb/:outletId", function (req, res) {
   });
 });
 
+router.post("/upsertHeaderImage", async (req, res) => {
+  const { isOutletOpen, outletId } = req.body;
 
+  if ((isOutletOpen === true || isOutletOpen === false) && outletId) {
+    try {
+      const isOutletOpenTimestamp = moment().tz("Asia/Kolkata");
+      const outletUpdateResponse = await supabaseInstance.from("Outlet").update({isOutletOpen, isOutletOpenTimestamp}).eq("outletId", outletId).select("outletId, isOutletOpen, isOutletOpenTimestamp").maybeSingle();
+      if (outletUpdateResponse?.data) {
+        res.status(200).json({
+          status: false,
+          data: outletUpdateResponse.data,
+          message: "Outlet status changes successfully."
+        })
+      } else {
+        throw outletUpdateResponse.error;
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        status: false,
+        error: error
+      })
+    }
+  } else {
+    res.status(500).json({
+      status: false,
+      error: { message: "Please pass Boolean(isOutletOpen), UID(outletId) in body." }
+    })
+  }
+})
 
 // router.post("/resetOutletPassword/:outletId", async (req, res) => {
 //   const { outletId } = req.params;
