@@ -264,7 +264,7 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
     const { data, error } = await query;
 
     if (data) {
-      const outdetData = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isTimeExtended,Timing!left(*, dayId(*))").eq("outletId", outletId).maybeSingle();
+      const outdetData = await supabaseInstance.from("Outlet").select("*,Menu_Categories(*),isOutletOpen,Timing!left(*, dayId(*))").eq("outletId", outletId).maybeSingle();
 
       let outletdetails = {};
 
@@ -286,12 +286,13 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
           const beforeTime = moment.tz(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
           const afterTime = moment.tz(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-          todayflag = isTimeInRange(time,beforeTime, afterTime);
+          // todayflag = isTimeInRange(time,beforeTime, afterTime);
+          todayflag = outletdetails?.isOutletOpen;
         }
 
-        if (!todayflag && outletdetails.isTimeExtended) {
-          todayflag = true;
-        }
+        // if (!todayflag && outletdetails.isTimeExtended) {
+        //   todayflag = true;
+        // }
 
         if (outletdetails?.Timing?.Tomorrow?.openTime && outletdetails?.Timing?.Tomorrow?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
@@ -301,9 +302,9 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
           tomorrowflag = isTimeInRange(time,beforeTime, afterTime);
         }
 
-        if (!tomorrowflag && outletdetails.isTimeExtended) {
-          tomorrowflag = true;
-        }
+        // if (!tomorrowflag && outletdetails.isTimeExtended) {
+        //   tomorrowflag = true;
+        // }
 
         if (outletdetails?.Timing?.Overmorrow?.openTime && outletdetails?.Timing?.Overmorrow?.closeTime) {
           const time = moment().tz("Asia/Kolkata");
@@ -313,9 +314,9 @@ router.get("/cafeteriaDetails/:outletId/:customerAuthUID", async (req, res) => {
           Overmorrowflag = isTimeInRange(time,beforeTime, afterTime);
         }
 
-        if (!Overmorrowflag && outletdetails.isTimeExtended) {
-          Overmorrowflag = true;
-        }
+        // if (!Overmorrowflag && outletdetails.isTimeExtended) {
+        //   Overmorrowflag = true;
+        // }
 
         outletdetails.todayisOutletOpen = todayflag;
         outletdetails.tomorrowisOutletOpen = tomorrowflag;
@@ -991,7 +992,7 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
       { event: 'UPDATE', schema: 'public', table: 'Timing', filter: `outletId=eq.${outletId}` },
       async (payload) => {
         const outdetData = await supabaseInstance.from("Outlet")
-          .select("outletName,address,isPublished,logo,headerImage,outletId,isActive,isPickUp,isDineIn,isDelivery,convenienceFee,isTimeExtended,packaging_charge,Timing(openTime,closeTime,Days(day))")
+          .select("outletName,address,isPublished,logo,headerImage,outletId,isActive,isPickUp,isDineIn,isDelivery,convenienceFee,isOutletOpen,packaging_charge,Timing(openTime,closeTime,Days(day))")
           .eq("outletId", payload.new.outletId).maybeSingle();
 
         if (outdetData?.data) {
@@ -1012,12 +1013,12 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             const beforeTime = moment.tz(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-            todayflag = isTimeInRange(time,beforeTime, afterTime);
+            todayflag = outletdetails?.isOutletOpen;
           }
 
-          if (!todayflag && outletdetails.isTimeExtended) {
-            todayflag = true;
-          }
+          // if (!todayflag && outletdetails.isTimeExtended) {
+          //   todayflag = true;
+          // }
 
           if (outletdetails?.Timing?.Tomorrow?.openTime && outletdetails?.Timing?.Tomorrow?.closeTime) {
             const time = moment().tz("Asia/Kolkata");
@@ -1027,9 +1028,9 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             tomorrowflag = isTimeInRange(time,beforeTime, afterTime);
           }
 
-          if (!tomorrowflag && outletdetails.isTimeExtended) {
-            tomorrowflag = true;
-          }
+          // if (!tomorrowflag && outletdetails.isTimeExtended) {
+          //   tomorrowflag = true;
+          // }
 
           if (outletdetails?.Timing?.Overmorrow?.openTime && outletdetails?.Timing?.Overmorrow?.closeTime) {
             const time = moment().tz("Asia/Kolkata");
@@ -1039,9 +1040,9 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             Overmorrowflag = isTimeInRange(time,beforeTime, afterTime);
           }
 
-          if (!Overmorrowflag && outletdetails.isTimeExtended) {
-            Overmorrowflag = true;
-          }
+          // if (!Overmorrowflag && outletdetails.isTimeExtended) {
+          //   Overmorrowflag = true;
+          // }
 
           outletdetails.todayisOutletOpen = todayflag;
           outletdetails.tomorrowisOutletOpen = tomorrowflag;
@@ -1054,7 +1055,7 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
       console.log(`outlet-update-channel-${outletId} status => `, status);
       if (status === "SUBSCRIBED") {
         const outdetData = await supabaseInstance.from("Outlet")
-          .select("outletName,address,isPublished,logo,headerImage,outletId,isActive,isPickUp,isDineIn,isDelivery,convenienceFee,isTimeExtended,packaging_charge,Timing(openTime,closeTime,Days(day))")
+          .select("outletName,address,isPublished,logo,headerImage,outletId,isActive,isPickUp,isDineIn,isDelivery,convenienceFee,isOutletOpen,packaging_charge,Timing(openTime,closeTime,Days(day))")
           .eq("outletId", outletId).maybeSingle();
         if (outdetData?.data) {
           outletdetails = {
@@ -1074,12 +1075,12 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             const beforeTime = moment.tz(outletdetails?.Timing?.Today?.openTime, 'HH:mm:ss', 'Asia/Kolkata');
             const afterTime = moment.tz(outletdetails?.Timing?.Today?.closeTime, 'HH:mm:ss', 'Asia/Kolkata');
 
-            todayflag = isTimeInRange(time,beforeTime, afterTime);
+            todayflag = outletdetails?.isOutletOpen;
           }
 
-          if (!todayflag && outletdetails.isTimeExtended) {
-            todayflag = true;
-          }
+          // if (!todayflag && outletdetails.isTimeExtended) {
+          //   todayflag = true;
+          // }
 
           if (outletdetails?.Timing?.Tomorrow?.openTime && outletdetails?.Timing?.Tomorrow?.closeTime) {
             const time = moment().tz("Asia/Kolkata");
@@ -1089,9 +1090,9 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             tomorrowflag = isTimeInRange(time,beforeTime, afterTime);
           }
 
-          if (!tomorrowflag && outletdetails.isTimeExtended) {
-            tomorrowflag = true;
-          }
+          // if (!tomorrowflag && outletdetails.isTimeExtended) {
+          //   tomorrowflag = true;
+          // }
 
           if (outletdetails?.Timing?.Overmorrow?.openTime && outletdetails?.Timing?.Overmorrow?.closeTime) {
             const time = moment().tz("Asia/Kolkata");
@@ -1101,9 +1102,9 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
             Overmorrowflag = isTimeInRange(time,beforeTime, afterTime);
           }
 
-          if (!Overmorrowflag && outletdetails.isTimeExtended) {
-            Overmorrowflag = true;
-          }
+          // if (!Overmorrowflag && outletdetails.isTimeExtended) {
+          //   Overmorrowflag = true;
+          // }
 
           outletdetails.todayisOutletOpen = todayflag;
           outletdetails.tomorrowisOutletOpen = tomorrowflag;
