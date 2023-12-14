@@ -815,12 +815,13 @@ router.get("/realtimeOutletWeb/:outletId", function (req, res) {
   });
 });
 
-router.post("/upsertHeaderImage", async (req, res) => {
+router.post("/outletIsOpenStatusChange", async (req, res) => {
   const { isOutletOpen, outletId } = req.body;
 
   if ((isOutletOpen === true || isOutletOpen === false) && outletId) {
     try {
       const isOutletOpenTimestamp = moment().tz("Asia/Kolkata");
+      console.log("body -> ", {isOutletOpen, isOutletOpenTimestamp});
       const outletUpdateResponse = await supabaseInstance.from("Outlet").update({isOutletOpen, isOutletOpenTimestamp}).eq("outletId", outletId).select("outletId, isOutletOpen, isOutletOpenTimestamp").maybeSingle();
       if (outletUpdateResponse?.data) {
         res.status(200).json({
