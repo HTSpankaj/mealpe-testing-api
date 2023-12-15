@@ -572,15 +572,16 @@ router.post("/petpooja-status-change/:orderId", async (req, res) => {
   // console.log("petpooja-status-change-[POST]-params =>   ", params);
 
   const { orderID, status } = req.body;
+  const { orderId } = req.params;
   let _status = status;
 
-  if (orderID && status) {
+  if (status && orderId) {
     try {
       if (_status === '-1') {
         _status = '-2';
       }
       console.log("_status => ", { orderStatusId: _status });
-      const orderResponse = await supabaseInstance.from("Order").update({ orderStatusId: _status }).eq("orderId", orderID).select("*").maybeSingle();
+      const orderResponse = await supabaseInstance.from("Order").update({ orderStatusId: _status }).eq("orderId", orderId).select("*").maybeSingle();
       if (orderResponse.data) {
         console.log("status change successfully");
         res.send({ success: true });
@@ -589,10 +590,10 @@ router.post("/petpooja-status-change/:orderId", async (req, res) => {
       }
     } catch (error) {
       res.send({ success: false });
-      console.log("status change -> ", error);
+      console.error("status change -> ", error);
     }
   } else {
-    console.log({ orderID, _status });
+    console.error({ _status, orderId });
     res.send({ success: false });
   }
 })
