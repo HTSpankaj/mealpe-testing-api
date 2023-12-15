@@ -436,7 +436,7 @@ function saveOrderToPetpooja(request, orderId) {
               //* Done
               Order: {
                 details: {
-                  orderID: orderData?.orderSequenceId,
+                  orderID: orderData?.data?.orderSequenceId,
                   created_on: moment(new Date(orderData.data?.created_at)).format("YYYY-MM-DD HH:mm:ss"),
                   preorder_date: orderData.data?.Order_Schedule?.[0]?.scheduleDate,
                   preorder_time: orderData.data?.Order_Schedule?.[0]?.scheduleDate,
@@ -555,7 +555,7 @@ function saveOrderToPetpooja(request, orderId) {
 };
 
 router.post("/saveOrderToPetpoojaTest", async (req, res) => {
-  saveOrderToPetpooja(req, 'c93a5f8c-25b8-4b3c-a203-395f639f0b06').then(response => {
+  saveOrderToPetpooja(req, '6778d17b-a25b-437b-9c04-668ddb79739f').then(response => {
     res.send(response);
   }).catch(err => {
     res.send(err);
