@@ -414,7 +414,7 @@ function saveOrderToPetpooja(request, orderId) {
               //* Done
               Restaurant: {
                 details: {
-                  res_name: orderData.data?.outletId?.restaurantName,
+                  res_name: orderData.data?.outletId?.outletName,
                   address: orderData.data?.outletId?.address,
                   contact_information: orderData.data?.outletId?.mobile,
                   restID: orderData.data?.outletId?.petPoojaRestId
