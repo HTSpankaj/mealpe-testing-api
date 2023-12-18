@@ -1051,7 +1051,8 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
         console.log("outletdetails==>", outletdetails)
         res.write(`data: ${JSON.stringify(outletdetails)}\n\n`);
       }
-    ).subscribe(async (status) => {
+    ).subscribe(async (status, error) => {
+      console.error("/realtimeOutlets/:outletId - error => ", error);
       console.log(`outlet-update-channel-${outletId} status => `, status);
       if (status === "SUBSCRIBED") {
         const outdetData = await supabaseInstance.from("Outlet")
