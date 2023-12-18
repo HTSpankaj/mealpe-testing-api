@@ -145,8 +145,7 @@ router.post("/getAdminFinanceOrderReport", async (req, res) => {
 router.post("/orderLevelExcelSheet", async (req, res) => {
     const { start_date, end_date, outletId } = req.body;
     try {
-        // const { data, error } = await supabaseInstance.rpc('order_level_excel_sheet_query', { start_date, end_date, outlet_id: outletId });
-        const { data, error } = await supabaseInstance.rpc('order_level_excel_sheet_query', {});
+        const { data, error } = await supabaseInstance.rpc('order_level_excel_sheet_query', { end_date, outlet_id: outletId, start_date });
 
         if (data) {
 
@@ -240,7 +239,6 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
 
                 _data.push(_arr);
             });
-
 
             res.status(200).json({
                 success: true,
