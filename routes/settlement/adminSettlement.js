@@ -206,6 +206,7 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
 
                 _arr.push(index + 1);
                 _arr.push(element['Order ID']);
+                _arr.push(element['Order Date']);
                 _arr.push(element['Restaurant Name']);
                 _arr.push(element['Restaurant ID']);
                 _arr.push(element['Discount Construct']);
