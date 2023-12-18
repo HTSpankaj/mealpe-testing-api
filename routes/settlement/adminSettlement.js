@@ -169,7 +169,6 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                     "Net bill value [(1) + (2) + (3) + (4) - (5)]",
                     "Total Food GST collected from customers = 5% of (1)",
                     "Food GST retained by MealPe - Amount of tax paid by MealPe under section 9(5)",
-                    
                     "Gross sales [(A) + (6)]",
                     "Total Merchant Amount [(B) - (7)-(4)]",
                     "Commissionable amount [(B) - (6) - (4)]",
@@ -185,6 +184,7 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                     "Credit note/(Debit Note) adjustment",
                     "Net Deductions [(4)+(12)+(13)+(16)+(17)+(18)+(19)+(20)]",
                     "Net Additions",
+                    
                     "Order level Payout(B) - (C) + (D) - (7)"
                 ]
             ]
@@ -192,8 +192,18 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
             data.forEach((element, index) => {
                 let _arr = [];
                 
-                const A = element['Subtotal'] + element['Packaging charge'] + element['Delivery charge'] - element['Restaurant discount'];
-                const B = A + element['Total Food GST collected from customers'];
+                const A = Number(element['Subtotal']) + Number(element['Packaging charge']) + Number(element['Delivery charge']) - Number(element['Restaurant discount']);
+                const B = A + Number(element['Total Food GST collected from customers']);
+
+                const _9  = B - Number(element['Total Food GST collected from customers']) - Number(element['Convenience Fee Value']);
+                const _14 = Number(element['Packaging charge']) + Number(element['Delivery charge']);
+                const _16 = +Number(0.18 * (Number(element['Convenience Fee Value']) + Number(element['Commission value']) + 0)).toFixed(2);
+                const _17 = +Number(0.18 * _14).toFixed(2);
+                const _19 = +Number(0.01 * _9).toFixed(2);
+
+                const C = Number(element['Convenience Fee Value']) + Number(element['Commission value']) + 0 + _16 + _17 + 0 + _19 + 0;
+
+                const E = (B - C) + (0 - Number(element['Total Food GST collected from customers']));
 
                 _arr.push(index + 1);
                 _arr.push(element['Order ID']);
@@ -211,50 +221,36 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                 _arr.push(A);
                 _arr.push(element['Total Food GST collected from customers']);
                 _arr.push(element['Total Food GST collected from customers']);
+                _arr.push(B);
+                _arr.push(_9);
+                _arr.push(B - element['Total Food GST collected from customers'] - element['Convenience Fee Value']);
+                _arr.push(element['Commission %']);
+                _arr.push(element['Commission value']);
+                _arr.push(element[0]); //* Payment mechanism fee
+                _arr.push(_14);
+                _arr.push(element['Subtotal']);
+                _arr.push(_16);
+                _arr.push(_17);
+                _arr.push(""); //* TCS IGST amount
+                _arr.push(_19); //* TDS 194O amount. = 1% of [(9)]
+                _arr.push(""); //* Credit note/(Debit Note) adjustment
+                _arr.push(C);
+                _arr.push(""); //* Net Additions
+                _arr.push(E);
 
-
-                _arr.push(element['Restaurant']);
-                _arr.push(element['Restaurant']);
-                _arr.push(element['Restaurant']);
-                _arr.push(element['Restaurant']);
-                _arr.push(element['Restaurant']);
-                _arr.push(element['Restaurant']);
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
-                _arr.push();
+                _data.push(_arr);
             });
 
 
             res.status(200).json({
                 success: true,
-                data: data
+                data: _data
             });
         } else {
             throw error;
         }
     } catch (error) {
-        // console.log(error)
+        console.log(error)
         res.status(500).json({ success: false, error: error });
     }
 });
