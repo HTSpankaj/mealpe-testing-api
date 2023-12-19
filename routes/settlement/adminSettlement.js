@@ -183,7 +183,6 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                     "Credit note/(Debit Note) adjustment",
                     "Net Deductions [(4)+(12)+(13)+(16)+(17)+(18)+(19)+(20)]",
                     "Net Additions",
-                    
                     "Order level Payout(B) - (C) + (D) - (7)"
                 ]
             ]
@@ -211,7 +210,6 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                 _arr.push(element['Restaurant ID']);
                 _arr.push(element['Discount Construct']);
                 _arr.push(element['Order type']);
-                _arr.push(element['Restaurant']);
                 _arr.push(element['Subtotal']);
                 _arr.push(element['Packaging charge']);
                 _arr.push(element['Delivery charge']);
