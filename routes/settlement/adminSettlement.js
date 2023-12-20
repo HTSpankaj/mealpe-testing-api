@@ -190,7 +190,7 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
             data.forEach((element, index) => {
                 let _arr = [];
                 
-                const A = Number(element['Subtotal']) + Number(element['Packaging charge']) + Number(element['Delivery charge']) - Number(element['Restaurant discount']);
+                const A = Number(element['Subtotal']) + Number(element['Packaging charge']) + Number(element['Delivery charge']) + Number(element['Convenience Fee Value']) - Number(element['Restaurant discount']);
                 const B = A + Number(element['Total Food GST collected from customers']);
 
                 const _9  = B - Number(element['Total Food GST collected from customers']) - Number(element['Convenience Fee Value']);
