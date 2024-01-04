@@ -1170,7 +1170,10 @@ router.get("/realtimePendingOrder/:outletId", function (req, res) {
         res.write("\n\n");
       }, 5000);
     }
-  ).subscribe((status) => {
+  ).subscribe((status,error) => {
+    if (status === "CHANNEL_ERROR") {
+      console.error(`realtimePendingOrder/:outletId error => `, error);
+    }
     console.log("subscribe status for outletId => ", outletId);
   });
 
@@ -1219,8 +1222,11 @@ router.get("/realtimeCurrentOrder/:outletId", function (req, res) {
         })
       }, 1000);
     }
-    ).subscribe((status) => {
-      console.log(`custom-current-channel-${outletId} status => `, status);
+    ).subscribe((status,error) => {
+      console.log(`customer-update-channel-${outletId} status => `, status);
+      if (status === "CHANNEL_ERROR") {
+        console.error(`realtimeCurrentOrder/:outletId error => `, error);
+      }
       if (status === "SUBSCRIBED") {
         supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId}).in("order_status_id",[1,2,3]).order("order_schedule_date",{ascending:false}).order("order_schedule_time",{ascending:false}).then(orderResponse => {
           if (orderResponse.data) {

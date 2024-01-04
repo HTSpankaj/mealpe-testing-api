@@ -416,7 +416,7 @@ function saveOrderToPetpooja(request, orderId) {
                 details: {
                   res_name: orderData.data?.outletId?.outletName,
                   address: orderData.data?.outletId?.address,
-                  contact_information: orderData.data?.outletId?.mobile,
+                  contact_information: String(orderData.data?.outletId?.mobile),
                   restID: orderData.data?.outletId?.petPoojaRestId
                 }
               },
@@ -427,7 +427,7 @@ function saveOrderToPetpooja(request, orderId) {
                   email: orderData.data?.customerAuthUID?.email,
                   name: orderData.data?.customerAuthUID?.customerName,
                   address: orderData.data?.DeliveryAddress?.[0]?.address || '',
-                  phone: orderData.data?.customerAuthUID?.mobile,
+                  phone: String(orderData.data?.customerAuthUID?.mobile),
                   latitude: "",
                   longitude: ""
                 }
@@ -444,17 +444,17 @@ function saveOrderToPetpooja(request, orderId) {
                   order_type: orderData.data?.isDelivery ? 'H' : orderData.data?.isPickUp ? 'P' : 'D',
 
                   payment_type: "ONLINE",
-                  total: orderData.data?.txnid?.amount || 0, //todo add charge
-                  tax_total: orderData.data?.txnid?.foodGST || 0,
-                  packing_charges: orderData.data?.txnid?.packagingCharge || 0,
-                  pc_tax_amount: "0", //* Tax amount calculated on packing charge
+                  total: String(orderData.data?.txnid?.amount) || "", //todo add charge
+                  tax_total: String(orderData.data?.txnid?.foodGST) || "",
+                  packing_charges: String(orderData.data?.txnid?.packagingCharge) || '',
+                  pc_tax_amount: "", //* Tax amount calculated on packing charge
                   pc_gst_details: [], //* Packing Charge GST liability with amount. It will be there in Order object (Required for Ecomm platform)
-                  delivery_charges: "0", //todo add delivery charge
-                  dc_tax_amount: "0", //* Tax amount calculated on delivery charge
+                  delivery_charges: String(orderData.data?.txnid?.deliveryCharge) || '', //todo add delivery charge
+                  dc_tax_amount: "", //* Tax amount calculated on delivery charge
                   dc_gst_details: [], //* Delivery Charge GST liability with amount. It will be there in Order object (Required for Ecomm platform)
-                  service_charge: "0", //* Service charge applicable at order level.
-                  sc_tax_amount: "0",  //* Tax calculated on service charge
-                  discount_total: "0",
+                  service_charge: "", //* Service charge applicable at order level.
+                  sc_tax_amount: "",  //* Tax calculated on service charge
+                  discount_total: "",
                   discount_type: "F",
 
                   description: "",
@@ -477,7 +477,29 @@ function saveOrderToPetpooja(request, orderId) {
               },
 
               Tax: {
-                details: []
+                details: [
+                  {
+                    "id": "01",
+                    "title": "CGST",
+                    "type": "P",
+                    "price": "2.5",
+                    "tax": String(orderData.data?.txnid?.foodGST / 2) || ''
+                  },
+                  {
+                    "id": "02",
+                    "title": "SGST",
+                    "type": "P",
+                    "price": "2.5",
+                    "tax": String(orderData.data?.txnid?.foodGST / 2) || ''
+                  },
+                  {
+                    "id": "02",
+                    "title": "Other Charges",
+                    "type": "F",
+                    // "price": "2.5",
+                    "tax": String(orderData.data?.txnid?.convenienceTotalAmount) || ''
+                  }
+                ]
               },
               Discount: {}
             },
@@ -555,7 +577,7 @@ function saveOrderToPetpooja(request, orderId) {
 };
 
 router.post("/saveOrderToPetpoojaTest", async (req, res) => {
-  saveOrderToPetpooja(req, '6778d17b-a25b-437b-9c04-668ddb79739f').then(response => {
+  saveOrderToPetpooja(req, 'ff3aae23-08a3-4710-bf6f-a5e9d303ded8').then(response => {
     res.send(response);
   }).catch(err => {
     res.send(err);

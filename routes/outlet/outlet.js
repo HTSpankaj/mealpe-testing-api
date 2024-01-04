@@ -791,6 +791,9 @@ router.get("/realtimeOutletWeb/:outletId", function (req, res) {
     )
     .subscribe(async (status, err) => {
       console.log(`outletWeb-update-channel-${outletId} status => `, status);
+      if (status === "CHANNEL_ERROR") {
+        console.error(`realtimeCurrentOrder/:outletId err => `, err);
+      }
       if (status === "SUBSCRIBED") {
         const outletData = await supabaseInstance.from("Outlet").select(outletSelectString).eq("outletId", outletId).maybeSingle();
         res.write('event: updateOutlet\n')

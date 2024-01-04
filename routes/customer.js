@@ -688,7 +688,10 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
 
         res.write(`data: ${JSON.stringify({ updateorder: { ...orderData?.data, totalItems: orderData?.data?.Order_Item?.length || 0 } || null })}\n\n`);
       }
-    ).subscribe((status) => {
+    ).subscribe((status,error) => {
+      if (status === "CHANNEL_ERROR") {
+        console.error(`realtimeCustomerOrders/:orderId error => `, error);
+      }
       console.log("subscribe status for orderId => ", orderId);
     })
 
@@ -994,6 +997,7 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
         const outdetData = await supabaseInstance.from("Outlet")
           .select("outletName,address,isPublished,logo,headerImage,outletId,isActive,isPickUp,isDineIn,isDelivery,convenienceFee,isOutletOpen,packaging_charge,Timing(openTime,closeTime,Days(day))")
           .eq("outletId", payload.new.outletId).maybeSingle();
+          console.log("outdetData===>",outdetData)
 
         if (outdetData?.data) {
           outletdetails = {
@@ -1049,15 +1053,20 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
           outletdetails.OvermorrowisOutletOpen = Overmorrowflag;
         }
         console.log("outletdetails==>", outletdetails)
-        res.write(`data: ${JSON.stringify(outletdetails)}\n\n`);
+        // res.write(`data: ${JSON.stringify(outletdetails)}\n\n`);
       }
     ).subscribe(async (status, error) => {
       console.error("/realtimeOutlets/:outletId - error => ", error);
       console.log(`outlet-update-channel-${outletId} status => `, status);
+      if (status === "CHANNEL_ERROR") {
+        console.error(`realtimeOutlets/:outletId error => `, error);
+      }
       if (status === "SUBSCRIBED") {
         const outdetData = await supabaseInstance.from("Outlet")
           .select("outletName,address,isPublished,logo,headerImage,outletId,isActive,isPickUp,isDineIn,isDelivery,convenienceFee,isOutletOpen,packaging_charge,Timing(openTime,closeTime,Days(day))")
           .eq("outletId", outletId).maybeSingle();
+          console.log("outdetData===>",outdetData)
+
         if (outdetData?.data) {
           outletdetails = {
             ...outdetData.data,

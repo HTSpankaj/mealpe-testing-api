@@ -558,7 +558,7 @@ function requestRefund(orderId) {
                 console.log("_generateHash => ", _generateHash);
                 const options = {
                     method: 'POST',
-                    url: `${easebuzzConfig.easebuzzBaseUrl}/transaction/v1/refund`,
+                    url: `${easebuzzConfig.refund_easebuzzBaseUrl}/transaction/v1/refund`,
                     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                     data: {
                         key: easebuzzConfig.key,
