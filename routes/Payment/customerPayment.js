@@ -452,7 +452,6 @@ router.post('/initiate-payment-with-order', async (req, res, next) => {
     }
 })
 
-module.exports = router;
 
 const generateHash = (hashstring) => {
     return SHA512(hashstring).toString();
@@ -552,7 +551,7 @@ function requestRefund(orderId) {
             if (orderResponse?.data) {
 
                 const refundResponse = await supabaseInstance.from('Refund').insert({ txnid: orderResponse.data.txnid, customerAuthUID: orderResponse.data.customerAuthUID.customerAuthUID, orderId }).select("*").maybeSingle();
-                var hashstring = easebuzzConfig.key + "|" + orderResponse?.data?.txnid + "|" + orderResponse?.data?.totalPrice + "|" + parseInt(Number(orderResponse.data.totalPrice)) + "|" + orderResponse?.data?.customerAuthUID?.email + "|" + orderResponse?.data?.customerAuthUID?.mobile + "|" + easebuzzConfig.salt
+                var hashstring = easebuzzConfig.key + "|" + orderResponse?.data?.txnid + "|" + orderResponse?.data?.totalPrice + "|" + Number(orderResponse.data.totalPrice) + "|" + orderResponse?.data?.customerAuthUID?.email + "|" + orderResponse?.data?.customerAuthUID?.mobile + "|" + easebuzzConfig.salt;
 
                 const _generateHash = generateHash(hashstring);
                 console.log("_generateHash => ", _generateHash);
@@ -563,7 +562,7 @@ function requestRefund(orderId) {
                     data: {
                         key: easebuzzConfig.key,
                         txnid: orderResponse.data.txnid,
-                        refund_amount: parseInt(Number(orderResponse.data.totalPrice)),
+                        refund_amount: Number(orderResponse.data.totalPrice),
                         phone: orderResponse.data.customerAuthUID.mobile + "",
                         email: orderResponse.data.customerAuthUID.email,
                         amount: orderResponse.data.totalPrice,
@@ -571,7 +570,9 @@ function requestRefund(orderId) {
                     }
                 };
 
-                axios.post(options.url, options.data, { headers: options.headers }).then(async (response) => {
+                console.log("options => ", options);
+
+                axios.post('https://testdashboard.easebuzz.in/transaction/v1/refund', options.data, { headers: options.headers }).then(async (response) => {
                     const refundUpdateResponse = await supabaseInstance.from('Refund').update({ refund_post_body: options?.data, refund_response: response?.data }).eq("refundId", refundResponse?.data?.refundId).select("*").maybeSingle();
                     console.log("refund Response in then =>", response.data);
                     resolve({ success: true, response: response?.data })
@@ -690,3 +691,5 @@ function getPriceBreakdown(outletId, itemTotalPrice, isDineIn = false, isPickUp 
         }
     })
 }
+
+module.exports = {router,requestRefund, getPriceBreakdown};

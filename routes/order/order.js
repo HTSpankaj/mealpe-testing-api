@@ -6,7 +6,7 @@ const { sendMobileSMS,sendEmail } = require("../../services/msf91Service");
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
 var msg91config = require("../../configs/msg91Config");
-
+var {requestRefund} = require("../Payment/customerPayment")
 
 router.post("/createOrder", async (req, res) => {
   const { customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId, items, pickupTime, orderPriceBreakDown,isScheduleNow,txnid,basePrice,isDelivery,address } = req.body;
@@ -293,17 +293,8 @@ router.get("/getOrderByCustomerAuthId/:customerAuthUID", async (req, res) => {
 
 router.get("/getPendingOrder/:outletId", async (req, res) => {
   const { outletId } = req.params;
-  const formattedTime = moment().tz("Asia/Kolkata").format('HH:mm:ss');
-  const formattedTimeAdd2Hours = moment(formattedTime, 'HH:mm:ss').add(45, 'minute').format('HH:mm:ss');
-
-  console.log("formattedTime ==> ",formattedTime)
-  console.log("formattedTimeAdd2Hours ==> ",formattedTimeAdd2Hours)
-
   try {
-    let currentDate = moment().tz("Asia/Kolkata").format('YYYY-MM-DD');
     let query = supabaseInstance.rpc("get_orders_for_outlet", {outlet_uuid: outletId})
-    // .eq("order_schedule_date", currentDate)
-    // .lte("order_schedule_time", formattedTimeAdd2Hours)
     .eq("order_status_id",0)
     .order("order_schedule_date",{ascending:false})
     .order("order_schedule_time",{ascending:false});
@@ -843,7 +834,7 @@ router.post("/rejectOrder/:orderId", async (req, res) => {
     if (data) {
       const sendMobileSMSResponse = await sendMobileSMS([{ mobiles: data?.customerAuthUID?.mobile, name: data?.customerAuthUID?.customerName, orderid: orderId }], msg91config.config.order_cancellation_template_id);
       console.log("sendMobileSMSResponse => ", sendMobileSMSResponse);
-
+      const requestRefundResponse = await requestRefund(orderId);
       updateOrderStatus(orderId,"-2").then((updateOrderStatusToPetpoojaResponse) => {
         console.log('updateOrderStatus ran: ', updateOrderStatusToPetpoojaResponse);
         res.status(200).json({
@@ -1336,9 +1327,9 @@ router.get("/adminMonthlyChurn", async (req, res) => {
 });
 
 router.post("/peakTimeAnalyticsOutlet", async (req, res) => {
-  const { outletId,analyticalType} = req.body;
+  const { outletId,analyticalType, target_date} = req.body;
   try {
-    const { data, error } = await supabaseInstance.rpc('peak_time_analytics_for_outlet',{analytical_type:analyticalType,outlet_id:outletId});
+    const { data, error } = await supabaseInstance.rpc('peak_time_analytics_for_outlet',{analytical_type:analyticalType,outlet_id:outletId, target_date});
     if (data) {
       res.status(200).json({
         success: true,

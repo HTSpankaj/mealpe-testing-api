@@ -493,7 +493,7 @@ function saveOrderToPetpooja(request, orderId) {
                     "tax": String(orderData.data?.txnid?.foodGST / 2) || ''
                   },
                   {
-                    "id": "02",
+                    "id": "03",
                     "title": "Other Charges",
                     "type": "F",
                     // "price": "2.5",

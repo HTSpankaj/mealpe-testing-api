@@ -8,6 +8,9 @@ const axios = require('axios');
 const moment = require("moment-timezone");
 const { sendMobileOtp, verifyMobileOtp, sendEmail, sendMobileSMS, generateOTP } = require("../services/msf91Service");
 const { isTimeInRange } = require("../services/dateTimeService");
+const  {requestRefund}  = require("./Payment/customerPayment")
+const { saveOrderToPetpooja,updateOrderStatus} = require("./petpooja/pushMenu");
+
 
 var cryptoJs = require("crypto-js");
 
@@ -1141,6 +1144,36 @@ router.get("/realtimeOutlets/:outletId", function (req, res) {
         console.log(`${channelName} Connection closed`);
       });
   });
+});
+
+router.post("/cancelOrder/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    const { data, error } = await supabaseInstance.from("Order").update({ orderStatusId: -1 }).select("*,customerAuthUID(*)").eq("orderId", orderId).maybeSingle();
+    if (data) {
+      const sendMobileSMSResponse = await sendMobileSMS([{ mobiles: data?.customerAuthUID?.mobile, name: data?.customerAuthUID?.customerName, orderid: orderId }], msg91config.config.order_cancellation_template_id);
+      console.log("sendMobileSMSResponse => ", sendMobileSMSResponse);
+      const requestRefundResponse = await requestRefund(orderId);
+      updateOrderStatus(orderId,"-1").then((updateOrderStatusToPetpoojaResponse) => {
+        console.log('updateOrderStatus ran: ', updateOrderStatusToPetpoojaResponse);
+        res.status(200).json({
+          success: true,
+          data: {
+            orderData: data,
+            saveOrderToPetpooja: updateOrderStatusToPetpoojaResponse
+          }
+        });
+      }).catch(err => {
+        console.log('.catch block ran: ', err);
+        throw err;
+      });
+    } else {
+      throw error
+    } 
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, error: error });
+  }
 });
 
 
