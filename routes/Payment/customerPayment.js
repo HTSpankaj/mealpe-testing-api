@@ -2,7 +2,7 @@ var express = require("express");
 var router = express.Router();
 var easebuzzConfig = require("../../configs/easebuzzConfig").config;
 var supabaseInstance = require("../../services/supabaseClient").supabase;
-
+const SHA512 = require("crypto-js").SHA512;
 
 const axios = require('axios').default;
 const { URLSearchParams } = require('url');
@@ -623,3 +623,7 @@ function getPriceBreakdown(outletId, itemTotalPrice, isDineIn = false, isPickUp 
 }
 
 module.exports = router;
+
+const generateHash = (hashstring) => {
+    return SHA512(hashstring).toString();
+}

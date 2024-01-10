@@ -56,10 +56,6 @@ router.post('/request-refund', async (req, res, next) => {
     }
 })
 
-const generateHash = (hashstring) => {
-    return SHA512(hashstring).toString();
-}
-
 function requestRefund(orderId) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -140,3 +136,7 @@ function requestRefund(orderId) {
 };
 
 module.exports = {router, requestRefund};
+
+const generateHash = (hashstring) => {
+    return SHA512(hashstring).toString();
+}
