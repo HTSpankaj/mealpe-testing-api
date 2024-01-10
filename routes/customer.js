@@ -691,6 +691,13 @@ router.get("/realtimeCustomerOrders/:orderId", function (req, res) {
 
         res.write(`data: ${JSON.stringify({ updateorder: { ...orderData?.data, totalItems: orderData?.data?.Order_Item?.length || 0 } || null })}\n\n`);
       }
+    ).on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'Refund', filter: `orderId=eq.${orderId}` },
+      async (payload) => {
+        const refundData = await supabaseInstance.from("Refund").select("refund_status").eq("orderId", payload.new.orderId).maybeSingle();
+        res.write(`data: ${JSON.stringify(refundData.data)}\n\n`);
+      }
     ).subscribe((status,error) => {
       if (status === "CHANNEL_ERROR") {
         console.error(`realtimeCustomerOrders/:orderId error => `, error);
