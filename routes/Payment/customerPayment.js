@@ -6,7 +6,6 @@ var supabaseInstance = require("../../services/supabaseClient").supabase;
 
 const axios = require('axios').default;
 const { URLSearchParams } = require('url');
-const SHA512 = require("crypto-js").SHA512;
 
 router.get('/', (req, res, next) => {
     res.send({ success: true, message: "Response from payment/customerPayment.js" });
@@ -178,7 +177,6 @@ router.post('/failure-payment', (req, res, next) => {
     res.send({ success: true, message: "Response from payment/customerPayment.js" });
 })
 
-
 router.get('/success-payment', (req, res, next) => {
     const postBody = req.body;
     const query = req.query;
@@ -254,17 +252,6 @@ router.get('/failure-payment', (req, res, next) => {
 //         res.status(500).json({ success: false, error: "Invalid Post Body" });
 //     }
 // })
-
-router.post('/request-refund', async (req, res, next) => {
-    const { orderId } = req.body;
-    try {
-        const requestRefundResponse = await requestRefund(orderId);
-        console.log("requestRefundResponse => ", requestRefundResponse);
-        res.status(200).json({ success: true, ...requestRefundResponse });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error });
-    }
-})
 
 router.post('/get-price-breakdown', async (req, res, next) => {
     const { outletId, itemTotalPrice, isDineIn, isPickUp, isDelivery } = req.body;
@@ -452,11 +439,6 @@ router.post('/initiate-payment-with-order', async (req, res, next) => {
     }
 })
 
-
-const generateHash = (hashstring) => {
-    return SHA512(hashstring).toString();
-}
-
 function encodedParamsToObject(encodedParams) {
     let obj = {};
     const ent = encodedParams.entries();
@@ -541,58 +523,6 @@ function encodedParamsToObject(encodedParams) {
 //         }
 //     })
 // }
-
-function requestRefund(orderId) {
-    return new Promise(async (resolve, reject) => {
-        try {
-
-            const orderResponse = await supabaseInstance.from("Order").select("*,customerAuthUID(*),outletId(*)").eq("orderId", orderId).maybeSingle();
-
-            if (orderResponse?.data) {
-
-                const refundResponse = await supabaseInstance.from('Refund').insert({ txnid: orderResponse.data.txnid, customerAuthUID: orderResponse.data.customerAuthUID.customerAuthUID, orderId }).select("*").maybeSingle();
-                var hashstring = easebuzzConfig.key + "|" + orderResponse?.data?.txnid + "|" + orderResponse?.data?.totalPrice + "|" + Number(orderResponse.data.totalPrice) + "|" + orderResponse?.data?.customerAuthUID?.email + "|" + orderResponse?.data?.customerAuthUID?.mobile + "|" + easebuzzConfig.salt;
-
-                const _generateHash = generateHash(hashstring);
-                console.log("_generateHash => ", _generateHash);
-                const options = {
-                    method: 'POST',
-                    url: `${easebuzzConfig.refund_easebuzzBaseUrl}/transaction/v1/refund`,
-                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                    data: {
-                        key: easebuzzConfig.key,
-                        txnid: orderResponse.data.txnid,
-                        refund_amount: Number(orderResponse.data.totalPrice),
-                        phone: orderResponse.data.customerAuthUID.mobile + "",
-                        email: orderResponse.data.customerAuthUID.email,
-                        amount: orderResponse.data.totalPrice,
-                        hash: _generateHash
-                    }
-                };
-
-                console.log("options => ", options);
-
-                axios.post('https://testdashboard.easebuzz.in/transaction/v1/refund', options.data, { headers: options.headers }).then(async (response) => {
-                    const refundUpdateResponse = await supabaseInstance.from('Refund').update({ refund_post_body: options?.data, refund_response: response?.data }).eq("refundId", refundResponse?.data?.refundId).select("*").maybeSingle();
-                    console.log("refund Response in then =>", response.data);
-                    resolve({ success: true, response: response?.data })
-                }).catch(async (error) => {
-                    const refundUpdateResponse = await supabaseInstance.from('Refund').update({ refund_post_body: options?.data, refund_error: error }).eq("refundId", refundResponse?.data?.refundId).select("*").maybeSingle();
-                    console.error("Error => ", error?.response?.data?.additional?.validation || error?.response || error);
-                    resolve({ success: false, response: error?.response?.data || error?.response || error })
-                })
-            } else {
-                throw orderResponse.error
-            }
-
-        } catch (error) {
-            resolve({
-                success: false,
-                error: error?.message || error
-            })
-        }
-    })
-};
 
 function getPriceBreakdown(outletId, itemTotalPrice, isDineIn = false, isPickUp = false, isDelivery = false) {
     itemTotalPrice = +itemTotalPrice;
@@ -692,4 +622,4 @@ function getPriceBreakdown(outletId, itemTotalPrice, isDineIn = false, isPickUp 
     })
 }
 
-module.exports = {router,requestRefund, getPriceBreakdown};
+module.exports = router;

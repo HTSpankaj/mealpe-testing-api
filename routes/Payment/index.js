@@ -2,8 +2,8 @@ var express = require("express");
 var router = express.Router();
 const SHA512 = require("crypto-js").SHA512;
 
-var customerPaymentRouter = require("./customerPayment").router;
-var refundRouter = require("./refund");
+var customerPaymentRouter = require("./customerPayment");
+var refundRouter = require("./refund").router;
 
 router.use('/customer', customerPaymentRouter);
 router.use('/refund', refundRouter);

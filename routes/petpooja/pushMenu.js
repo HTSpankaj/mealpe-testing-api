@@ -444,12 +444,12 @@ function saveOrderToPetpooja(request, orderId) {
                   order_type: orderData.data?.isDelivery ? 'H' : orderData.data?.isPickUp ? 'P' : 'D',
 
                   payment_type: "ONLINE",
-                  total: String(orderData.data?.txnid?.amount) || "", //todo add charge
-                  tax_total: String(orderData.data?.txnid?.foodGST) || "",
-                  packing_charges: String(orderData.data?.txnid?.packagingCharge) || '',
+                  total: String(orderData.data?.txnid?.amount || ""), //todo add charge
+                  tax_total: String(Number(Number(orderData.data?.txnid?.foodGST) + Number(orderData.data?.txnid?.convenienceTotalAmount)).toFixed(2) || ""),
+                  packing_charges: String(orderData.data?.txnid?.packagingCharge || ""),
                   pc_tax_amount: "", //* Tax amount calculated on packing charge
                   pc_gst_details: [], //* Packing Charge GST liability with amount. It will be there in Order object (Required for Ecomm platform)
-                  delivery_charges: String(orderData.data?.txnid?.deliveryCharge) || '', //todo add delivery charge
+                  delivery_charges: String(orderData.data?.txnid?.deliveryCharge || ""), //todo add delivery charge
                   dc_tax_amount: "", //* Tax amount calculated on delivery charge
                   dc_gst_details: [], //* Delivery Charge GST liability with amount. It will be there in Order object (Required for Ecomm platform)
                   service_charge: "", //* Service charge applicable at order level.
@@ -458,7 +458,7 @@ function saveOrderToPetpooja(request, orderId) {
                   discount_type: "F",
 
                   description: "",
-                  min_prep_time: orderData.data?.isScheduleNow ? orderData.data?.preparationTime : 0,
+                  // min_prep_time: orderData.data?.isScheduleNow ? orderData.data?.preparationTime : 0,
                   callback_url: `https://${request.get('host')}/petpooja/pushMenu/petpooja-status-change/${orderId}`,
                   // callback_url: `https://mealpe-testing-api.onrender.com/petpooja/pushMenu/petpooja-status-change/${orderId}`,
                   enable_delivery: 1, //*Values can be 0 or 1 where 0 means Rider from thirdparty side will come and 1 means Rider from Restaurant i.e. self delivery order.
@@ -483,25 +483,42 @@ function saveOrderToPetpooja(request, orderId) {
                     "title": "CGST",
                     "type": "P",
                     "price": "2.5",
-                    "tax": String(orderData.data?.txnid?.foodGST / 2) || ''
+                    "tax": String((orderData.data?.txnid?.foodGST / 2) || ""),
+                    "restaurant_liable_amt": ""
                   },
                   {
                     "id": "02",
                     "title": "SGST",
                     "type": "P",
                     "price": "2.5",
-                    "tax": String(orderData.data?.txnid?.foodGST / 2) || ''
+                    "tax": String((orderData.data?.txnid?.foodGST / 2) || ""),
+                    "restaurant_liable_amt": ""
                   },
                   {
                     "id": "03",
-                    "title": "Other Charges",
+                    "title": "Convenience Fee",
                     "type": "F",
-                    // "price": "2.5",
-                    "tax": String(orderData.data?.txnid?.convenienceTotalAmount) || ''
-                  }
+                    // "tax": String(orderData.data?.txnid?.convenienceTotalAmount + orderData.data?.txnid?.commissionTotalAmount) || ''
+                    "tax": String(orderData.data?.txnid?.convenienceTotalAmount || ""),
+                    "restaurant_liable_amt": ""
+                  },
+                  // {
+                  //   "id": "03",
+                  //   "title": "Convenience Amount",
+                  //   "type": "F",
+                  //   // "price": "2.5",
+                  //   "tax": String(orderData.data?.txnid?.convenienceTotalAmount) || ''
+                  // },
+                  // {
+                  //   "id": "04",
+                  //   "title": "Commission Amount",
+                  //   "type": "F",
+                  //   // "price": "2.5",
+                  //   "tax": String(orderData.data?.txnid?.commissionTotalAmount) || ''
+                  // }
                 ]
               },
-              Discount: {}
+              // Discount: {}
             },
             udid: "",
             device_type: "Web"
@@ -509,6 +526,13 @@ function saveOrderToPetpooja(request, orderId) {
         }
 
         for (let itemData of orderData.data?.Order_Item) {
+
+          let _itemPrice = itemData.itemPrice;
+          if (orderData?.data?.txnid?.isGSTApplied === false) {
+            // _itemPrice = itemData.itemPrice - Number((5*itemData.itemPrice)/100).toFixed(2);
+            _itemPrice = Number(((itemData.itemPrice * 100) / 105).toFixed(2));
+          }
+
           let petpoojaOrderObj = {
             id: itemData?.itemId?.itemid,
             name: itemData?.itemId?.itemname,
@@ -517,8 +541,8 @@ function saveOrderToPetpooja(request, orderId) {
             gst_liability: "vendor", //* Required for Ecomm platform and Optional for others.GST liability ownership. It will be there in the item object (vendor/restaurant)
             item_tax: [], //* Tax calculated at item level after discount
             item_discount: "0",
-            final_price: itemData.itemPrice, //* Item price after discount. If there is no discount, Price and finalPrice objects will have the same value.
-            price: itemData.itemPrice, //* Unit price of item.(This price includes addonitems price and if variations then includes variation price.)
+            final_price: _itemPrice, //* Item price after discount. If there is no discount, Price and finalPrice objects will have the same value.
+            price: _itemPrice, //* Unit price of item.(This price includes addonitems price and if variations then includes variation price.)
             // price: itemData.calculatedPrice,
             quantity: itemData.quantity,
 
@@ -577,7 +601,7 @@ function saveOrderToPetpooja(request, orderId) {
 };
 
 router.post("/saveOrderToPetpoojaTest", async (req, res) => {
-  saveOrderToPetpooja(req, 'ff3aae23-08a3-4710-bf6f-a5e9d303ded8').then(response => {
+  saveOrderToPetpooja(req, '0e6ff37b-1c7d-459e-b376-45576ac4614f').then(response => {
     res.send(response);
   }).catch(err => {
     res.send(err);
@@ -593,7 +617,7 @@ router.post("/petpooja-status-change/:orderId", async (req, res) => {
   // console.log("petpooja-status-change-[POST]-query =>    ", query);
   // console.log("petpooja-status-change-[POST]-params =>   ", params);
 
-  const { orderID, status } = req.body;
+  const { orderID, status, minimum_prep_time } = req.body;
   const { orderId } = req.params;
   let _status = status;
 
@@ -603,7 +627,7 @@ router.post("/petpooja-status-change/:orderId", async (req, res) => {
         _status = '-2';
       }
       console.log("_status => ", { orderStatusId: _status });
-      const orderResponse = await supabaseInstance.from("Order").update({ orderStatusId: _status }).eq("orderId", orderId).select("*").maybeSingle();
+      const orderResponse = await supabaseInstance.from("Order").update({ orderStatusId: _status, preparationTime :minimum_prep_time }).eq("orderId", orderId).select("*").maybeSingle();
       if (orderResponse.data) {
         console.log("status change successfully");
         res.send({ success: true });
@@ -611,8 +635,8 @@ router.post("/petpooja-status-change/:orderId", async (req, res) => {
         throw orderResponse.error;
       }
     } catch (error) {
+      console.error(`petpooja-status-change error for ${orderId} => `, error);
       res.send({ success: false });
-      console.error("status change -> ", error);
     }
   } else {
     console.error({ _status, orderId });

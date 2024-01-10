@@ -15,11 +15,7 @@ router.get("/getAdminList", async (req, res) => {
 
   console.log({ page, perPage });
   try {
-    let query = supabaseInstance
-      .from("Super_Admin_Users")
-      .select("*", { count: "exact" })
-      .range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1)
-
+    let query = supabaseInstance.from("Super_Admin_Users").select("*", { count: "exact" }).range((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage - 1);
 
     if (searchText) {
       query = query.ilike('name', `%${searchText}%`)
@@ -58,6 +54,7 @@ router.get("/getAdminList", async (req, res) => {
       throw error;
     }
   } catch (error) {
+    console.error("error => ", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -66,10 +63,7 @@ router.post("/createAdmin", async function (req, res, next) {
   const { email, password, name, mobile, role, tabAccess } = req.body;
 
   try {
-    const authResponse = await supabaseInstance.auth.signUp({
-      email,
-      password,
-    });
+    const authResponse = await supabaseInstance.auth.signUp({ email, password });
     if (authResponse?.data?.user) {
       const adminId = authResponse.data.user.id;
       const insertResponse = await supabaseInstance
@@ -98,21 +92,18 @@ router.post("/createAdmin", async function (req, res, next) {
 router.post("/adminLogin", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const authResponse = await supabaseInstance.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const authResponse = await supabaseInstance.auth.signInWithPassword({ email, password });
     if (authResponse.data?.user) {
       const adminId = authResponse.data.user.id;
       const { data, error } = await supabaseInstance
         .from("Super_Admin_Users")
         .select("*")
-        .eq("adminId",adminId)
+        .eq("adminId", adminId)
         .maybeSingle();
 
       res.send({
         success: true,
-        message: "Login succesfull",
+        message: "Login successful",
         data: data,
       });
     } else {
@@ -231,7 +222,7 @@ router.post("/updateOutletAdmin/:outletAdminId", async (req, res) => {
 });
 
 router.get("/getOutletAdminList", async (req, res) => {
-  const { page, perPage, searchText ,sortBy} = req.query;
+  const { page, perPage, searchText, sortBy } = req.query;
   const pageNumber = parseInt(page) || 1;
   const itemsPerPage = parseInt(perPage) || 10;
 
