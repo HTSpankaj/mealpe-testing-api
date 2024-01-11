@@ -86,7 +86,7 @@ function requestRefund(orderId) {
                       },
                       data: encodedParams,
                 };
-                await axios.request(transactionAPI).then(async transactionAPIResponse =>{
+                axios.request(transactionAPI).then(async transactionAPIResponse =>{
                     console.log("transactionAPIResponse===>",transactionAPIResponse?.data);
                     const easepayid = transactionAPIResponse?.data?.msg?.easepayid;
 
@@ -121,12 +121,15 @@ function requestRefund(orderId) {
                             resolve({ success: false, response: error?.response?.data || error?.response || error })
                         })
                     }
+                }).catch(err => {
+                    throw err?.request?.data;
                 })
             } else {
                 throw orderResponse.error
             }
-
+            
         } catch (error) {
+            console.error("error => ", error);
             resolve({
                 success: false,
                 error: error?.message || error

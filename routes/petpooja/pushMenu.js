@@ -439,7 +439,7 @@ function saveOrderToPetpooja(request, orderId) {
                   orderID: orderData?.data?.orderSequenceId,
                   created_on: moment(new Date(orderData.data?.created_at)).format("YYYY-MM-DD HH:mm:ss"),
                   preorder_date: orderData.data?.Order_Schedule?.[0]?.scheduleDate,
-                  preorder_time: orderData.data?.Order_Schedule?.[0]?.scheduleDate,
+                  preorder_time: orderData.data?.Order_Schedule?.[0]?.scheduleTime,
 
                   order_type: orderData.data?.isDelivery ? 'H' : orderData.data?.isPickUp ? 'P' : 'D',
 
