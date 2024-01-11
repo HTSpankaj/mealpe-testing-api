@@ -10,7 +10,7 @@ router.post("/createCampus", async (req, res) => {
   const { campusName, address, cityId } = req.body;
   try {
     const { data, error } = await supabaseInstance.from("Campus").insert({ campusName, address, cityId }).select("*").maybeSingle();
-   
+
     if (data) {
       res.send({
         success: true,
@@ -49,7 +49,7 @@ router.get("/getCampusList", async (req, res) => {
           totalCount: count,
         },
       });
-    }else{
+    } else {
       throw error;
     }
   } catch (error) {
@@ -58,21 +58,37 @@ router.get("/getCampusList", async (req, res) => {
 });
 
 router.get("/getCampus/:cityId", async (req, res) => {
-  const {cityId} = req.params;
+  const { cityId } = req.params;
   try {
-    const { data, error } = await supabaseInstance
+    let query = supabaseInstance
       .from("Campus")
-      .select("*")
-      .eq("isDelete",false)
-      .eq("cityId",cityId)
+      .select("*, cityId(city)")
+      .eq("isDelete", false)
+
+    if (cityId?.includes("-")) {
+      query = query.eq("cityId", cityId);
+    } else {
+
+      const cityResponse = await supabaseInstance.from("City").select("cityId, city").ilike("city", cityId).maybeSingle();
+
+      if (cityResponse?.data?.cityId) {
+        query = query.eq("cityId", cityResponse?.data?.cityId);
+      } else {
+        return res.status(500).json({ success: false, error: "City not found please select manually." });
+      }
+
+    }
+
+    const { data, error } = await query;
+
+    console.log("data => ", data.length);
 
     if (data) {
       res.status(200).json({
         success: true,
         data,
       });
-    }else
-    {
+    } else {
       throw error;
     }
   } catch (error) {
@@ -82,13 +98,13 @@ router.get("/getCampus/:cityId", async (req, res) => {
 
 router.post("/updateCampus/:campusId", async (req, res) => {
   const { campusId } = req.params;
-  const { campusName, address,isDelete,cityId } = req.body;
+  const { campusName, address, isDelete, cityId } = req.body;
   // const { name, email, mobile, role } = req.body;
 
   try {
     const { data, error } = await supabaseInstance
       .from("Campus")
-      .update({ campusName, address,isDelete,cityId})
+      .update({ campusName, address, isDelete, cityId })
       .eq("campusId", campusId)
       .select("*")
       .maybeSingle()
@@ -140,7 +156,7 @@ router.get("/getAllCampusList", async (req, res) => {
         message: "Data fetch succesfully",
         data: data,
       });
-    }else{
+    } else {
       throw error;
     }
   } catch (error) {
@@ -148,7 +164,7 @@ router.get("/getAllCampusList", async (req, res) => {
   }
 })
 
-router.get("/getCityCampusList",async (req,res) => {
+router.get("/getCityCampusList", async (req, res) => {
   const { cityId } = req.query;
   try {
     const { data, error } = await supabaseInstance.from("Campus").select("*")
