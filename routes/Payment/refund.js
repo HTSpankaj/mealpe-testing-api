@@ -86,44 +86,56 @@ function requestRefund(orderId) {
                       },
                       data: encodedParams,
                 };
-                axios.request(transactionAPI).then(async transactionAPIResponse =>{
-                    console.log("transactionAPIResponse===>",transactionAPIResponse?.data);
-                    const easepayid = transactionAPIResponse?.data?.msg?.easepayid;
+                const transactionAPIResponse = await axios.request(transactionAPI)
+                // console.log("transactionAPIResponse===>",transactionAPIResponse?.data);
+                const easepayid = transactionAPIResponse?.data?.msg?.easepayid;
 
-                    if (transactionAPIResponse?.data?.status === true && easepayid) {
-                        const refundResponse = await supabaseInstance.from('Refund').insert({ txnid: orderResponse.data.txnid, customerAuthUID: orderResponse.data.customerAuthUID.customerAuthUID, orderId }).select("*").maybeSingle();
-                        var hashstring = easebuzzConfig.key + "|" + easepayid + "|" + orderResponse?.data?.totalPrice + "|" + Number(orderResponse.data.totalPrice) + "|" + orderResponse?.data?.customerAuthUID?.email + "|" + orderResponse?.data?.customerAuthUID?.mobile + "|" + easebuzzConfig.salt;
-        
-                        const _generateHash = generateHash(hashstring);
-                        console.log("_generateHash => ", _generateHash);
-                        const options = {
-                            method: 'POST',
-                            url: `${easebuzzConfig.refund_easebuzzBaseUrl}/transaction/v1/refund`,
-                            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                            data: {
-                                key: easebuzzConfig.key,
-                                txnid: easepayid,
-                                refund_amount: Number(orderResponse.data.totalPrice),
-                                phone: orderResponse.data.customerAuthUID.mobile + "",
-                                email: orderResponse.data.customerAuthUID.email,
-                                amount: orderResponse.data.totalPrice,
-                                hash: _generateHash
-                            }
-                        };
+                if (transactionAPIResponse?.data?.status === true && easepayid) {
+                    var hashstring = easebuzzConfig.key + "|" + easepayid + "|" + orderResponse?.data?.totalPrice + "|" + Number(orderResponse.data.totalPrice) + "|" + orderResponse?.data?.customerAuthUID?.email + "|" + orderResponse?.data?.customerAuthUID?.mobile + "|" + easebuzzConfig.salt;
+    
+                    const _generateHash = generateHash(hashstring);
+                    console.log("_generateHash => ", _generateHash);
+                    const options = {
+                        method: 'POST',
+                        url: `${easebuzzConfig.refund_easebuzzBaseUrl}/transaction/v1/refund`,
+                        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                        data: {
+                            key: easebuzzConfig.key,
+                            txnid: easepayid,
+                            refund_amount: Number(orderResponse.data.totalPrice),
+                            phone: orderResponse.data.customerAuthUID.mobile + "",
+                            email: orderResponse.data.customerAuthUID.email,
+                            amount: orderResponse.data.totalPrice,
+                            hash: _generateHash
+                        }
+                    };
 
-                        axios.post(options.url, options.data, { headers: options.headers }).then(async (response) => {
-                            const refundUpdateResponse = await supabaseInstance.from('Refund').update({ refund_post_body: options?.data, refund_response: response?.data,refund_amount: response?.data?.refund_amount}).eq("refundId", refundResponse?.data?.refundId).select("*").maybeSingle();
-                            console.log("refund Response in then =>", response.data);
-                            resolve({ success: true, response: response?.data })
-                        }).catch(async (error) => {
-                            const refundUpdateResponse = await supabaseInstance.from('Refund').update({ refund_post_body: options?.data, refund_error: error }).eq("refundId", refundResponse?.data?.refundId).select("*").maybeSingle();
-                            console.error("Error => ", error?.response?.data?.additional?.validation || error?.response || error);
-                            resolve({ success: false, response: error?.response?.data || error?.response || error })
-                        })
+                    const refundInitiateResponse = await axios.post(options.url, options.data, { headers: options.headers });
+                    if (refundInitiateResponse?.data?.status === true && refundInitiateResponse?.data?.refund_id) {
+                        // const refundUpdateResponse = await supabaseInstance.from('Refund').update({ refund_post_body: options?.data, refund_response: refundInitiateResponse?.data,refund_amount: refundInitiateResponse?.data?.refund_amount}).eq("refundId", refundResponse?.data?.refundId).select("*").maybeSingle();
+                        const insert_refund_post_body = { 
+                            txnid: orderResponse.data.txnid,
+                            customerAuthUID: orderResponse.data.customerAuthUID.customerAuthUID,
+                            orderId,
+                            refund_post_body: options?.data,
+                            refund_response: refundInitiateResponse?.data,
+                            refund_amount: refundInitiateResponse?.data?.refund_amount
+                        }
+                        const insert_refund_post_body_response = await supabaseInstance.from('Refund').insert(insert_refund_post_body).select("*").maybeSingle();
+                        // console.log("refund Response in then =>", refundInitiateResponse.data);
+                        resolve({ success: true, refundInitiateResponse: refundInitiateResponse?.data })
+                    } else {
+                        resolve({ success: false, refundInitiateResponse: refundInitiateResponse?.data, url: "transaction/v1/refund" })
                     }
-                }).catch(err => {
-                    throw err?.request?.data;
-                })
+
+                    // const refundUpdateResponse = await supabaseInstance.from('Refund').update({ refund_post_body: options?.data, refund_error: error }).eq("refundId", refundResponse?.data?.refundId).select("*").maybeSingle();
+                    // console.error("Error => ", error?.response?.data?.additional?.validation || error?.response || error);
+                    // resolve({ success: false, response: error?.response?.data || error?.response || error })
+                        
+                } else {
+                    const _err = transactionAPIResponse?.data;
+                    throw _err;
+                }
             } else {
                 throw orderResponse.error
             }
