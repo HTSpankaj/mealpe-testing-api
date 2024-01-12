@@ -816,41 +816,33 @@ router.post("/item-off-webhook", async (req, res) => {
 
       if (outletQuery?.data?.length > 0) {
         const outletQueryData = outletQuery.data[0];
-
         let resultArr = [];
 
-        if (fetchMenuCardResponse?.success) {
-          
-          for (const itemIdElement of itemID) {
-            let resultObj = {
-              petpoojaItemId: itemIdElement,
-              success: true
-            }
-            const menuItemUpdateResponse = await supabaseInstance.from("Menu_Item").update({status: false}).eq("outletId", outletQueryData?.outletId).eq("petpoojaItemId", itemIdElement).select("itemid");
-            if (menuItemUpdateResponse?.data?.length > 0) {
-              resultObj.updateLength = menuItemUpdateResponse?.data?.length;
-              resultObj.success = true;
+        for (const itemIdElement of itemID) {
+          let resultObj = {
+            petpoojaItemId: itemIdElement,
+            success: true
+          }
+          const menuItemUpdateResponse = await supabaseInstance.from("Menu_Item").update({status: false}).eq("outletId", outletQueryData?.outletId).eq("petpoojaItemId", itemIdElement).select("itemid");
+          if (menuItemUpdateResponse?.data?.length > 0) {
+            resultObj.updateLength = menuItemUpdateResponse?.data?.length;
+            resultObj.success = true;
+          } else {
+            resultObj.success = false;
+            if (menuItemUpdateResponse?.data?.length === 0) {
+              resultObj.reson = "Not update any Item (menuItemUpdateResponse?.data?.length === 0)";
             } else {
-              resultObj.success = false;
-              if (menuItemUpdateResponse?.data?.length === 0) {
-                resultObj.reson = "Not update any Item (menuItemUpdateResponse?.data?.length === 0)";
-              } else {
-                resultObj.reson = menuItemUpdateResponse?.error?.message;
-              }
+              resultObj.reson = menuItemUpdateResponse?.error?.message;
             }
           }
-          console.log("result Arr for [item-off-webhook] => ", resultArr);
-  
-          res.status(200).json({
-            http_code: 200,
-            success: true,
-            error: ""
-          });
-        } else {
-          console.log("fetchMenuCardResponse => ", fetchMenuCardResponse);
-          const _err = `Something error while fetchMenuCard(${outletQueryData?.outletId})`
-          throw _err;
         }
+        console.log("result Arr for [item-off-webhook] => ", resultArr);
+
+        res.status(200).json({
+          http_code: 200,
+          success: true,
+          error: ""
+        });
       } else {
         if (outletQuery?.data?.length === 0) {
           res.status(500).json({ success: false, error: "Outlet not found in mealpe system." });
@@ -859,7 +851,7 @@ router.post("/item-off-webhook", async (req, res) => {
         }
       }
     } catch (error) {
-      console.err("update-store-status-webhook => ", error);
+      console.error("update-store-status-webhook => ", error);
       res.status(500).json({ success: false, error: error?.message || error || JSON.stringify(error) });
     }
   } else {
@@ -886,41 +878,33 @@ router.post("/item-on-webhook", async (req, res) => {
 
       if (outletQuery?.data?.length > 0) {
         const outletQueryData = outletQuery.data[0];
-
         let resultArr = [];
 
-        if (fetchMenuCardResponse?.success) {
-          
-          for (const itemIdElement of itemID) {
-            let resultObj = {
-              petpoojaItemId: itemIdElement,
-              success: true
-            }
-            const menuItemUpdateResponse = await supabaseInstance.from("Menu_Item").update({status: true}).eq("outletId", outletQueryData?.outletId).eq("petpoojaItemId", itemIdElement).select("itemid");
-            if (menuItemUpdateResponse?.data?.length > 0) {
-              resultObj.updateLength = menuItemUpdateResponse?.data?.length;
-              resultObj.success = true;
+        for (const itemIdElement of itemID) {
+          let resultObj = {
+            petpoojaItemId: itemIdElement,
+            success: true
+          }
+          const menuItemUpdateResponse = await supabaseInstance.from("Menu_Item").update({status: true}).eq("outletId", outletQueryData?.outletId).eq("petpoojaItemId", itemIdElement).select("itemid");
+          if (menuItemUpdateResponse?.data?.length > 0) {
+            resultObj.updateLength = menuItemUpdateResponse?.data?.length;
+            resultObj.success = true;
+          } else {
+            resultObj.success = false;
+            if (menuItemUpdateResponse?.data?.length === 0) {
+              resultObj.reson = "Not update any Item (menuItemUpdateResponse?.data?.length === 0)";
             } else {
-              resultObj.success = false;
-              if (menuItemUpdateResponse?.data?.length === 0) {
-                resultObj.reson = "Not update any Item (menuItemUpdateResponse?.data?.length === 0)";
-              } else {
-                resultObj.reson = menuItemUpdateResponse?.error?.message;
-              }
+              resultObj.reson = menuItemUpdateResponse?.error?.message;
             }
           }
-          console.log("result Arr for [item-on-webhook] => ", resultArr);
-  
-          res.status(200).json({
-            http_code: 200,
-            success: true,
-            error: ""
-          });
-        } else {
-          console.log("fetchMenuCardResponse => ", fetchMenuCardResponse);
-          const _err = `Something error while fetchMenuCard(${outletQueryData?.outletId})`
-          throw _err;
         }
+        console.log("result Arr for [item-on-webhook] => ", resultArr);
+
+        res.status(200).json({
+          http_code: 200,
+          success: true,
+          error: ""
+        });
       } else {
         if (outletQuery?.data?.length === 0) {
           res.status(500).json({ success: false, error: "Outlet not found in mealpe system." });
@@ -929,7 +913,7 @@ router.post("/item-on-webhook", async (req, res) => {
         }
       }
     } catch (error) {
-      console.err("update-store-status-webhook => ", error);
+      console.error("update-store-status-webhook => ", error);
       res.status(500).json({ success: false, error: error?.message || error || JSON.stringify(error) });
     }
   } else {
@@ -1057,9 +1041,3 @@ function updateItemAddon(outletId, itemID) {
 };
 
 module.exports = { router, saveOrderToPetpooja, updateOrderStatus, updateStoreStatus };
-
-supabaseInstance.from("Menu_Item").update({status: true}).eq("petpoojaItemId", 34).select("itemid").then(res=> {
-  console.log("Res => ", res);
-}).catch(err => {
-  console.log("err => ", err);
-})
