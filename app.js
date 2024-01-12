@@ -20,7 +20,7 @@ var offerRouter = require("./routes/outlet/offer")
 var staffRouter = require("./routes/staff/staff")
 var roleRouter = require("./routes/staff/role")
 var commonRouter = require("./routes/common")
-var pushMenuRouter = require("./routes/petpooja/pushMenu").router;
+var petpoojaRouter = require("./routes/petpooja/index");
 var orderRouter = require("./routes/order/order");
 var favoriteRouter = require("./routes/favorite/favorite");
 var ratingRouter = require("./routes/rating/rating");
@@ -61,7 +61,7 @@ app.use('/outlet/offer', offerRouter);
 app.use('/staff/staff', staffRouter);
 app.use('/staff/role', roleRouter);
 app.use('/common', commonRouter);
-app.use('/petpooja/pushMenu', pushMenuRouter);
+app.use('/petpooja', petpoojaRouter);
 app.use('/order/order', orderRouter);
 app.use('/favorite/favorite', favoriteRouter);
 app.use('/rating/rating', ratingRouter);
