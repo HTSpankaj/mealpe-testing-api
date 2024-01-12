@@ -667,7 +667,7 @@ router.post("/get-store-status-webhook", async (req, res) => {
           http_code: 200,
           status: "success",
           store_status: String(store_status),
-          message: "Store Delivery Status fetched successfully"
+          message: "Store Delivery Status fetched successfully."
         });
       } else {
         if (outletQuery?.data?.length === 0) {
