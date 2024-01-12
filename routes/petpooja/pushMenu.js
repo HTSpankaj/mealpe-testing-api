@@ -348,49 +348,56 @@ router.post("/fetchMenu", async (req, res) => {
 
 router.post("/fetchMenuCard", async (req, res) => {
   const { outletId } = req.body;
-  try {
-
-    const petPoojaQuery = await supabaseInstance.from("Outlet").select("*").eq("outletId", outletId).maybeSingle();
-
-    if (petPoojaQuery?.data) {
-      const options = {
-        headers: {
-          'Content-Type': 'application/json',
-          'app-key': petPoojaQuery.data?.petPoojaAppKey,
-          'app-secret': petPoojaQuery.data?.petPoojaAppSecret,
-          'access-token': petPoojaQuery.data?.petPoojaApAccessToken
-        },
-      };
-
-      const data = {
-        "restID": petPoojaQuery.data?.petPoojaRestId
-      };
-      const payloadData = await axios.post(petpoojaconfig.config.fetch_menu_api, data, options);
-
-      if (payloadData?.data) {
-
-        if (!petPoojaQuery?.data?.petpoojaMenuBackup && payloadData?.data?.success === '1') {
-          const petpoojaMenuBackup = await supabaseInstance.from("Outlet").update({ petpoojaMenuBackup: payloadData?.data }).select("*").eq("outletId", outletId).maybeSingle();
-        }
-
-        res.status(200).json({
-          success: true,
-          data: payloadData.data,
-          op: { fetch_menu_api: petpoojaconfig.config.fetch_menu_api, data, options }
-        });
-      } else {
-        throw error;
-      }
-    } else {
-      res.status(500).json({ success: false, error: "Outlet not found." });
-    }
-
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ success: false, error: error });
-  }
+  const fetchMenuCardResponse = await fetchMenuCard(outletId);
+  res.status(fetchMenuCardResponse?.status).json(fetchMenuCardResponse);
 })
 
+async function fetchMenuCard(outletId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+
+      const petPoojaQuery = await supabaseInstance.from("Outlet").select("*").eq("outletId", outletId).maybeSingle();
+  
+      if (petPoojaQuery?.data) {
+        const options = {
+          headers: {
+            'Content-Type': 'application/json',
+            'app-key': petPoojaQuery.data?.petPoojaAppKey,
+            'app-secret': petPoojaQuery.data?.petPoojaAppSecret,
+            'access-token': petPoojaQuery.data?.petPoojaApAccessToken
+          },
+        };
+  
+        const data = {
+          "restID": petPoojaQuery.data?.petPoojaRestId
+        };
+        const payloadData = await axios.post(petpoojaconfig.config.fetch_menu_api, data, options);
+  
+        if (payloadData?.data) {
+  
+          if (!petPoojaQuery?.data?.petpoojaMenuBackup && payloadData?.data?.success === '1') {
+            const petpoojaMenuBackup = await supabaseInstance.from("Outlet").update({ petpoojaMenuBackup: payloadData?.data }).select("*").eq("outletId", outletId).maybeSingle();
+          }
+  
+          resolve({
+            status: 200,
+            success: true,
+            data: payloadData.data,
+            op: { fetch_menu_api: petpoojaconfig.config.fetch_menu_api, data, options }
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        reolve({ status: 500, success: false, error: "Outlet not found." });
+      }
+  
+    } catch (error) {
+      console.error(error)
+      reolve({ status: 500, success: false, error: error });
+    }
+  })
+}
 
 //? ref => https://onlineorderingapisv210.docs.apiary.io/#/reference/0/save-order?mc=reference%2F0%2Fsave-order%2Fsave-order%2F200
 function saveOrderToPetpooja(request, orderId) {
@@ -709,14 +716,14 @@ router.post("/update-store-status-webhook", async (req, res) => {
         const isOutletOpenTimestamp = moment().tz("Asia/Kolkata");
         const isOutletOpen = Boolean(store_status === "1" || store_status === 1) ? true : false;
 
-        const outletUpdateQuery = await supabaseInstance.from("Outlet").update({isOutletOpen, isOutletOpenTimestamp}).eq("outletId", outletQueryData?.outletId).select("outletId").maybeSingle();
+        const outletUpdateQuery = await supabaseInstance.from("Outlet").update({ isOutletOpen, isOutletOpenTimestamp }).eq("outletId", outletQueryData?.outletId).select("outletId").maybeSingle();
 
         if (outletUpdateQuery?.data) {
           console.log("Store Delivery Status update successfully from petpooja to mealpe.");
           console.log("outlet name  => ", outletQueryData?.outletName);
           console.log("outlet ID    => ", outletQueryData?.outletId);
-          console.log("update body => ", {isOutletOpen, isOutletOpenTimestamp});
-  
+          console.log("update body => ", { isOutletOpen, isOutletOpenTimestamp });
+
           res.status(200).json({
             http_code: 200,
             success: true,
@@ -789,27 +796,187 @@ function updateOrderStatus(orderId, updatedOrderStatus) {
 };
 
 router.post("/item-off-webhook", async (req, res) => {
-  const postBody = req.body;
-  const params = req.params;
-  const query = req.query;
+  const { restID, inStock, itemID, type, autoTurnOnTime, customTurnOnTime } = req.body;
+  // {
+  //   restID: 'bq69dxai',
+  //   inStock: false,
+  //   itemID: [ '10505299', '10505300' ],
+  //   type: 'item',
+  //   autoTurnOnTime: 'custom',
+  //   customTurnOnTime: '2024-01-12 15:06:00'
+  // }
+  // {"success":true,"http_code":200,"error":""}
 
-  console.log("item-off-webhook-postBody => ", postBody);
-  console.log("item-off-webhook-params => ", params);
-  console.log("item-off-webhook-query => ", query);
+  console.log("req.body => ", req.body);
 
-  res.status(200).json({ success: true });
+  if (restID) {
+
+    try {
+      const outletQuery = await supabaseInstance.from("Outlet").select("outletId,outletName,petPoojaRestId").eq("petPoojaRestId", restID);
+
+      if (outletQuery?.data?.length > 0) {
+        const outletQueryData = outletQuery.data[0];
+        const fetchMenuCardResponse = await fetchMenuCard(outletQueryData?.outletId);
+
+        // data?.items?.itemid
+        let resultArr = [];
+
+        if (fetchMenuCardResponse?.success) {
+          
+          for (const itemIdElement of itemID) {
+            let resultObj = {
+              petpoojaItemId: itemIdElement,
+              success: true
+            }
+            const petpoojaItemObject = fetchMenuCardResponse?.data?.items?.find(f => f?.itemid === itemIdElement);
+            if (petpoojaItemObject?.itemname) {
+              const Menu_ItemResponse = await supabaseInstance.from("Menu_Item").select("itemid").ilike("itemname", petpoojaItemObject?.itemname);
+              if (Menu_ItemResponse?.data.length > 0) {
+                resultObj.foundLength =  Menu_ItemResponse?.data.length;
+                const supabaseMenuItemObject = Menu_ItemResponse?.data[0];
+
+                resultObj.supabaseMenuItemObjectItemid = supabaseMenuItemObject?.itemid;
+                const updateSupabseMenuItemResponse = await supabaseInstance.from("Menu_Item").update({status: false}).eq("itemid", supabaseMenuItemObject?.itemid).select("itemid").maybeSingle();
+                if (updateSupabseMenuItemResponse.data) {
+                  resultObj.success = true;
+                } else {
+                  resultObj.success = false;
+                  resultObj.reason = "Item Not update";
+                  resultObj.error = updateSupabseMenuItemResponse?.error?.message;
+                }
+              } else {
+                resultObj.success = false;
+                if (Menu_ItemResponse?.data.length === 0) {
+                  resultObj.reason = "Menu item not found in supabase system.";
+                } else {
+                  resultObj.reason = Menu_ItemResponse?.error?.message;
+                }
+              }
+
+              resultArr.push(resultObj);
+            } else {
+              resultObj.success = false;
+              resultObj.reason = "Item Id not found in fetchMenuCardResponse.";
+            }
+          }
+
+          console.log("result Arr for [item-off-webhook] => ", resultArr);
+  
+          res.status(200).json({
+            http_code: 200,
+            success: true,
+            error: ""
+          });
+        } else {
+          console.log("fetchMenuCardResponse => ", fetchMenuCardResponse);
+          const _err = `Something error while fetchMenuCard(${outletQueryData?.outletId})`
+          throw _err;
+        }
+      } else {
+        if (outletQuery?.data?.length === 0) {
+          res.status(500).json({ success: false, error: "Outlet not found in mealpe system." });
+        } else {
+          throw outletQuery?.error;
+        }
+      }
+    } catch (error) {
+      console.err("update-store-status-webhook => ", error);
+      res.status(500).json({ success: false, error: error?.message || error || JSON.stringify(error) });
+    }
+  } else {
+    res.status(500).json({ success: false, error: "Please pass restID." });
+  }
 })
 
 router.post("/item-on-webhook", async (req, res) => {
-  const postBody = req.body;
-  const params = req.params;
-  const query = req.query;
+  const { restID, inStock, itemID, type } = req.body;
+  // {
+  //   restID: 'bq69dxai',
+  //   inStock: true,
+  //   itemID: [ '10505295', '10505296' ],
+  //   type: 'item'
+  // }
+  // {"success":true,"http_code":200,"error":""}
 
-  console.log("item-on-webhook-postBody => ", postBody);
-  console.log("item-on-webhook-params => ", params);
-  console.log("item-on-webhook-query => ", query);
+  console.log("req.body => ", req.body);
 
-  res.status(200).json({ success: true });
+  if (restID) {
+
+    try {
+      const outletQuery = await supabaseInstance.from("Outlet").select("outletId,outletName,petPoojaRestId").eq("petPoojaRestId", restID);
+
+      if (outletQuery?.data?.length > 0) {
+        const outletQueryData = outletQuery.data[0];
+        const fetchMenuCardResponse = await fetchMenuCard(outletQueryData?.outletId);
+
+        // data?.items?.itemid
+        let resultArr = [];
+
+        if (fetchMenuCardResponse?.success) {
+          
+          for (const itemIdElement of itemID) {
+            let resultObj = {
+              petpoojaItemId: itemIdElement,
+              success: true
+            }
+            const petpoojaItemObject = fetchMenuCardResponse?.data?.items?.find(f => f?.itemid === itemIdElement);
+            if (petpoojaItemObject?.itemname) {
+              const Menu_ItemResponse = await supabaseInstance.from("Menu_Item").select("itemid").ilike("itemname", petpoojaItemObject?.itemname);
+              if (Menu_ItemResponse?.data.length > 0) {
+                resultObj.foundLength =  Menu_ItemResponse?.data.length;
+                const supabaseMenuItemObject = Menu_ItemResponse?.data[0];
+
+                resultObj.supabaseMenuItemObjectItemid = supabaseMenuItemObject?.itemid;
+                const updateSupabseMenuItemResponse = await supabaseInstance.from("Menu_Item").update({status: true}).eq("itemid", supabaseMenuItemObject?.itemid).select("itemid").maybeSingle();
+                if (updateSupabseMenuItemResponse.data) {
+                  resultObj.success = true;
+                } else {
+                  resultObj.success = false;
+                  resultObj.reason = "Item Not update";
+                  resultObj.error = updateSupabseMenuItemResponse?.error?.message;
+                }
+              } else {
+                resultObj.success = false;
+                if (Menu_ItemResponse?.data.length === 0) {
+                  resultObj.reason = "Menu item not found in supabase system.";
+                } else {
+                  resultObj.reason = Menu_ItemResponse?.error?.message;
+                }
+              }
+
+              resultArr.push(resultObj);
+            } else {
+              resultObj.success = false;
+              resultObj.reason = "Item Id not found in fetchMenuCardResponse.";
+            }
+          }
+
+          console.log("result Arr for [item-on-webhook] => ", resultArr);
+  
+          res.status(200).json({
+            http_code: 200,
+            success: true,
+            error: ""
+          });
+        } else {
+          console.log("fetchMenuCardResponse => ", fetchMenuCardResponse);
+          const _err = `Something error while fetchMenuCard(${outletQueryData?.outletId})`
+          throw _err;
+        }
+      } else {
+        if (outletQuery?.data?.length === 0) {
+          res.status(500).json({ success: false, error: "Outlet not found in mealpe system." });
+        } else {
+          throw outletQuery?.error;
+        }
+      }
+    } catch (error) {
+      console.err("update-store-status-webhook => ", error);
+      res.status(500).json({ success: false, error: error?.message || error || JSON.stringify(error) });
+    }
+  } else {
+    res.status(500).json({ success: false, error: "Please pass restID." });
+  }
 })
 
 

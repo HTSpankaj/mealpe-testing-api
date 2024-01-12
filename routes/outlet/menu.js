@@ -139,6 +139,9 @@ router.post("/addMenu", async (req, res) => {
     if (!menuItemData?.spice_level_id) {
       menuItemData.spice_level_id = null;
     }
+    if (!menuItemData?.petpoojaItemId) {
+      menuItemData.petpoojaItemId = null;
+    }
     const { data, error } = await supabaseInstance
       .from("Menu_Item")
       .insert(menuItemData)
