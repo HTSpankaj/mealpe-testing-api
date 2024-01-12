@@ -788,6 +788,31 @@ function updateOrderStatus(orderId, updatedOrderStatus) {
   })
 };
 
+router.post("/item-off-webhook", async (req, res) => {
+  const postBody = req.body;
+  const params = req.params;
+  const query = req.query;
+
+  console.log("item-off-webhook-postBody => ", postBody);
+  console.log("item-off-webhook-params => ", params);
+  console.log("item-off-webhook-query => ", query);
+
+  res.status(200).json({ success: true });
+})
+
+router.post("/item-on-webhook", async (req, res) => {
+  const postBody = req.body;
+  const params = req.params;
+  const query = req.query;
+
+  console.log("item-on-webhook-postBody => ", postBody);
+  console.log("item-on-webhook-params => ", params);
+  console.log("item-on-webhook-query => ", query);
+
+  res.status(200).json({ success: true });
+})
+
+
 // function getStoreStatus(outletId) {
 //   return new Promise(async (resolve, reject) => {
 //     try {
