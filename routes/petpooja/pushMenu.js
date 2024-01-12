@@ -648,6 +648,7 @@ router.post("/get-store-status-webhook", async (req, res) => {
   const { restID } = req.body;
   // { restID: 'IDIDIDIDID' }
   // {"http_code":200,"status":"success","store_status":"1","message":"Store Delivery Status fetched successfully"}
+  console.log("req.body => ", req.body);
 
   if (restID) {
 
@@ -696,6 +697,8 @@ router.post("/update-store-status-webhook", async (req, res) => {
 
   // {"success":true,"http_code":200,"error":""}
 
+  console.log("req.body => ", req.body);
+
   if (restID) {
 
     try {
@@ -704,7 +707,7 @@ router.post("/update-store-status-webhook", async (req, res) => {
       if (outletQuery?.data?.length > 0) {
         const outletQueryData = outletQuery.data[0];
         const isOutletOpenTimestamp = moment().tz("Asia/Kolkata");
-        const isOutletOpen = store_status === "1" ? true : false;
+        const isOutletOpen = Boolean(store_status === "1" || store_status === 1) ? true : false;
 
         const outletUpdateQuery = await supabaseInstance.from("Outlet").update({isOutletOpen, isOutletOpenTimestamp}).eq("outletId", outletQueryData?.outletId).select("outletId").maybeSingle();
 
