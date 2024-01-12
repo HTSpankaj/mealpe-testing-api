@@ -835,6 +835,7 @@ router.post("/item-off-webhook", async (req, res) => {
               resultObj.reson = menuItemUpdateResponse?.error?.message;
             }
           }
+          resultArr.push(resultObj);
         }
         console.log("result Arr for [item-off-webhook] => ", resultArr);
 
@@ -897,6 +898,7 @@ router.post("/item-on-webhook", async (req, res) => {
               resultObj.reson = menuItemUpdateResponse?.error?.message;
             }
           }
+          resultArr.push(resultObj);
         }
         console.log("result Arr for [item-on-webhook] => ", resultArr);
 
