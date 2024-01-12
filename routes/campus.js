@@ -81,8 +81,6 @@ router.get("/getCampus/:cityId", async (req, res) => {
 
     const { data, error } = await query;
 
-    console.log("data => ", data.length);
-
     if (data) {
       res.status(200).json({
         success: true,

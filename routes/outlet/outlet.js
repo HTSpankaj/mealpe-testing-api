@@ -9,6 +9,7 @@ var msg91config = require("../../configs/msg91Config");
 const { sendMobileSMS, sendEmail } = require("../../services/msf91Service");
 var { outletSelectString } = require('../../services/supabaseCommonValues').value;
 const moment = require("moment-timezone");
+const { updateStoreStatus } = require("../petpooja/pushMenu");
 
 router.post("/createOutlet", async (req, res) => {
   const {
@@ -827,6 +828,10 @@ router.post("/outletIsOpenStatusChange", async (req, res) => {
       console.log("body -> ", {isOutletOpen, isOutletOpenTimestamp});
       const outletUpdateResponse = await supabaseInstance.from("Outlet").update({isOutletOpen, isOutletOpenTimestamp}).eq("outletId", outletId).select("outletId, isOutletOpen, isOutletOpenTimestamp").maybeSingle();
       if (outletUpdateResponse?.data) {
+        let updateStoreStatusResponse = updateStoreStatus(outletId);
+        if (updateStoreStatusResponse?.success === false && updateStoreStatusResponse?.petpoojaApiError) {
+          console.log("updateStoreStatusResponse => ",updateStoreStatusResponse);
+        }
         res.status(200).json({
           status: false,
           data: outletUpdateResponse.data,

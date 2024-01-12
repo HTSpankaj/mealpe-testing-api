@@ -627,7 +627,7 @@ router.post("/petpooja-status-change/:orderId", async (req, res) => {
         _status = '-2';
       }
       console.log("_status => ", { orderStatusId: _status });
-      const orderResponse = await supabaseInstance.from("Order").update({ orderStatusId: _status, preparationTime :minimum_prep_time }).eq("orderId", orderId).select("*").maybeSingle();
+      const orderResponse = await supabaseInstance.from("Order").update({ orderStatusId: _status, preparationTime: minimum_prep_time }).eq("orderId", orderId).select("*").maybeSingle();
       if (orderResponse.data) {
         console.log("status change successfully");
         res.send({ success: true });
@@ -642,6 +642,30 @@ router.post("/petpooja-status-change/:orderId", async (req, res) => {
     console.error({ _status, orderId });
     res.send({ success: false });
   }
+})
+
+router.post("/get-store-status-webhook", async (req, res) => {
+  const postBody = req.body;
+  const params = req.params;
+  const query = req.query;
+
+  console.log("get-store-status-webhook-postBody => ", postBody);
+  console.log("get-store-status-webhook-params => ", params);
+  console.log("get-store-status-webhook-query => ", query);
+
+  res.status(200).json({ success: true });
+})
+
+router.post("/update-store-status-webhook", async (req, res) => {
+  const postBody = req.body;
+  const params = req.params;
+  const query = req.query;
+
+  console.log("update-store-status-webhook-postBody => ", postBody);
+  console.log("update-store-status-webhook-params => ", params);
+  console.log("update-store-status-webhook-query => ", query);
+
+  res.status(200).json({ success: true });
 })
 
 function updateOrderStatus(orderId, updatedOrderStatus) {
@@ -690,9 +714,123 @@ function updateOrderStatus(orderId, updatedOrderStatus) {
     }
   })
 };
-// updateOrderStatus("c93a5f8c-25b8-4b3c-a203-395f639f0b06", "10").then(res => {
-//   console.log("res", res);
-// }).catch(err => {
-//   console.error(err);
-// })
-module.exports = { router, saveOrderToPetpooja, updateOrderStatus };
+
+function getStoreStatus(outletId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const outletQuery = await supabaseInstance.from("Outlet").select("*").eq("outletId", outletId).maybeSingle();
+
+      if (outletQuery?.data) {
+        const restID = outletQuery.data.petPoojaRestId;
+
+        if (restID) {
+          const petPoojaUpStoreStatus = await axios.post('https://private-anon-947573d619-onlineorderingapisv210.apiary-mock.com/get_store_status', restID);
+
+          if (petPoojaUpStoreStatus.data) {
+            resolve({ success: true, data: petPoojaUpStoreStatus.data })
+          } else {
+            console.log("Something Went Wrong.")
+            resolve({ success: false, error: "Something Went Wrong." })
+          }
+        } else {
+          console.log("restID not found.")
+          resolve({ success: false, error: "restID not found." })
+        }
+      } else {
+        console.log("Outlet not found.")
+        resolve({ success: false, error: "Outlet not found." })
+      }
+    } catch (error) {
+      resolve({ success: false, error: error?.message || error })
+    }
+  })
+};
+
+function updateStoreStatus(outletId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const outletQuery = await supabaseInstance.from("Outlet").select("petPoojaRestId,isOutletOpen,Timing!left(openTime,dayId(day))").eq("outletId", outletId).maybeSingle();
+      if (outletQuery?.data) {
+
+        const restID = outletQuery.data.petPoojaRestId;
+        const store_status = outletQuery.data.isOutletOpen ? 1 : 0;
+
+        let Tomorrow = outletQuery.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(1, 'days').format("dddd"));
+        const turn_on_time = moment(Tomorrow).add(1, 'days').format(`YYYY-MM-DD ${Tomorrow.openTime}`)
+        //let Overmorrow = outletQuery.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"));
+
+        if (restID && store_status && turn_on_time) {
+          try {
+            let payload = {
+              "restID": restID,
+              "store_status": String(store_status),
+              "reason": "Store off"
+            }
+            if (store_status === 0) {
+              payload["turn_on_time"] = turn_on_time;
+            }
+            const petPoojaUpUpdateStoreStatus = await axios.post('https://private-anon-947573d619-onlineorderingapisv210.apiary-mock.com/update_store_status', payload);
+            if (petPoojaUpUpdateStoreStatus.data) {
+              console.log("petPoojaUpUpdateStoreStatus.data===>", petPoojaUpUpdateStoreStatus.data);
+              resolve({ success: true, data: petPoojaUpUpdateStoreStatus.data })
+            } else {
+              console.log("Something Went Wrong.");
+              resolve({ success: false, error: "Something Went Wrong.", petpoojaApiError: true })
+            }
+          } catch (axiosError) {
+            console.log("update_store_status axiosError => ", axiosError?.response?.data);
+            resolve({ success: false, error: axiosError?.response?.data, petpoojaApiError: true })
+          }
+        } else {
+          console.log("restID not found.");
+          resolve({ success: false, error: "restID not found.", petpoojaApiError: false })
+        }
+      } else {
+        resolve({ success: false, error: "Restaurent Data Not Found.", petpoojaApiError: false })
+      }
+    } catch (error) {
+      resolve({ success: false, error: error?.message || error, petpoojaApiError: false })
+    }
+  })
+};
+
+function updateItemAddon(outletId, itemID) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const outletQuery = await supabaseInstance.from("Outlet").select("petPoojaRestId,Menu_Item!left(itemid,status)").eq("outletId", outletId).eq("Menu_Item.itemid", itemID).maybeSingle();
+
+      if (outletQuery?.data) {
+
+        const restID = outletQuery?.data?.petPoojaRestId;
+        const inStock = outletQuery?.data?.Menu_Item[0]?.status;
+
+        if (restID && inStock) {
+          let payload = {
+            "restID": restID,
+            "type": "item",
+            "inStock": inStock,
+            "itemID": [itemID],
+            "autoTurnOnTime": "custom",
+            "customTurnOnTime": "2020-02-24 18:00"
+          }
+
+          const petPoojaUpUpdateStoreStatus = await axios.post('https://private-anon-947573d619-onlineorderingapisv210.apiary-mock.com/item_stock_off', payload);
+
+          if (petPoojaUpUpdateStoreStatus.data) {
+            resolve({ success: true, data: petPoojaUpUpdateStoreStatus.data })
+          } else {
+            resolve({ success: false, error: "Something Went Wrong." })
+          }
+        } else {
+          resolve({ success: false, error: "restID not found." })
+        }
+      } else {
+        resolve({ success: false, error: "Restaurent Data Not Found." })
+      }
+    } catch (error) {
+      resolve({ success: false, error: error?.message || error })
+    }
+  })
+};
+
+module.exports = { router, saveOrderToPetpooja, updateOrderStatus, updateStoreStatus };
