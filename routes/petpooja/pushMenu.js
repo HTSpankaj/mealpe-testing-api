@@ -816,9 +816,7 @@ router.post("/item-off-webhook", async (req, res) => {
 
       if (outletQuery?.data?.length > 0) {
         const outletQueryData = outletQuery.data[0];
-        const fetchMenuCardResponse = await fetchMenuCard(outletQueryData?.outletId);
 
-        // data?.items?.itemid
         let resultArr = [];
 
         if (fetchMenuCardResponse?.success) {
@@ -828,38 +826,19 @@ router.post("/item-off-webhook", async (req, res) => {
               petpoojaItemId: itemIdElement,
               success: true
             }
-            const petpoojaItemObject = fetchMenuCardResponse?.data?.items?.find(f => f?.itemid === itemIdElement);
-            if (petpoojaItemObject?.itemname) {
-              const Menu_ItemResponse = await supabaseInstance.from("Menu_Item").select("itemid").ilike("itemname", petpoojaItemObject?.itemname);
-              if (Menu_ItemResponse?.data.length > 0) {
-                resultObj.foundLength =  Menu_ItemResponse?.data.length;
-                const supabaseMenuItemObject = Menu_ItemResponse?.data[0];
-
-                resultObj.supabaseMenuItemObjectItemid = supabaseMenuItemObject?.itemid;
-                const updateSupabseMenuItemResponse = await supabaseInstance.from("Menu_Item").update({status: false}).eq("itemid", supabaseMenuItemObject?.itemid).select("itemid").maybeSingle();
-                if (updateSupabseMenuItemResponse.data) {
-                  resultObj.success = true;
-                } else {
-                  resultObj.success = false;
-                  resultObj.reason = "Item Not update";
-                  resultObj.error = updateSupabseMenuItemResponse?.error?.message;
-                }
-              } else {
-                resultObj.success = false;
-                if (Menu_ItemResponse?.data.length === 0) {
-                  resultObj.reason = "Menu item not found in supabase system.";
-                } else {
-                  resultObj.reason = Menu_ItemResponse?.error?.message;
-                }
-              }
-
-              resultArr.push(resultObj);
+            const menuItemUpdateResponse = await supabaseInstance.from("Menu_Item").update({status: false}).eq("outletId", outletQueryData?.outletId).eq("petpoojaItemId", itemIdElement).select("itemid");
+            if (menuItemUpdateResponse?.data?.length > 0) {
+              resultObj.updateLength = menuItemUpdateResponse?.data?.length;
+              resultObj.success = true;
             } else {
               resultObj.success = false;
-              resultObj.reason = "Item Id not found in fetchMenuCardResponse.";
+              if (menuItemUpdateResponse?.data?.length === 0) {
+                resultObj.reson = "Not update any Item (menuItemUpdateResponse?.data?.length === 0)";
+              } else {
+                resultObj.reson = menuItemUpdateResponse?.error?.message;
+              }
             }
           }
-
           console.log("result Arr for [item-off-webhook] => ", resultArr);
   
           res.status(200).json({
@@ -907,9 +886,7 @@ router.post("/item-on-webhook", async (req, res) => {
 
       if (outletQuery?.data?.length > 0) {
         const outletQueryData = outletQuery.data[0];
-        const fetchMenuCardResponse = await fetchMenuCard(outletQueryData?.outletId);
 
-        // data?.items?.itemid
         let resultArr = [];
 
         if (fetchMenuCardResponse?.success) {
@@ -919,38 +896,19 @@ router.post("/item-on-webhook", async (req, res) => {
               petpoojaItemId: itemIdElement,
               success: true
             }
-            const petpoojaItemObject = fetchMenuCardResponse?.data?.items?.find(f => f?.itemid === itemIdElement);
-            if (petpoojaItemObject?.itemname) {
-              const Menu_ItemResponse = await supabaseInstance.from("Menu_Item").select("itemid").ilike("itemname", petpoojaItemObject?.itemname);
-              if (Menu_ItemResponse?.data.length > 0) {
-                resultObj.foundLength =  Menu_ItemResponse?.data.length;
-                const supabaseMenuItemObject = Menu_ItemResponse?.data[0];
-
-                resultObj.supabaseMenuItemObjectItemid = supabaseMenuItemObject?.itemid;
-                const updateSupabseMenuItemResponse = await supabaseInstance.from("Menu_Item").update({status: true}).eq("itemid", supabaseMenuItemObject?.itemid).select("itemid").maybeSingle();
-                if (updateSupabseMenuItemResponse.data) {
-                  resultObj.success = true;
-                } else {
-                  resultObj.success = false;
-                  resultObj.reason = "Item Not update";
-                  resultObj.error = updateSupabseMenuItemResponse?.error?.message;
-                }
-              } else {
-                resultObj.success = false;
-                if (Menu_ItemResponse?.data.length === 0) {
-                  resultObj.reason = "Menu item not found in supabase system.";
-                } else {
-                  resultObj.reason = Menu_ItemResponse?.error?.message;
-                }
-              }
-
-              resultArr.push(resultObj);
+            const menuItemUpdateResponse = await supabaseInstance.from("Menu_Item").update({status: true}).eq("outletId", outletQueryData?.outletId).eq("petpoojaItemId", itemIdElement).select("itemid");
+            if (menuItemUpdateResponse?.data?.length > 0) {
+              resultObj.updateLength = menuItemUpdateResponse?.data?.length;
+              resultObj.success = true;
             } else {
               resultObj.success = false;
-              resultObj.reason = "Item Id not found in fetchMenuCardResponse.";
+              if (menuItemUpdateResponse?.data?.length === 0) {
+                resultObj.reson = "Not update any Item (menuItemUpdateResponse?.data?.length === 0)";
+              } else {
+                resultObj.reson = menuItemUpdateResponse?.error?.message;
+              }
             }
           }
-
           console.log("result Arr for [item-on-webhook] => ", resultArr);
   
           res.status(200).json({
@@ -1099,3 +1057,9 @@ function updateItemAddon(outletId, itemID) {
 };
 
 module.exports = { router, saveOrderToPetpooja, updateOrderStatus, updateStoreStatus };
+
+supabaseInstance.from("Menu_Item").update({status: true}).eq("petpoojaItemId", 34).select("itemid").then(res=> {
+  console.log("Res => ", res);
+}).catch(err => {
+  console.log("err => ", err);
+})
