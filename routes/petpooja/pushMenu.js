@@ -409,7 +409,8 @@ function saveOrderToPetpooja(request, orderId) {
       // console.log("orderData Order_Item => ", orderData.data?.Order_Item);
       // console.log("orderData outletId => ", orderData.data?.outletId);
 
-      if (orderData.data?.outletId?.isOrderHandlingFromPetpooja && orderData.data?.outletId?.petPoojaAppKey && orderData.data?.outletId?.petPoojaAppSecret && orderData.data?.outletId?.petPoojaApAccessToken && orderData.data?.outletId?.petPoojaRestId) {
+      // if (orderData.data?.outletId?.isOrderHandlingFromPetpooja && orderData.data?.outletId?.petPoojaAppKey && orderData.data?.outletId?.petPoojaAppSecret && orderData.data?.outletId?.petPoojaApAccessToken && orderData.data?.outletId?.petPoojaRestId) {
+      if ( orderData.data?.outletId?.petPoojaAppKey && orderData.data?.outletId?.petPoojaAppSecret && orderData.data?.outletId?.petPoojaApAccessToken && orderData.data?.outletId?.petPoojaRestId) {
 
         let payload = {
           app_key: orderData.data?.outletId?.petPoojaAppKey,
@@ -490,7 +491,7 @@ function saveOrderToPetpooja(request, orderId) {
                     "title": "CGST",
                     "type": "P",
                     "price": "2.5",
-                    "tax": String((orderData.data?.txnid?.foodGST / 2) || ""),
+                    "tax": String(Number(orderData.data?.txnid?.foodGST / 2)?.toFixed(2) || ""),
                     "restaurant_liable_amt": ""
                   },
                   {
@@ -498,7 +499,7 @@ function saveOrderToPetpooja(request, orderId) {
                     "title": "SGST",
                     "type": "P",
                     "price": "2.5",
-                    "tax": String((orderData.data?.txnid?.foodGST / 2) || ""),
+                    "tax": String(Number(orderData.data?.txnid?.foodGST / 2)?.toFixed(2) || ""),
                     "restaurant_liable_amt": ""
                   },
                   {
@@ -729,91 +730,91 @@ function updateOrderStatus(orderId, updatedOrderStatus) {
 //   })
 // };
 
-function updateStoreStatus(outletId) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const outletQuery = await supabaseInstance.from("Outlet").select("petPoojaRestId,isOutletOpen,Timing!left(openTime,dayId(day))").eq("outletId", outletId).maybeSingle();
-      if (outletQuery?.data) {
+// function updateStoreStatus(outletId) {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       const outletQuery = await supabaseInstance.from("Outlet").select("petPoojaRestId,isOutletOpen,Timing!left(openTime,dayId(day))").eq("outletId", outletId).maybeSingle();
+//       if (outletQuery?.data) {
 
-        const restID = outletQuery.data.petPoojaRestId;
-        const store_status = outletQuery.data.isOutletOpen ? 1 : 0;
+//         const restID = outletQuery.data.petPoojaRestId;
+//         const store_status = outletQuery.data.isOutletOpen ? 1 : 0;
 
-        let Tomorrow = outletQuery.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(1, 'days').format("dddd"));
-        const turn_on_time = moment(Tomorrow).add(1, 'days').format(`YYYY-MM-DD ${Tomorrow.openTime}`)
-        //let Overmorrow = outletQuery.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"));
+//         let Tomorrow = outletQuery.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(1, 'days').format("dddd"));
+//         const turn_on_time = moment(Tomorrow).add(1, 'days').format(`YYYY-MM-DD ${Tomorrow.openTime}`)
+//         //let Overmorrow = outletQuery.data?.Timing?.find(f => f.dayId?.day === moment().tz("Asia/Kolkata").add(2, 'days').format("dddd"));
 
-        if (restID && store_status && turn_on_time) {
-          try {
-            let payload = {
-              "restID": restID,
-              "store_status": String(store_status),
-              "reason": "Store off"
-            }
-            if (store_status === 0) {
-              payload["turn_on_time"] = turn_on_time;
-            }
-            const petPoojaUpUpdateStoreStatus = await axios.post('https://private-anon-947573d619-onlineorderingapisv210.apiary-mock.com/update_store_status', payload);
-            if (petPoojaUpUpdateStoreStatus.data) {
-              console.log("petPoojaUpUpdateStoreStatus.data===>", petPoojaUpUpdateStoreStatus.data);
-              resolve({ success: true, data: petPoojaUpUpdateStoreStatus.data })
-            } else {
-              console.log("Something Went Wrong.");
-              resolve({ success: false, error: "Something Went Wrong.", petpoojaApiError: true })
-            }
-          } catch (axiosError) {
-            console.log("update_store_status axiosError => ", axiosError?.response?.data);
-            resolve({ success: false, error: axiosError?.response?.data, petpoojaApiError: true })
-          }
-        } else {
-          console.log("restID not found.");
-          resolve({ success: false, error: "restID not found.", petpoojaApiError: false })
-        }
-      } else {
-        resolve({ success: false, error: "Restaurent Data Not Found.", petpoojaApiError: false })
-      }
-    } catch (error) {
-      resolve({ success: false, error: error?.message || error, petpoojaApiError: false })
-    }
-  })
-};
+//         if (restID && store_status && turn_on_time) {
+//           try {
+//             let payload = {
+//               "restID": restID,
+//               "store_status": String(store_status),
+//               "reason": "Store off"
+//             }
+//             if (store_status === 0) {
+//               payload["turn_on_time"] = turn_on_time;
+//             }
+//             const petPoojaUpUpdateStoreStatus = await axios.post('https://private-anon-947573d619-onlineorderingapisv210.apiary-mock.com/update_store_status', payload);
+//             if (petPoojaUpUpdateStoreStatus.data) {
+//               console.log("petPoojaUpUpdateStoreStatus.data===>", petPoojaUpUpdateStoreStatus.data);
+//               resolve({ success: true, data: petPoojaUpUpdateStoreStatus.data })
+//             } else {
+//               console.log("Something Went Wrong.");
+//               resolve({ success: false, error: "Something Went Wrong.", petpoojaApiError: true })
+//             }
+//           } catch (axiosError) {
+//             console.log("update_store_status axiosError => ", axiosError?.response?.data);
+//             resolve({ success: false, error: axiosError?.response?.data, petpoojaApiError: true })
+//           }
+//         } else {
+//           console.log("restID not found.");
+//           resolve({ success: false, error: "restID not found.", petpoojaApiError: false })
+//         }
+//       } else {
+//         resolve({ success: false, error: "Restaurent Data Not Found.", petpoojaApiError: false })
+//       }
+//     } catch (error) {
+//       resolve({ success: false, error: error?.message || error, petpoojaApiError: false })
+//     }
+//   })
+// };
 
-function updateItemAddon(outletId, itemID) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const outletQuery = await supabaseInstance.from("Outlet").select("petPoojaRestId,Menu_Item!left(itemid,status)").eq("outletId", outletId).eq("Menu_Item.itemid", itemID).maybeSingle();
+// function updateItemAddon(outletId, itemID) {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       const outletQuery = await supabaseInstance.from("Outlet").select("petPoojaRestId,Menu_Item!left(itemid,status)").eq("outletId", outletId).eq("Menu_Item.itemid", itemID).maybeSingle();
 
-      if (outletQuery?.data) {
+//       if (outletQuery?.data) {
 
-        const restID = outletQuery?.data?.petPoojaRestId;
-        const inStock = outletQuery?.data?.Menu_Item[0]?.status;
+//         const restID = outletQuery?.data?.petPoojaRestId;
+//         const inStock = outletQuery?.data?.Menu_Item[0]?.status;
 
-        if (restID && inStock) {
-          let payload = {
-            "restID": restID,
-            "type": "item",
-            "inStock": inStock,
-            "itemID": [itemID],
-            "autoTurnOnTime": "custom",
-            "customTurnOnTime": "2020-02-24 18:00"
-          }
+//         if (restID && inStock) {
+//           let payload = {
+//             "restID": restID,
+//             "type": "item",
+//             "inStock": inStock,
+//             "itemID": [itemID],
+//             "autoTurnOnTime": "custom",
+//             "customTurnOnTime": "2020-02-24 18:00"
+//           }
 
-          const petPoojaUpUpdateStoreStatus = await axios.post('https://private-anon-947573d619-onlineorderingapisv210.apiary-mock.com/item_stock_off', payload);
+//           const petPoojaUpUpdateStoreStatus = await axios.post('https://private-anon-947573d619-onlineorderingapisv210.apiary-mock.com/item_stock_off', payload);
 
-          if (petPoojaUpUpdateStoreStatus.data) {
-            resolve({ success: true, data: petPoojaUpUpdateStoreStatus.data })
-          } else {
-            resolve({ success: false, error: "Something Went Wrong." })
-          }
-        } else {
-          resolve({ success: false, error: "restID not found." })
-        }
-      } else {
-        resolve({ success: false, error: "Restaurent Data Not Found." })
-      }
-    } catch (error) {
-      resolve({ success: false, error: error?.message || error })
-    }
-  })
-};
+//           if (petPoojaUpUpdateStoreStatus.data) {
+//             resolve({ success: true, data: petPoojaUpUpdateStoreStatus.data })
+//           } else {
+//             resolve({ success: false, error: "Something Went Wrong." })
+//           }
+//         } else {
+//           resolve({ success: false, error: "restID not found." })
+//         }
+//       } else {
+//         resolve({ success: false, error: "Restaurent Data Not Found." })
+//       }
+//     } catch (error) {
+//       resolve({ success: false, error: error?.message || error })
+//     }
+//   })
+// };
 
-module.exports = { router, saveOrderToPetpooja, updateOrderStatus, updateStoreStatus, fetchMenuCard };
+module.exports = { router, saveOrderToPetpooja, updateOrderStatus, fetchMenuCard };
