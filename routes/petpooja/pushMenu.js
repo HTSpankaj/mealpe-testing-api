@@ -409,8 +409,7 @@ function saveOrderToPetpooja(request, orderId) {
       // console.log("orderData Order_Item => ", orderData.data?.Order_Item);
       // console.log("orderData outletId => ", orderData.data?.outletId);
 
-      // if (orderData.data?.outletId?.isOrderHandlingFromPetpooja && orderData.data?.outletId?.petPoojaAppKey && orderData.data?.outletId?.petPoojaAppSecret && orderData.data?.outletId?.petPoojaApAccessToken && orderData.data?.outletId?.petPoojaRestId) {
-      if (orderData.data?.outletId?.petPoojaAppKey && orderData.data?.outletId?.petPoojaAppSecret && orderData.data?.outletId?.petPoojaApAccessToken && orderData.data?.outletId?.petPoojaRestId) {
+      if (orderData.data?.outletId?.isOrderHandlingFromPetpooja && orderData.data?.outletId?.petPoojaAppKey && orderData.data?.outletId?.petPoojaAppSecret && orderData.data?.outletId?.petPoojaApAccessToken && orderData.data?.outletId?.petPoojaRestId) {
 
         let payload = {
           app_key: orderData.data?.outletId?.petPoojaAppKey,
@@ -444,7 +443,7 @@ function saveOrderToPetpooja(request, orderId) {
               //* Done
               Order: {
                 details: {
-                  orderID: orderData?.data?.orderSequenceId,
+                  orderID: String(orderData?.data?.orderSequenceId),
                   created_on: moment(new Date(orderData.data?.created_at)).format("YYYY-MM-DD HH:mm:ss"),
                   preorder_date: orderData.data?.Order_Schedule?.[0]?.scheduleDate,
                   preorder_time: orderData.data?.Order_Schedule?.[0]?.scheduleTime,
@@ -452,7 +451,7 @@ function saveOrderToPetpooja(request, orderId) {
                   order_type: orderData.data?.isDelivery ? 'H' : orderData.data?.isPickUp ? 'P' : 'D',
 
                   payment_type: "ONLINE",
-                  total: String(orderData.data?.txnid?.amount || ""), //todo add charge
+                  total: String((orderData.data?.txnid?.amount - Number(Number(orderData.data?.txnid?.foodGST) + Number(orderData.data?.txnid?.convenienceTotalAmount)).toFixed(2)) || ""), //todo add charge
                   tax_total: String(Number(Number(orderData.data?.txnid?.foodGST) + Number(orderData.data?.txnid?.convenienceTotalAmount)).toFixed(2) || ""),
                   packing_charges: String(orderData.data?.txnid?.packagingCharge || ""),
                   pc_tax_amount: "", //* Tax amount calculated on packing charge
@@ -750,17 +749,17 @@ function updateStoreStatus(outletId) {
           }
         })
 
-        if (restID && (store_status === 0 || store_status === 0)  && turn_on_time) {
+        if (restID && (store_status === 0 || store_status === 1)  && turn_on_time) {
           try {
             let payload = {
               "restID": restID,
               "store_status": String(store_status),
-              "reason": "Store off"
+              "reason": store_status ? "Store On" : "Store off"
             }
             if (store_status === 0) {
               payload["turn_on_time"] = turn_on_time;
             }
-            const petPoojaUpUpdateStoreStatus = await axios.post('https://private-anon-947573d619-onlineorderingapisv210.apiary-mock.com/update_store_status', payload);
+            const petPoojaUpUpdateStoreStatus = await axios.post(petpoojaconfig.config.update_store_status_api, payload);
             if (petPoojaUpUpdateStoreStatus.data) {
               console.log("petPoojaUpUpdateStoreStatus.data===>", petPoojaUpUpdateStoreStatus.data);
               resolve({ success: true, data: petPoojaUpUpdateStoreStatus.data })

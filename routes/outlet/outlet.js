@@ -829,10 +829,10 @@ router.post("/outletIsOpenStatusChange", async (req, res) => {
       console.log("body -> ", {isOutletOpen, isOutletOpenTimestamp});
       const outletUpdateResponse = await supabaseInstance.from("Outlet").update({isOutletOpen, isOutletOpenTimestamp}).eq("outletId", outletId).select("outletId, isOutletOpen, isOutletOpenTimestamp").maybeSingle();
       if (outletUpdateResponse?.data) {
-        let updateStoreStatusResponse = updateStoreStatus(outletId);
-        if (updateStoreStatusResponse?.success === false && updateStoreStatusResponse?.petpoojaApiError) {
-          console.log("updateStoreStatusResponse => ",updateStoreStatusResponse);
-        }
+        // let updateStoreStatusResponse = updateStoreStatus(outletId);
+        // if (updateStoreStatusResponse?.success === false && updateStoreStatusResponse?.petpoojaApiError) {
+        //   console.log("updateStoreStatusResponse => ",updateStoreStatusResponse);
+        // }
         res.status(200).json({
           status: false,
           data: outletUpdateResponse.data,
