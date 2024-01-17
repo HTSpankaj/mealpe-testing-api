@@ -784,6 +784,7 @@ function updateStoreStatus(outletId) {
   })
 };
 
+// updateStoreStatus("08d06cbe-27d1-4f4b-87e8-38e341622625")
 
 // function updateItemAddon(outletId, itemID) {
 //   return new Promise(async (resolve, reject) => {

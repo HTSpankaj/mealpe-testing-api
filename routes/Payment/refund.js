@@ -9,6 +9,9 @@ router.post('/refundWebhook', async (req, res, next) => {
     const postBody = req.body;
     console.log("RefundWebhook PostBody => ", postBody);
 
+    console.log("Req => ", req);
+    console.log("Res => ", res);
+
     if (postBody?.status === "1" && postBody?.data?.refund_status && postBody?.data?.txnid) {
         // const refundResponse = await supabaseInstance.from("Refund").select("refundId, txnid").eq("txnid", postBody?.data?.txnid).maybeSingle();
         const refundResponse = await supabaseInstance.from("Refund").update({refund_status: postBody?.data?.refund_status}).select("refundId, txnid").eq("txnid", postBody?.data?.txnid).maybeSingle();
@@ -60,20 +63,22 @@ function requestRefund(orderId) {
     return new Promise(async (resolve, reject) => {
         try {
 
-            const orderResponse = await supabaseInstance.from("Order").select("*,customerAuthUID(*),outletId(*)").eq("orderId", orderId).maybeSingle();
+            const orderResponse = await supabaseInstance.from("Order").select("*,customerAuthUID(*),outletId(*),txnid(txnid,email,phone)").eq("orderId", orderId).maybeSingle();
 
             if (orderResponse?.data) {
 
-                var hashstring_transactionAPI = easebuzzConfig.key + "|" + orderResponse?.data?.txnid + "|" + orderResponse?.data?.totalPrice + "|"  + orderResponse?.data?.customerAuthUID?.email + "|" + orderResponse?.data?.customerAuthUID?.mobile + "|" + easebuzzConfig.salt;
+                console.log("orderResponse?.data?.totalPrice => ", orderResponse?.data?.totalPrice);
+
+                var hashstring_transactionAPI = easebuzzConfig.key + "|" + orderResponse?.data?.txnid?.txnid + "|" + orderResponse?.data?.totalPrice + "|"  + orderResponse?.data?.txnid?.email + "|" + orderResponse?.data?.txnid?.phone + "|" + easebuzzConfig.salt;
                 const _generatetransactionAPIHash = generateHash(hashstring_transactionAPI);
 
                 console.log("hashstring_transactionAPI==>",hashstring_transactionAPI);
                 const encodedParams = {
-                    'txnid': orderResponse.data.txnid,
+                    'txnid': orderResponse?.data?.txnid?.txnid,
                     'key': easebuzzConfig.key,
-                    'amount': orderResponse.data.totalPrice,
-                    'email': orderResponse.data.customerAuthUID.email,
-                    'phone': orderResponse.data.customerAuthUID.mobile + "",
+                    'amount': orderResponse?.data?.totalPrice,
+                    'email': orderResponse.data.txnid.email,
+                    'phone': orderResponse?.data?.txnid?.phone + "",
                     'hash': _generatetransactionAPIHash,
                 }
 
@@ -87,11 +92,11 @@ function requestRefund(orderId) {
                       data: encodedParams,
                 };
                 const transactionAPIResponse = await axios.request(transactionAPI)
-                // console.log("transactionAPIResponse===>",transactionAPIResponse?.data);
+                console.log("transactionAPIResponse===>",transactionAPIResponse?.data);
                 const easepayid = transactionAPIResponse?.data?.msg?.easepayid;
 
                 if (transactionAPIResponse?.data?.status === true && easepayid) {
-                    var hashstring = easebuzzConfig.key + "|" + easepayid + "|" + orderResponse?.data?.totalPrice + "|" + Number(orderResponse.data.totalPrice) + "|" + orderResponse?.data?.customerAuthUID?.email + "|" + orderResponse?.data?.customerAuthUID?.mobile + "|" + easebuzzConfig.salt;
+                    var hashstring = easebuzzConfig.key + "|" + easepayid + "|" + orderResponse?.data?.totalPrice + "|" + Number(orderResponse.data.totalPrice) + "|" + orderResponse?.data?.txnid?.email + "|" + orderResponse?.data?.txnid?.phone + "|" + easebuzzConfig.salt;
     
                     const _generateHash = generateHash(hashstring);
                     console.log("_generateHash => ", _generateHash);
@@ -103,8 +108,8 @@ function requestRefund(orderId) {
                             key: easebuzzConfig.key,
                             txnid: easepayid,
                             refund_amount: Number(orderResponse.data.totalPrice),
-                            phone: orderResponse.data.customerAuthUID.mobile + "",
-                            email: orderResponse.data.customerAuthUID.email,
+                            phone: orderResponse?.data?.txnid?.phone + "",
+                            email: orderResponse.data.txnid.email,
                             amount: orderResponse.data.totalPrice,
                             hash: _generateHash
                         }
@@ -114,7 +119,7 @@ function requestRefund(orderId) {
                     if (refundInitiateResponse?.data?.status === true && refundInitiateResponse?.data?.refund_id) {
                         // const refundUpdateResponse = await supabaseInstance.from('Refund').update({ refund_post_body: options?.data, refund_response: refundInitiateResponse?.data,refund_amount: refundInitiateResponse?.data?.refund_amount}).eq("refundId", refundResponse?.data?.refundId).select("*").maybeSingle();
                         const insert_refund_post_body = { 
-                            txnid: orderResponse.data.txnid,
+                            txnid: orderResponse?.data?.txnid?.txnid,
                             customerAuthUID: orderResponse.data.customerAuthUID.customerAuthUID,
                             orderId,
                             refund_post_body: options?.data,
