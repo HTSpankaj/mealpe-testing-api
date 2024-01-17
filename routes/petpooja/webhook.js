@@ -228,4 +228,14 @@ router.post("/item-on-webhook", async (req, res) => {
     }
 })
 
+router.post("/menu-sharing-webhook", async (req, res) => {
+    const postBody = req.body;
+
+    console.log("postBody => ", postBody);
+    res.status(200).json({
+        http_code: 200,
+        success: true,
+        error: ""
+    });
+})
 module.exports = router;

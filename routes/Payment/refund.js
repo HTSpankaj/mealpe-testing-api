@@ -10,19 +10,21 @@ router.post('/refundWebhook', async (req, res, next) => {
     console.log("req?.body?.status => ", req?.body?.status);
     console.log("typeof req?.body?.data => ",typeof req?.body?.data);
     
-    let postBody = JSON.parse(JSON.stringify(req.body));
-    postBody.data = JSON.parse(JSON.stringify(postBody.data));
-    postBody.data = JSON.parse(JSON.stringify(postBody.data));
-
+    let postBody = req.body;
+    
+    const postBodyData = JSON.parse(JSON.stringify(req?.body?.data));
+    
     console.log("RefundWebhook PostBody => ", postBody);
+    console.log("RefundWebhook postBodyData => ", postBodyData);
+    console.log("typeof postBodyData => ",typeof postBodyData);
 
-    if (postBody?.status === "1" && postBody?.data?.refund_status && postBody?.data?.txnid) {
-        // const refundResponse = await supabaseInstance.from("Refund").select("refundId, txnid").eq("txnid", postBody?.data?.txnid).maybeSingle();
-        const refundResponse = await supabaseInstance.from("Refund").update({refund_status: postBody?.data?.refund_status}).select("refundId, txnid").eq("txnid", postBody?.data?.txnid).maybeSingle();
+    if (postBody?.status === "1" && postBodyData?.refund_status && postBodyData?.txnid) {
+        // const refundResponse = await supabaseInstance.from("Refund").select("refundId, txnid").eq("txnid", postBodyData?.txnid).maybeSingle();
+        const refundResponse = await supabaseInstance.from("Refund").update({refund_status: postBodyData?.refund_status}).select("refundId, txnid").eq("txnid", postBodyData?.txnid).maybeSingle();
         if (refundResponse.data) {
             let postObjectForRefundWebhook = {
                 responseBody: postBody,
-                refund_status: postBody?.data?.refund_status,
+                refund_status: postBodyData?.refund_status,
                 refundId: refundResponse.data?.refundId
             }
             await supabaseInstance.from("RefundWebhook").insert(postObjectForRefundWebhook).select("refundWebhookId").maybeSingle();
@@ -35,10 +37,10 @@ router.post('/refundWebhook', async (req, res, next) => {
         console.error("If condition fail");
 
         console.log("postBody?.status => ", postBody?.status);
-        console.log("postBody?.data?.refund_status => ", postBody?.data?.refund_status);
-        console.log("postBody?.data?.txnid => ", postBody?.data?.txnid);
+        console.log("postBodyData?.refund_status => ", postBodyData?.refund_status);
+        console.log("postBodyData?.txnid => ", postBodyData?.txnid);
 
-        console.log(postBody?.status === "1" && postBody?.data?.refund_status && postBody?.data?.txnid);
+        console.log(postBody?.status === "1" && postBodyData?.refund_status && postBodyData?.txnid);
         res.status(500).json({success: false});
     }
 })
