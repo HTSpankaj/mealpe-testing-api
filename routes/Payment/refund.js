@@ -11,8 +11,7 @@ router.post('/refundWebhook', async (req, res, next) => {
     console.log("typeof req?.body?.data => ",typeof req?.body?.data);
     
     let postBody = req.body;
-    
-    const postBodyData = JSON.parse(JSON.stringify(req?.body?.data));
+    const postBodyData = JSON.parse(req?.body?.data);
     
     console.log("RefundWebhook PostBody => ", postBody);
     console.log("RefundWebhook postBodyData => ", postBodyData);
