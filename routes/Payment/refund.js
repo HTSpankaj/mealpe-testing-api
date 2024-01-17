@@ -6,12 +6,13 @@ const axios = require('axios').default;
 const SHA512 = require("crypto-js").SHA512;
 
 router.post('/refundWebhook', async (req, res, next) => {
+    console.log("typeof req.body => ", typeof req.body);
+    
     const postBody = JSON.parse(JSON.stringify(req.body));
+    console.log("typeof postBody => ", typeof postBody);
+
     console.log("RefundWebhook PostBody => ", postBody);
     console.log("RefundWebhook JSON.stringify(postBody) => ", JSON.stringify(postBody));
-
-    console.log("Req => ", req);
-    console.log("Res => ", res);
 
     if (postBody?.status === "1" && postBody?.data?.refund_status && postBody?.data?.txnid) {
         // const refundResponse = await supabaseInstance.from("Refund").select("refundId, txnid").eq("txnid", postBody?.data?.txnid).maybeSingle();
@@ -29,7 +30,13 @@ router.post('/refundWebhook', async (req, res, next) => {
             res.status(500).json({success: false});
         }
     } else {
-        console.error("Error while update Refund[refund_status].");
+        console.error("If condition fail");
+
+        console.log("postBody?.status => ", postBody?.status);
+        console.log("postBody?.data?.refund_status => ", postBody?.data?.refund_status);
+        console.log("postBody?.data?.txnid => ", postBody?.data?.txnid);
+
+        console.log(postBody?.status === "1" && postBody?.data?.refund_status && postBody?.data?.txnid);
         res.status(500).json({success: false});
     }
 })
