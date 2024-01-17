@@ -8,7 +8,8 @@ const SHA512 = require("crypto-js").SHA512;
 router.post('/refundWebhook', async (req, res, next) => {
     console.log("typeof req.body => ", typeof req.body);
     
-    const postBody = JSON.parse(JSON.stringify(req.body));
+    let postBody = JSON.parse(JSON.stringify(req.body));
+    postBody.data = JSON.parse(JSON.stringify(postBody.data));
     console.log("typeof postBody => ", typeof postBody);
 
     console.log("RefundWebhook PostBody => ", postBody);
