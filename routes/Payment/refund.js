@@ -6,8 +6,9 @@ const axios = require('axios').default;
 const SHA512 = require("crypto-js").SHA512;
 
 router.post('/refundWebhook', async (req, res, next) => {
-    const postBody = req.body;
+    const postBody = JSON.parse(JSON.stringify(req.body));
     console.log("RefundWebhook PostBody => ", postBody);
+    console.log("RefundWebhook JSON.stringify(postBody) => ", JSON.stringify(postBody));
 
     console.log("Req => ", req);
     console.log("Res => ", res);
@@ -28,6 +29,7 @@ router.post('/refundWebhook', async (req, res, next) => {
             res.status(500).json({success: false});
         }
     } else {
+        console.error("Error while update Refund[refund_status].");
         res.status(500).json({success: false});
     }
 })
