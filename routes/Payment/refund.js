@@ -6,14 +6,15 @@ const axios = require('axios').default;
 const SHA512 = require("crypto-js").SHA512;
 
 router.post('/refundWebhook', async (req, res, next) => {
-    console.log("typeof req.body => ", typeof req.body);
+
+    console.log("req?.body?.status => ", req?.body?.status);
+    console.log("typeof req?.body?.data => ",typeof req?.body?.data);
     
     let postBody = JSON.parse(JSON.stringify(req.body));
     postBody.data = JSON.parse(JSON.stringify(postBody.data));
-    console.log("typeof postBody => ", typeof postBody);
+    postBody.data = JSON.parse(JSON.stringify(postBody.data));
 
     console.log("RefundWebhook PostBody => ", postBody);
-    console.log("RefundWebhook JSON.stringify(postBody) => ", JSON.stringify(postBody));
 
     if (postBody?.status === "1" && postBody?.data?.refund_status && postBody?.data?.txnid) {
         // const refundResponse = await supabaseInstance.from("Refund").select("refundId, txnid").eq("txnid", postBody?.data?.txnid).maybeSingle();
@@ -82,7 +83,7 @@ function requestRefund(orderId) {
                 var hashstring_transactionAPI = easebuzzConfig.key + "|" + orderResponse?.data?.txnid?.txnid + "|" + orderResponse?.data?.totalPrice + "|"  + orderResponse?.data?.txnid?.email + "|" + orderResponse?.data?.txnid?.phone + "|" + easebuzzConfig.salt;
                 const _generatetransactionAPIHash = generateHash(hashstring_transactionAPI);
 
-                console.log("hashstring_transactionAPI==>",hashstring_transactionAPI);
+                // console.log("hashstring_transactionAPI==>",hashstring_transactionAPI);
                 const encodedParams = {
                     'txnid': orderResponse?.data?.txnid?.txnid,
                     'key': easebuzzConfig.key,
@@ -102,7 +103,7 @@ function requestRefund(orderId) {
                       data: encodedParams,
                 };
                 const transactionAPIResponse = await axios.request(transactionAPI)
-                console.log("transactionAPIResponse===>",transactionAPIResponse?.data);
+                // console.log("transactionAPIResponse===>",transactionAPIResponse?.data);
                 const easepayid = transactionAPIResponse?.data?.msg?.easepayid;
 
                 if (transactionAPIResponse?.data?.status === true && easepayid) {
