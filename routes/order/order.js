@@ -6,7 +6,7 @@ const { sendMobileSMS, sendEmail } = require("../../services/msf91Service");
 var router = express.Router();
 var supabaseInstance = require("../../services/supabaseClient").supabase;
 var msg91config = require("../../configs/msg91Config");
-var {requestRefund} = require("../Payment/refund")
+var { requestRefund } = require("../Payment/refund")
 
 router.post("/createOrder", async (req, res) => {
   const { customerAuthUID, outletId, restaurantId, isDineIn, isPickUp, totalPrice, paymentId, items, pickupTime, orderPriceBreakDown, isScheduleNow, txnid, basePrice, isDelivery, address } = req.body;
@@ -1159,6 +1159,16 @@ router.get("/realtimePendingOrder/:outletId", function (req, res) {
         res.write(`data: ${JSON.stringify(orderData?.data || null)}`);
         res.write("\n\n");
       }, 5000);
+    }
+  ).on('postgres_changes',
+    { event: "UPDATE", schema: 'public', table: 'Order', filter: `outletId=eq.${outletId}` },
+    async (payload) => {
+      console.log(payload);
+      if (payload?.new?.outletId === outletId && payload?.new?.orderStatusId === 0) {
+        res.write('event: cancelorder\n');  //* new order Event 
+        res.write(`data: ${payload?.new?.orderStatusId}`);
+        res.write("\n\n");
+      }
     }
   ).subscribe((status, error) => {
     if (status === "CHANNEL_ERROR") {
