@@ -447,6 +447,19 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
       .eq("outletId", outletId)
       .select("*,bankDetailsId(*),outletAdminId(*),Timing!left(*),Restaurant_category!left(categoryId)");
 
+    let childOutletBody = {};
+
+    if(outletData.convenienceFee) {
+      childOutletBody.convenienceFee = outletData.convenienceFee;
+    }
+    if(outletData.commissionFee) {
+      childOutletBody.commissionFee = outletData.commissionFee;
+    }
+    if (Object.keys(childOutletBody).length > 0) {
+      const updateChildOutlet = await supabaseInstance.from("Outlet").update(childOutletBody).eq("primaryOutletId", outletId);
+      console.log("updateChildOutlet => ", updateChildOutlet);
+    }
+
     if (data) {
       console.log
       res.status(200).json({
