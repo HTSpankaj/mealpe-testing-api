@@ -1163,10 +1163,10 @@ router.get("/realtimePendingOrder/:outletId", function (req, res) {
   ).on('postgres_changes',
     { event: "UPDATE", schema: 'public', table: 'Order', filter: `outletId=eq.${outletId}` },
     async (payload) => {
-      console.log(payload);
-      if (payload?.new?.outletId === outletId && payload?.new?.orderStatusId === 0) {
+      // console.log(payload);
+      if (payload?.new && payload?.new?.orderStatusId === -1) {
         res.write('event: cancelorder\n');  //* new order Event 
-        res.write(`data: ${payload?.new?.orderStatusId}`);
+        res.write(`data: ${JSON.stringify(payload?.new || null)}`);
         res.write("\n\n");
       }
     }
