@@ -564,8 +564,10 @@ function getPriceBreakdown(outletId, itemTotalPrice, isDineIn = false, isPickUp 
                         FoodBasePrice = itemTotalPrice;
                     } else {
                         isGstApplied = false;
-                        FoodBasePrice = Number(((itemTotalPrice * 100) / 105).toFixed(2));
-                        foodGST = Number((itemTotalPrice - FoodBasePrice).toFixed(2));
+                        // FoodBasePrice = Number(((itemTotalPrice * 100) / 105).toFixed(2));
+                        // foodGST = Number((itemTotalPrice - FoodBasePrice).toFixed(2));
+                        foodGST = Number(((5 * itemTotalPrice) / 100).toFixed(2));
+                        FoodBasePrice = itemTotalPrice - foodGST;
                     }
                     
                     convenienceAmount = (outletData.convenienceFee * FoodBasePrice) / 100;

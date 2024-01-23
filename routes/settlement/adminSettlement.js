@@ -145,11 +145,13 @@ router.post("/getAdminFinanceOrderReport", async (req, res) => {
 router.post("/orderLevelExcelSheet", async (req, res) => {
     const { start_date, end_date, outletId } = req.body;
     try {
-        const { data, error } = await supabaseInstance.rpc('order_level_excel_sheet_query', { end_date, outlet_id: outletId, start_date });
+        const { data, error } = await supabaseInstance.rpc('order_level_excel_sheet_query', { end_date, outlet_id: outletId, start_date })
+        // .in("Order ID", [664, 609]); //!  Delete Line
 
         if (data) {
 
             let _data = [
+                // ["", "", "", "", "", "", "", "Delete", "(1)", "(2)", "(3)", "(CF)", "(4)", "(5)", "(A)", "(6)", "(7)", "(B)", "(9)", "(10)", "(11)", "(12)", "(13)", "(14)", "(15)", "(16)", "(17)", "(18)", "(19)", "(20)", "(C)", "(D)", "(E)"],
                 ["", "", "", "", "", "", "", "(1)", "(2)", "(3)", "(CF)", "(4)", "(5)", "(A)", "(6)", "(7)", "(B)", "(9)", "(10)", "(11)", "(12)", "(13)", "(14)", "(15)", "(16)", "(17)", "(18)", "(19)", "(20)", "(C)", "(D)", "(E)"],
                 [
                     "S.No.",
@@ -159,6 +161,7 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                     "Restaurant ID",
                     "Discount Construct [X% off upto INR X (Date Range Applicable)]",
                     "Order type (Take Away/Dine In/Delivery)",
+                    // "GST Type",   //! Delete Line
                     "Subtotal (items base price)",
                     "Packaging charge",
                     "Delivery charge",
@@ -210,6 +213,7 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                 _arr.push(element['Restaurant ID']);
                 _arr.push(element['Discount Construct']);
                 _arr.push(element['Order type']);
+                // _arr.push(element['isGSTApplied'] ? 'EXCLUSIVE' : 'INCLUSIVE');
                 _arr.push(element['Subtotal']);
                 _arr.push(element['Packaging charge']);
                 _arr.push(element['Delivery charge']);
@@ -217,7 +221,7 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                 _arr.push(element['Convenience Fee Value']);
                 _arr.push(element['Restaurant discount']);
                 _arr.push(A);
-                _arr.push(element['Total Food GST collected from customers']);
+                _arr.push(element['isGSTApplied'] ? element['Total Food GST collected from customers'] : 0);
                 _arr.push(element['Total Food GST collected from customers']);
                 _arr.push(B);
                 _arr.push(_9);

@@ -232,10 +232,34 @@ router.post("/menu-sharing-webhook", async (req, res) => {
     const postBody = req.body;
 
     console.log("postBody => ", postBody);
-    res.status(200).json({
-        http_code: 200,
-        success: true,
-        error: ""
-    });
+    console.log("postBody?.restaurants?.[0]?.details?.menusharingcode => ", postBody?.restaurants?.[0]?.details?.menusharingcode);
+
+    if (postBody?.success === "1" && postBody?.restaurants?.[0]?.details?.menusharingcode) {
+        try {
+            const outletQuery = await supabaseInstance.from("Outlet").select("outletId,outletName,petPoojaRestId,Menu_Parent_Categories!left(*),Menu_Categories!left(*),Menu_Item!left(*)").eq("petPoojaRestId", postBody?.restaurants?.[0]?.details?.menusharingcode).limit(1);
+
+            if (outletQuery?.data?.length > 0) {
+                const outletQueryData = outletQuery.data[0];
+
+                res.status(200).json({
+                    http_code: 200,
+                    success: true,
+                    error: "",
+                    outletQueryData
+                });
+            } else {
+                if (outletQuery?.data?.length === 0) {
+                    res.status(500).json({ success: false, error: "Outlet not found in mealpe system." });
+                } else {
+                    throw outletQuery?.error;
+                }
+            }
+        } catch (error) {
+            console.error("menu-sharing-webhook => ", error);
+            res.status(500).json({ success: false, error: error?.message || error || JSON.stringify(error) });
+        }
+    } else {
+        res.status(500).json({ success: false, error: "Please pass postBody?.restaurants?.[0]?.details?.menusharingcode." });
+    }
 })
 module.exports = router;

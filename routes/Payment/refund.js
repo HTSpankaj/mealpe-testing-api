@@ -13,9 +13,9 @@ router.post('/refundWebhook', async (req, res, next) => {
     let postBody = req.body;
     const postBodyData = JSON.parse(req?.body?.data);
     
-    console.log("RefundWebhook PostBody => ", postBody);
-    console.log("RefundWebhook postBodyData => ", postBodyData);
-    console.log("typeof postBodyData => ",typeof postBodyData);
+    // console.log("RefundWebhook PostBody => ", postBody);
+    // console.log("RefundWebhook postBodyData => ", postBodyData);
+    // console.log("typeof postBodyData => ",typeof postBodyData);
 
     if (postBody?.status === "1" && postBodyData?.refund_status && postBodyData?.txnid) {
         // const refundResponse = await supabaseInstance.from("Refund").select("refundId, txnid").eq("txnid", postBodyData?.txnid).maybeSingle();
@@ -79,16 +79,16 @@ function requestRefund(orderId) {
 
             if (orderResponse?.data) {
 
-                console.log("orderResponse?.data?.totalPrice => ", orderResponse?.data?.totalPrice);
+                console.log("Number(orderResponse?.data?.totalPrice).toFixed(2) => ", Number(orderResponse?.data?.totalPrice).toFixed(2));
 
-                var hashstring_transactionAPI = easebuzzConfig.key + "|" + orderResponse?.data?.txnid?.txnid + "|" + orderResponse?.data?.totalPrice + "|"  + orderResponse?.data?.txnid?.email + "|" + orderResponse?.data?.txnid?.phone + "|" + easebuzzConfig.salt;
+                var hashstring_transactionAPI = easebuzzConfig.key + "|" + orderResponse?.data?.txnid?.txnid + "|" + Number(orderResponse?.data?.totalPrice).toFixed(2) + "|"  + orderResponse?.data?.txnid?.email + "|" + orderResponse?.data?.txnid?.phone + "|" + easebuzzConfig.salt;
                 const _generatetransactionAPIHash = generateHash(hashstring_transactionAPI);
 
                 // console.log("hashstring_transactionAPI==>",hashstring_transactionAPI);
                 const encodedParams = {
                     'txnid': orderResponse?.data?.txnid?.txnid,
                     'key': easebuzzConfig.key,
-                    'amount': orderResponse?.data?.totalPrice,
+                    'amount': Number(orderResponse?.data?.totalPrice).toFixed(2),
                     'email': orderResponse.data.txnid.email,
                     'phone': orderResponse?.data?.txnid?.phone + "",
                     'hash': _generatetransactionAPIHash,
@@ -108,7 +108,7 @@ function requestRefund(orderId) {
                 const easepayid = transactionAPIResponse?.data?.msg?.easepayid;
 
                 if (transactionAPIResponse?.data?.status === true && easepayid) {
-                    var hashstring = easebuzzConfig.key + "|" + easepayid + "|" + orderResponse?.data?.totalPrice + "|" + Number(orderResponse.data.totalPrice) + "|" + orderResponse?.data?.txnid?.email + "|" + orderResponse?.data?.txnid?.phone + "|" + easebuzzConfig.salt;
+                    var hashstring = easebuzzConfig.key + "|" + easepayid + "|" + Number(orderResponse?.data?.totalPrice).toFixed(2) + "|" + Number(orderResponse.data.totalPrice).toFixed(2) + "|" + orderResponse?.data?.txnid?.email + "|" + orderResponse?.data?.txnid?.phone + "|" + easebuzzConfig.salt;
     
                     const _generateHash = generateHash(hashstring);
                     console.log("_generateHash => ", _generateHash);
@@ -119,10 +119,10 @@ function requestRefund(orderId) {
                         data: {
                             key: easebuzzConfig.key,
                             txnid: easepayid,
-                            refund_amount: Number(orderResponse.data.totalPrice),
+                            refund_amount: Number(orderResponse.data.totalPrice).toFixed(2),
                             phone: orderResponse?.data?.txnid?.phone + "",
                             email: orderResponse.data.txnid.email,
-                            amount: orderResponse.data.totalPrice,
+                            amount: Number(orderResponse.data.totalPrice).toFixed(2),
                             hash: _generateHash
                         }
                     };
@@ -158,10 +158,11 @@ function requestRefund(orderId) {
             }
             
         } catch (error) {
-            console.error("error => ", error);
+            const _err = error?.response?.data || error?.message || error;
+            console.error("error => ", _err);
             resolve({
                 success: false,
-                error: error?.message || error
+                error: _err
             })
         }
     })

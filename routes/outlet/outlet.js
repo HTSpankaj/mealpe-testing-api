@@ -457,7 +457,7 @@ router.post("/updateOutlet/:outletId", async (req, res) => {
     }
     if (Object.keys(childOutletBody).length > 0) {
       const updateChildOutlet = await supabaseInstance.from("Outlet").update(childOutletBody).eq("primaryOutletId", outletId);
-      console.log("updateChildOutlet => ", updateChildOutlet);
+      // console.log("updateChildOutlet => ", updateChildOutlet);
     }
 
     if (data) {
