@@ -224,8 +224,8 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                 _arr.push(element['Convenience Fee Value']);
                 _arr.push(element['Restaurant discount']);
                 _arr.push(A);
-                _arr.push(_7);
                 _arr.push(_6);
+                _arr.push(_7);
 
                 _arr.push(B);
                 _arr.push(_9);
