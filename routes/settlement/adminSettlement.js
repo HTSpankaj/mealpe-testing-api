@@ -195,10 +195,11 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                 
                 const A = Number(element['Subtotal']) + Number(element['Packaging charge']) + Number(element['Delivery charge']) + Number(element['Convenience Fee Value']) - Number(element['Restaurant discount']);
                 
-                const _7 = element['isGSTApplied'] ? element['Total Food GST collected from customers'] : 0;
+                const _6 = element['isGSTApplied'] ? element['Total Food GST collected from customers'] : 0;
+                const _7 = element['Total Food GST collected from customers'];
                 const B = A + _7;
 
-                const _9  = B - Number(element['Total Food GST collected from customers']) - Number(element['Convenience Fee Value']);
+                const _9  = B - _7 - Number(element['Convenience Fee Value']);
                 const _14 = Number(element['Packaging charge']) + Number(element['Delivery charge']);
                 const _16 = +Number(0.18 * (Number(element['Convenience Fee Value']) + Number(element['Commission value']) + 0)).toFixed(2);
                 const _17 = +Number(0.18 * _14).toFixed(2);
@@ -206,7 +207,7 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
 
                 const C = Number(element['Convenience Fee Value']) + Number(element['Commission value']) + 0 + _16 + _17 + 0 + _19 + 0;
 
-                const E = (B - C) + (0 - Number(element['Total Food GST collected from customers']));
+                const E = (B - C) + (0 - _7);
 
                 _arr.push(index + 1);
                 _arr.push(element['Order ID']);
@@ -224,10 +225,11 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                 _arr.push(element['Restaurant discount']);
                 _arr.push(A);
                 _arr.push(_7);
-                _arr.push(element['Total Food GST collected from customers']);
+                _arr.push(_6);
+
                 _arr.push(B);
                 _arr.push(_9);
-                _arr.push(B - element['Total Food GST collected from customers'] - element['Convenience Fee Value']);
+                _arr.push(B - _6 - element['Convenience Fee Value']);
                 _arr.push(element['Commission %']);
                 _arr.push(element['Commission value']);
                 _arr.push(element[0]); //* Payment mechanism fee
