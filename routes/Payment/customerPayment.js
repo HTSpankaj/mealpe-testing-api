@@ -570,19 +570,31 @@ function getPriceBreakdown(outletId, itemTotalPrice, isDineIn = false, isPickUp 
                         FoodBasePrice = itemTotalPrice - foodGST;
                     }
                     
-                    convenienceAmount = (outletData.convenienceFee * FoodBasePrice) / 100;
+                    // convenienceAmount = (outletData.convenienceFee * FoodBasePrice) / 100;
+                    convenienceAmount = (outletData.convenienceFee * itemTotalPrice) / 100;
                     convenienceGSTAmount = (18 * convenienceAmount) / 100;
                     convenienceTotalAmount = Number((convenienceAmount + convenienceGSTAmount)?.toFixed(2));
                     
-                    commissionAmount = (outletData.commissionFee * (deliveryCharge + packagingCharge + FoodBasePrice)) / 100;
+                    // commissionAmount = (outletData.commissionFee * (deliveryCharge + packagingCharge + FoodBasePrice)) / 100;
+                    commissionAmount = (outletData.commissionFee * (deliveryCharge + packagingCharge + itemTotalPrice)) / 100;
                     commissionGSTAmount = (18 *  commissionAmount) / 100;
                     commissionTotalAmount = Number((commissionAmount + commissionGSTAmount)?.toFixed(2));
 
-                    TDS = (1 * FoodBasePrice) / 100;
+                    // TDS = (1 * FoodBasePrice) / 100;
+                    TDS = (itemTotalPrice) / 100;
                     TCS = (packagingCharge + deliveryCharge) / 101;
 
-                    totalPriceForCustomer = Number((FoodBasePrice + packagingCharge + foodGST + deliveryCharge + convenienceTotalAmount)?.toFixed(2));
+                    if (outletData?.isGSTShow === true) {
+                        //? Amount Collected from Customer = Base Price + CF + GST = 106
+                        totalPriceForCustomer = Number((itemTotalPrice + convenienceTotalAmount + foodGST + packagingCharge + deliveryCharge)?.toFixed(2));
+                    } else {
+                        //? Amount Collected from Customer = Base Price + CF = 101
+                        totalPriceForCustomer = Number((itemTotalPrice + convenienceTotalAmount +           packagingCharge + deliveryCharge)?.toFixed(2));
+                    }
+                    //? Net Deductions = (GST Amount + Commission + CF + 1% TDS)
                     mealpeVendorAmount = Number((foodGST + convenienceTotalAmount + commissionTotalAmount + TDS + TCS)?.toFixed(2));
+
+                    //? Settlement amount => Amount Collected - Net Deductions
                     outletVendorAmount = Number((totalPriceForCustomer - mealpeVendorAmount)?.toFixed(2));
 
                     const outletBankLabel = outletData?.bankLabel || null;
