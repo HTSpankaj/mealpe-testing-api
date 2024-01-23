@@ -194,7 +194,9 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                 let _arr = [];
                 
                 const A = Number(element['Subtotal']) + Number(element['Packaging charge']) + Number(element['Delivery charge']) + Number(element['Convenience Fee Value']) - Number(element['Restaurant discount']);
-                const B = A + Number(element['Total Food GST collected from customers']);
+                
+                const _7 = element['isGSTApplied'] ? element['Total Food GST collected from customers'] : 0;
+                const B = A + _7;
 
                 const _9  = B - Number(element['Total Food GST collected from customers']) - Number(element['Convenience Fee Value']);
                 const _14 = Number(element['Packaging charge']) + Number(element['Delivery charge']);
@@ -221,7 +223,7 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                 _arr.push(element['Convenience Fee Value']);
                 _arr.push(element['Restaurant discount']);
                 _arr.push(A);
-                _arr.push(element['isGSTApplied'] ? element['Total Food GST collected from customers'] : 0);
+                _arr.push(_7);
                 _arr.push(element['Total Food GST collected from customers']);
                 _arr.push(B);
                 _arr.push(_9);
