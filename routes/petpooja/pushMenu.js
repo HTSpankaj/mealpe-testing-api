@@ -451,7 +451,8 @@ function saveOrderToPetpooja(request, orderId) {
                   order_type: orderData.data?.isDelivery ? 'H' : orderData.data?.isPickUp ? 'P' : 'D',
 
                   payment_type: "ONLINE",
-                  total: String((orderData.data?.txnid?.amount - Number(Number(orderData.data?.txnid?.foodGST) + Number(orderData.data?.txnid?.convenienceTotalAmount)).toFixed(2)) || ""), //todo add charge
+                  // total: String((orderData.data?.txnid?.amount - Number(Number(orderData.data?.txnid?.foodGST) - Number(orderData.data?.txnid?.convenienceTotalAmount)).toFixed(2)) || ""), //todo add charge
+                  total: String(Number(orderData.data?.txnid?.itemTotalPrice).toFixed(2) || ""), //todo add charge
                   tax_total: String(Number(Number(orderData.data?.txnid?.foodGST) + Number(orderData.data?.txnid?.convenienceTotalAmount)).toFixed(2) || ""),
                   packing_charges: String(orderData.data?.txnid?.packagingCharge || ""),
                   pc_tax_amount: "", //* Tax amount calculated on packing charge
@@ -535,10 +536,10 @@ function saveOrderToPetpooja(request, orderId) {
         for (let itemData of orderData.data?.Order_Item) {
 
           let _itemPrice = itemData.itemPrice;
-          if (orderData?.data?.txnid?.isGSTApplied === false) {
-            // _itemPrice = itemData.itemPrice - Number((5*itemData.itemPrice)/100).toFixed(2);
-            _itemPrice = Number(((itemData.itemPrice * 100) / 105).toFixed(2));
-          }
+          // if (orderData?.data?.txnid?.isGSTApplied === false) {
+          //   // _itemPrice = itemData.itemPrice - Number((5*itemData.itemPrice)/100).toFixed(2);
+          //   _itemPrice = Number(((itemData.itemPrice * 100) / 105).toFixed(2));
+          // }
 
           let petpoojaOrderObj = {
             id: itemData?.itemId?.itemid,
