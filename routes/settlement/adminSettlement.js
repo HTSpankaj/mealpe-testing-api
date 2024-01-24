@@ -197,7 +197,7 @@ router.post("/orderLevelExcelSheet", async (req, res) => {
                 
                 const _6 = element['isGSTApplied'] ? element['Total Food GST collected from customers'] : 0;
                 const _7 = element['Total Food GST collected from customers'];
-                const B = A + _7;
+                const B = A + _6;
 
                 const _9  = B - _7 - Number(element['Convenience Fee Value']);
                 const _14 = Number(element['Packaging charge']) + Number(element['Delivery charge']);
