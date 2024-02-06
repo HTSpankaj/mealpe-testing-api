@@ -380,6 +380,8 @@ router.post("/menu-sharing-webhook", async (req, res) => {
                     }
                 }
 
+
+                console.info("http_code: 200");
                 res.status(200).json({
                     http_code: 200,
                     success: true,
@@ -388,6 +390,7 @@ router.post("/menu-sharing-webhook", async (req, res) => {
                 });
             } else {
                 if (outletQuery?.data?.length === 0) {
+                    console.info("http_code: 500", "Outlet not found in mealpe system.");
                     res.status(500).json({ success: false, error: "Outlet not found in mealpe system." });
                 } else {
                     throw outletQuery?.error;
@@ -395,9 +398,11 @@ router.post("/menu-sharing-webhook", async (req, res) => {
             }
         } catch (error) {
             console.error("menu-sharing-webhook => ", error);
+            console.info("http_code: 500");
             res.status(500).json({ success: false, error: error?.message || error || JSON.stringify(error) });
         }
     } else {
+        console.info("http_code: 500", "Please pass postBody?.restaurants?.[0]?.details?.menusharingcode.");
         res.status(500).json({ success: false, error: "Please pass postBody?.restaurants?.[0]?.details?.menusharingcode." });
     }
 })
