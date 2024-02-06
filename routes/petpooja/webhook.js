@@ -282,6 +282,14 @@ router.post("/menu-sharing-webhook", async (req, res) => {
                 const menuCategoriesData = postBody.categories;
                 const itemsData = postBody.items;
 
+                console.info("http_code: 200");
+                res.status(200).json({
+                    http_code: 200,
+                    success: true,
+                    error: "",
+                    // outletQueryData
+                });
+
                 if (parentcategoriesData?.length > 0) {
                     for (let petpoojaParentCategoryObject of parentcategoriesData) {
                         const mealpeParentCategoryObject = outletQueryData?.Menu_Parent_Categories?.find(f => f.petpoojaParentCategoryId === petpoojaParentCategoryObject.id);
@@ -379,15 +387,7 @@ router.post("/menu-sharing-webhook", async (req, res) => {
                         }
                     }
                 }
-
-
-                console.info("http_code: 200");
-                res.status(200).json({
-                    http_code: 200,
-                    success: true,
-                    error: "",
-                    // outletQueryData
-                });
+                console.info("menu-sharing-webhook success");
             } else {
                 if (outletQuery?.data?.length === 0) {
                     console.info("http_code: 500", "Outlet not found in mealpe system.");
