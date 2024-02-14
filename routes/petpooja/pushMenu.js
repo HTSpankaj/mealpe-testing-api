@@ -542,7 +542,7 @@ function saveOrderToPetpooja(request, orderId) {
           // }
 
           let petpoojaOrderObj = {
-            id: itemData?.itemId?.itemid,
+            id: itemData?.itemId?.petpoojaItemId ? itemData?.itemId?.petpoojaItemId : itemData?.itemId?.itemid,
             name: itemData?.itemId?.itemname,
             description: "",
 
