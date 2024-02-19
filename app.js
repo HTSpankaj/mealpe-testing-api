@@ -2,6 +2,7 @@ var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
 var logger = require('morgan');
 const cors = require("cors");
 
@@ -35,6 +36,10 @@ var scheduleRouter = require("./routes/scheduler/index");
 
 
 var app = express();
+
+// Increase the request size limit
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
